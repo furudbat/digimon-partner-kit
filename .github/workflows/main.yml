@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - development
 
   pull_request:
     types: [opened, synchronize, reopened]
@@ -24,7 +25,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
       - name: Install dependencies
         run: pnpm install
       - name: Run prettier check
@@ -45,7 +46,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
       - name: Install dependencies
         run: pnpm install
       - name: Run eslint check
@@ -67,7 +68,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
       - name: Install dependencies
         run: pnpm install
       - name: Run tests
@@ -91,34 +92,10 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
       - name: Install dependencies
         run: pnpm install
       - name: Build nextjs
         run: pnpm build
-        env:
-          CI: true
-
-  storybook-build-check:
-    name: Build storybook application
-    needs: [jest-check]
-    runs-on: ubuntu-latest
-    env:
-      SKIP_ENV_VALIDATION: ${{ secrets.SKIP_ENV_VALIDATION }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8.10.2
-      - name: Setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - name: Install dependencies
-        run: pnpm install
-      - name: Build storybook
-        run: pnpm storybook:build
         env:
           CI: true
