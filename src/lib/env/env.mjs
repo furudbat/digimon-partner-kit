@@ -14,5 +14,5 @@ export const env = createEnv({
   },
   runtimeEnv: {
     // NEXT_PUBLIC_EXAMPLE: process.env.NEXT_PUBLIC_EXAMPLE
-  }
+  },
 });

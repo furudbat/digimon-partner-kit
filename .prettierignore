@@ -5,3 +5,4 @@ public
 coverage
 .gitkeep
 *.hbs
+src/db/*.json
