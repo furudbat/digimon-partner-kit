@@ -1,4 +1,5 @@
 import { Button, Card } from 'flowbite-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { DigimonData } from 'src/models/digimon';
 
@@ -28,30 +29,33 @@ export function DigimonSelection({
   })();
 
   const cardClassName = highlight ? `w-60 ${bg} border-2 p-1` : `w-60 ${bg} border p-1`;
-  const imgHeight = 240;
+  const imgSize = 240;
 
   return (
     <Card
       className={cardClassName}
-      style={{ height: imgHeight + 120 }}
+      style={{ height: imgSize + 120 }}
       renderImage={() => {
         return (
           <Button color="light" onClick={() => onClick && onClick()} disabled={data === undefined && disabled}>
             {data && (
-              <img
+              <Image
+                /*crossOrigin="anonymous"*/
+                unoptimized
                 className="rounded-lg w-auto max-w-full max-h-48"
                 src={data.img}
-                height={imgHeight}
+                width={imgSize}
+                height={imgSize}
                 alt={data.name}
               />
             )}
             {!data && !disabled && (
-              <p className={`my-4 text-lg font-normal self-center`} style={{ height: imgHeight }}>
+              <p className={`my-4 text-lg font-normal self-center`} style={{ height: imgSize }}>
                 Click Me to Select
               </p>
             )}
             {!data && disabled && (
-              <p className={`my-4 text-lg self-center`} style={{ height: imgHeight }}>
+              <p className={`my-4 text-lg self-center`} style={{ height: imgSize }}>
                 (Select previous Level)
               </p>
             )}

@@ -1,4 +1,5 @@
 import { List } from 'flowbite-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { DigimonData } from 'src/models/digimon';
 
@@ -7,8 +8,11 @@ export function DigimonInfoBox({ data }: { data: DigimonData }) {
     <div className="max-w-full border border-gray-200 rounded-lg shadow p-5" style={{ height: '28rem' }}>
       <div className="grid grid-flow-row-dense grid-cols-2 grid-rows-1 px-2">
         <div className="items-stretch items-center my-5">
-          <img
+          <Image
+            /*crossOrigin="anonymous"*/
+            unoptimized
             className="self-center h-max-auto w-auto max-w-full rounded-md"
+            width={320}
             height={320}
             src={data.img}
             alt={data.name}
@@ -65,7 +69,15 @@ export function DigimonInfoBox({ data }: { data: DigimonData }) {
             {data.categories?.length > 0 &&
               data.categories.map((category) => (
                 <a key={category.title} href={category.href} title={category.title}>
-                  <img className="flex flex-inline mx-1 h-auto max-w-full" src={category.img} alt={category.name} />
+                  <Image
+                    /*crossOrigin="anonymous"*/
+                    unoptimized
+                    className="flex flex-inline mx-1 h-auto max-w-full"
+                    src={category.img}
+                    alt={category.name}
+                    width={50}
+                    height={50}
+                  />
                 </a>
               ))}
           </div>
