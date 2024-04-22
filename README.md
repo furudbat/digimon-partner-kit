@@ -1,18 +1,18 @@
 # Digimon Partner Kit
 
-Build your own Digimon-Partner Digivolution line
+Build your own digimon-partner digivolution line.
 
 ## Features
 
-- Select your Starter Digimon (Child or Adult Level)
+- Select your starter Digimon (Child- or Adult-Level)
 - Select the next/prev. Level from the line
-- Chose from the huge library of Digimon from [wikimon](https://wikimon.net) (over 1300 Digimons)
+- Chose from a huge library of Digimon (over 1300 Digimons), thanks to [wikimon](https://wikimon.net) 
 
 
 ### Limitations
 
-- Only main Levels are available like "Child", "Perfect and "Ultimate". Other Levels like "Armor" are skipped to keep it simple
-- Only Evolves From/To the next/prev. Level are possible, no digivolutions to the same Level or skipping Levels
+- Only main Levels are available like "Child", "Perfect" and "Ultimate". Other Levels like "Armor" are skipped to keep it simple
+- Only Digivolution From/To the next/prev. Levels are possible, no Digivolutions at the same Level or skipping Levels
 
 
 
@@ -49,4 +49,3 @@ Digimon and other media relating to the franchise are registered trademarks by B
 - https://digimon-api.com/
 - https://github.com/tvanantwerp/scraper-example
 - https://www.youtube.com/watch?v=nwgzHrkBZis
-- https://www.freecodecamp.org/news/how-to-deploy-next-js-app-to-github-pages/
