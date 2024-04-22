@@ -182,7 +182,7 @@ const HomePage = () => {
             />
           </div>
         </div>
-        <div className="container mx-auto max-w-screen-lg mt-6">
+        <div className="container mx-auto max-w-screen-lg mt-6" style={{ minHeight: '28rem' }}>
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-2">
               {!currentSelectionLevel && !currentDigimon && (
