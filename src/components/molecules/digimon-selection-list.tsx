@@ -36,7 +36,7 @@ export function DigimonSelectionList({
                 key={digimon.id}
                 onClick={() => digimons && selectDigimon(digimons[digimon.id])}
                 active={digimon.id === currentDigimon?.id}
-                disabled={!isSelectable}
+                disabled={!isSelectable(currentSelectionLevel)}
               >
                 {digimon.name}
               </ListGroup.Item>
