@@ -12,6 +12,12 @@ import { promisify } from 'util';
 const writeFileAsync = promisify(fs.writeFile);
 const readFileAsync = promisify(fs.readFile);
 
+export function filterUnique<T>(arr: T[], pred: (a: T, b: T) => boolean) {
+  return arr.filter((value, index, self) => {
+    return self.findIndex((v) => pred(v, value)) === index;
+  });
+}
+
 function getRandom(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -471,14 +477,12 @@ export async function main() {
   }
   // load rest/all
   const promises = allDigimonUrls.map(async (d) => scraper.scrapeDigimon(d));
-  db.digimons = db.digimons.concat((await executePromisesWithLimit(promises, 2)).filter((d) => d));
+  db.digimons = [...db.digimons, ...((await executePromisesWithLimit(promises, 2)).filter((d) => d) as DigimonData[])];
 
   console.info('clean up Digimons...');
 
   // filter unique digimon (remove duplicates)
-  db.digimons = db.digimons.filter((digimon, i, arr) => {
-    return arr.indexOf(arr.find((t) => t.id === digimon.id)) === i;
-  });
+  db.digimons = filterUnique(db.digimons, (a, b) => a.id === b.id);
 
   // clean up evols
   db.digimons = db.digimons.map((digimon) => {

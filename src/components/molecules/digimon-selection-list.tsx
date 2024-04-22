@@ -34,7 +34,7 @@ export function DigimonSelectionList({
               <ListGroup.Item
                 className="truncate"
                 key={digimon.id}
-                onClick={() => selectDigimon(digimons[digimon.id])}
+                onClick={() => digimons && selectDigimon(digimons[digimon.id])}
                 active={digimon.id === currentDigimon?.id}
                 disabled={!isSelectable}
               >

@@ -1,7 +1,7 @@
 import { Flowbite } from 'flowbite-react';
 import { ReactNode } from 'react';
 
-import { MainFooter } from '@/components/molecules/footer';
+import { MainFooter } from '@/components/organisms/footer';
 import { MainHeader } from '@/components/organisms/header';
 
 import { cn } from '@/lib/utils';

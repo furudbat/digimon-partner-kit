@@ -40,7 +40,7 @@ Licensed under the MIT License, Copyright © 2024
 
 See [LICENSE](LICENSE) for more information.
 
-This Project is free fan site and not affiliated with Bandai.
+This Project is a free fan site and not affiliated with Bandai.
 Digimon and other media relating to the franchise are registered trademarks by Bandai.
 
 ---
