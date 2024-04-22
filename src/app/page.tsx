@@ -1,12 +1,12 @@
 'use client';
 
-import { DarkThemeToggle, ListGroup, Timeline } from 'flowbite-react';
 import React from 'react';
 import { useEffect } from 'react';
 import { DigimonDB, DigimonData, DigimonLevel } from 'src/models/digimon';
 
 import { DigimonInfoBox } from '@/components/molecules/digimon-info-box';
-import { DigimonSelection } from '@/components/molecules/digimon-selection';
+import { DigimonSelectionList } from '@/components/molecules/digimon-selection-list';
+import { DigimonTimeline } from '@/components/organisms/digimon-timeline';
 
 const HomePage = () => {
   const [db, setDB] = React.useState<DigimonDB | undefined>(undefined);
@@ -149,13 +149,14 @@ const HomePage = () => {
     }
 
     return undefined;
-  }, [baby1, baby2, child, adult, perfect, ultimate, currentSelectionLevel, isSelectable]);
+  }, [baby1, baby2, child, adult, perfect, ultimate, currentSelectionLevel]);
 
   useEffect(() => {
     import('../db/digimon.db.json').then((data) => {
-      setDB(data.default);
+      const db = data.default as DigimonDB;
+      setDB(db);
       const digimons: Record<string, DigimonData> = {};
-      data.default.digimons.forEach((digimon) => {
+      db.digimons.forEach((digimon) => {
         digimons[digimon.id] = digimon;
       });
       setDigimons(digimons);
@@ -164,142 +165,21 @@ const HomePage = () => {
 
   return (
     <div>
-      <section className="dark:text-white">
-        <div className="mx-auto grid max-w-screen-xl px-1 py-1 text-center lg:py-2 lg:pt-4">
-          <div className="mx-auto place-self-center">
-            <h1 className="mb-2 max-w-2xl font-extrabold leading-none tracking-tight">Digimon Partner Kit</h1>
-            <p className="mb-1 max-w-2xl lg:mb-2">
-              Build your own Digimon-Partner Digivolution line. <DarkThemeToggle />
-              <br />
-              <em>Select your Child or Adult Digimon first and then select the next/previous Levels.</em>
-            </p>
-          </div>
-        </div>
-      </section>
-      <div className="mx-auto mt-2 px-2">
+      <div className="mx-auto my-2 px-2">
         <div className="flex items-center w-full">
           <div className="mx-auto place-self-center">
-            <Timeline horizontal>
-              <Timeline.Item>
-                <div className="flex items-center dark:text-white">
-                  <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">
-                    I
-                  </div>
-                  <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
-                </div>
-                <Timeline.Content>
-                  <div className="px-3">
-                    <DigimonSelection
-                      title="Baby I"
-                      data={baby1}
-                      onClick={() => selectDigimonLevel('Baby I')}
-                      onReset={() => clearDigimonLevel('Baby I')}
-                      disabled={!isSelectable('Baby I')}
-                      selected={currentSelectionLevel === 'Baby I'}
-                    />
-                  </div>
-                </Timeline.Content>
-              </Timeline.Item>
-              <Timeline.Item>
-                <div className="flex items-center dark:text-white">
-                  <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">
-                    II
-                  </div>
-                  <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
-                </div>
-                <Timeline.Content>
-                  <div className="px-3">
-                    <DigimonSelection
-                      title="Baby II"
-                      data={baby2}
-                      onClick={() => selectDigimonLevel('Baby II')}
-                      onReset={() => clearDigimonLevel('Baby II')}
-                      disabled={!isSelectable('Baby II')}
-                      selected={currentSelectionLevel === 'Baby II'}
-                    />
-                  </div>
-                </Timeline.Content>
-              </Timeline.Item>
-              <Timeline.Item>
-                <div className="flex items-center dark:text-white">
-                  <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">
-                    III
-                  </div>
-                  <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
-                </div>
-                <Timeline.Content>
-                  <div className="px-3">
-                    <DigimonSelection
-                      title="Child"
-                      data={child}
-                      onClick={() => selectDigimonLevel('Child')}
-                      onReset={() => clearDigimonLevel('Child')}
-                      disabled={!isSelectable('Child')}
-                      selected={currentSelectionLevel === 'Child'}
-                    />
-                  </div>
-                </Timeline.Content>
-              </Timeline.Item>
-              <Timeline.Item>
-                <div className="flex items-center dark:text-white">
-                  <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">
-                    IV
-                  </div>
-                  <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
-                </div>
-                <Timeline.Content>
-                  <div className="px-3">
-                    <DigimonSelection
-                      title="Adult"
-                      data={adult}
-                      onClick={() => selectDigimonLevel('Adult')}
-                      onReset={() => clearDigimonLevel('Adult')}
-                      disabled={!isSelectable('Adult')}
-                      selected={currentSelectionLevel === 'Adult'}
-                    />
-                  </div>
-                </Timeline.Content>
-              </Timeline.Item>
-              <Timeline.Item>
-                <div className="flex items-center dark:text-white">
-                  <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">
-                    V
-                  </div>
-                  <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
-                </div>
-                <Timeline.Content>
-                  <div className="px-3">
-                    <DigimonSelection
-                      title="Perfect"
-                      data={perfect}
-                      onClick={() => selectDigimonLevel('Perfect')}
-                      onReset={() => clearDigimonLevel('Perfect')}
-                      disabled={!isSelectable('Perfect')}
-                      selected={currentSelectionLevel === 'Perfect'}
-                    />
-                  </div>
-                </Timeline.Content>
-              </Timeline.Item>
-              <Timeline.Item>
-                <div className="flex items-center dark:text-white">
-                  <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">
-                    VI
-                  </div>
-                </div>
-                <Timeline.Content>
-                  <div className="px-3">
-                    <DigimonSelection
-                      title="Ultimate"
-                      data={ultimate}
-                      onClick={() => selectDigimonLevel('Ultimate')}
-                      onReset={() => clearDigimonLevel('Ultimate')}
-                      disabled={!isSelectable('Ultimate')}
-                      selected={currentSelectionLevel === 'Ultimate'}
-                    />
-                  </div>
-                </Timeline.Content>
-              </Timeline.Item>
-            </Timeline>
+            <DigimonTimeline
+              selectDigimonLevel={selectDigimonLevel}
+              clearDigimonLevel={clearDigimonLevel}
+              isSelectable={isSelectable}
+              baby1={baby1}
+              baby2={baby2}
+              child={child}
+              adult={adult}
+              perfect={perfect}
+              ultimate={ultimate}
+              currentSelectionLevel={currentSelectionLevel}
+            />
           </div>
         </div>
         <div className="container mx-auto max-w-screen-lg mt-6">
@@ -310,34 +190,14 @@ const HomePage = () => {
               )}
               {currentDigimon && <DigimonInfoBox data={currentDigimon} />}
             </div>
-            <div className="dark:text-white">
-              <div className="text-center">
-                {selectableDigimons && isSelectable(currentSelectionLevel) && (
-                  <h3 className="pb-2">Select {currentSelectionLevel} Level</h3>
-                )}
-                {selectableDigimons && !isSelectable(currentSelectionLevel) && (
-                  <h3 className="pb-2 underline">Can not select Digivolution in the middle of the line</h3>
-                )}
-              </div>
-              {selectableDigimons && selectableDigimons.length === 0 && <p>No Digimon to select</p>}
-              {selectableDigimons && selectableDigimons.length > 0 && (
-                <ListGroup className="text-sm w-50 max-h-96 overflow-y-auto">
-                  {selectableDigimons.map((digimon) => {
-                    return (
-                      <ListGroup.Item
-                        className="truncate"
-                        key={digimon.id}
-                        onClick={() => selectDigimon(digimon)}
-                        active={digimon.id === currentDigimon?.id}
-                        disabled={!isSelectable(currentSelectionLevel)}
-                      >
-                        {digimon.name}
-                      </ListGroup.Item>
-                    );
-                  })}
-                </ListGroup>
-              )}
-            </div>
+            <DigimonSelectionList
+              selectableDigimons={selectableDigimons}
+              isSelectable={isSelectable}
+              currentSelectionLevel={currentSelectionLevel}
+              selectDigimon={selectDigimon}
+              digimons={digimons}
+              currentDigimon={currentDigimon}
+            />
           </div>
         </div>
       </div>

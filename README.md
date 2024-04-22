@@ -49,3 +49,4 @@ Digimon and other media relating to the franchise are registered trademarks by B
 - https://digimon-api.com/
 - https://github.com/tvanantwerp/scraper-example
 - https://www.youtube.com/watch?v=nwgzHrkBZis
+- https://www.freecodecamp.org/news/how-to-deploy-next-js-app-to-github-pages/

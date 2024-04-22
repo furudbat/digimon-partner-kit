@@ -27,7 +27,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       <head>
         <ThemeModeScript />
       </head>
-      <body className={cn(inter.variable, 'font-primary')} suppressHydrationWarning>
+      <body className={cn(inter.variable, 'font-primary', 'h-screen')} suppressHydrationWarning>
         <MainProvider>
           <MainLayout>
             <main>{children}</main>
