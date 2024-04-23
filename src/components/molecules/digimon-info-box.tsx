@@ -5,9 +5,9 @@ import { DigimonData } from 'src/models/digimon';
 
 export function DigimonInfoBox({ data }: { data: DigimonData }) {
   return (
-    <div className="max-w-full border border-gray-200 rounded-lg shadow p-5" style={{ height: '28rem' }}>
-      <div className="grid grid-flow-row-dense grid-cols-2 grid-rows-1 px-2">
-        <div className="items-stretch items-center my-5">
+    <div className="max-w-full border border-gray-200 rounded-lg shadow p-5" style={{ height: '37rem' }}>
+      <div className="grid grid-flow-row-dense  grid-cols-2 grid-rows-1 px-2">
+        <div className="items-center my-10">
           <Image
             /*crossOrigin="anonymous"*/
             unoptimized
@@ -18,7 +18,7 @@ export function DigimonInfoBox({ data }: { data: DigimonData }) {
             alt={data.name}
           />
         </div>
-        <div className="px-2 items-start ml-4 overflow-y-auto" style={{ height: '22rem' }}>
+        <div className="px-2 items-start ml-4 overflow-y-auto" style={{ height: '24rem' }}>
           <h5 className="text-2xl pb-3 font-bold tracking-tight text-gray-900 dark:text-white">
             <Link href={data.href} title={data.name} target="_blank" rel="noreferrer">
               {data.name}
@@ -68,7 +68,13 @@ export function DigimonInfoBox({ data }: { data: DigimonData }) {
           <div className="grid grid-flow-col auto-cols-max items-center">
             {data.categories?.length > 0 &&
               data.categories.map((category) => (
-                <a key={category.title} href={category.href} title={category.title}>
+                <Link
+                  key={category.title}
+                  href={category.href ?? '#'}
+                  title={category.title}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   <Image
                     /*crossOrigin="anonymous"*/
                     unoptimized
@@ -78,10 +84,25 @@ export function DigimonInfoBox({ data }: { data: DigimonData }) {
                     width={50}
                     height={50}
                   />
-                </a>
+                </Link>
               ))}
           </div>
         </div>
+      </div>
+      <div className="p-1 px-2 my-2 ml-6">
+        <div className="overflow-hidden h-12 w-full dark:text-white" style={{ maxLines: 2 }}>
+          <p className="text-ellipsis" style={{ lineClamp: 2, whiteSpace: 'pre-line' }}>
+            {data.description}
+          </p>
+        </div>
+        <Link
+          href={data.href}
+          target="_blank"
+          className="items-center text-center text-blue-800 dark:text-blue-400 hover:underline"
+          rel="noreferrer"
+        >
+          more
+        </Link>
       </div>
     </div>
   );

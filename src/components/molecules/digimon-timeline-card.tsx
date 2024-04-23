@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { DigimonData } from 'src/models/digimon';
 
-export function DigimonSelection({
+export function DigimonTimelineCard({
   title,
   data,
   onClick,

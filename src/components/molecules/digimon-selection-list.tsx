@@ -1,6 +1,8 @@
 import { ListGroup } from 'flowbite-react';
 import { DigimonData, DigimonLevel } from 'src/models/digimon';
 
+import { cn } from '@/lib/utils';
+
 export function DigimonSelectionList({
   selectableDigimons,
   isSelectable,
@@ -9,7 +11,7 @@ export function DigimonSelectionList({
   digimons,
   currentDigimon,
 }: {
-  selectableDigimons?: { id: string; name: string }[];
+  selectableDigimons?: { id: string; name: string; canon?: boolean }[];
   isSelectable: (level: DigimonLevel) => boolean;
   currentSelectionLevel: DigimonLevel;
   selectDigimon: (digimon: DigimonData) => void;
@@ -32,7 +34,7 @@ export function DigimonSelectionList({
           {selectableDigimons.map((digimon) => {
             return (
               <ListGroup.Item
-                className="truncate"
+                className={cn('truncate', digimon.canon ? 'font-extrabold' : '')}
                 key={digimon.id}
                 onClick={() => digimons && selectDigimon(digimons[digimon.id])}
                 active={digimon.id === currentDigimon?.id}
