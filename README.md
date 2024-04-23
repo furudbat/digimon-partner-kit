@@ -18,6 +18,14 @@ Build your own digimon-partner digivolution line.
 
 ## Development
 
+### Run (local)
+
+```bash
+pnpm run dev
+```
+
+Go to http://localhost:3000/digimon-partner-kit
+
 ### Testing
 
 All tests are collocated with the source code inside the same directory. So, it makes it easier to find them. Coverage threshold is set to `70%`. In the `.jest` folder there is a custom provider for the all tests.

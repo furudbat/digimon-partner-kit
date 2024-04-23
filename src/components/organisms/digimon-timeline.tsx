@@ -1,7 +1,7 @@
 import { Timeline } from 'flowbite-react';
 import { DigimonLevel, DigimonData } from 'src/models/digimon';
 
-import { DigimonSelection } from '../molecules/digimon-selection';
+import { DigimonTimelineCard } from '../molecules/digimon-timeline-card';
 
 export function DigimonTimeline({
   selectDigimonLevel,
@@ -35,7 +35,7 @@ export function DigimonTimeline({
         </div>
         <Timeline.Content>
           <div className="px-3">
-            <DigimonSelection
+            <DigimonTimelineCard
               title="Baby I"
               data={baby1}
               onClick={() => selectDigimonLevel('Baby I')}
@@ -53,7 +53,7 @@ export function DigimonTimeline({
         </div>
         <Timeline.Content>
           <div className="px-3">
-            <DigimonSelection
+            <DigimonTimelineCard
               title="Baby II"
               data={baby2}
               onClick={() => selectDigimonLevel('Baby II')}
@@ -73,7 +73,7 @@ export function DigimonTimeline({
         </div>
         <Timeline.Content>
           <div className="px-3">
-            <DigimonSelection
+            <DigimonTimelineCard
               title="Child"
               data={child}
               onClick={() => selectDigimonLevel('Child')}
@@ -91,7 +91,7 @@ export function DigimonTimeline({
         </div>
         <Timeline.Content>
           <div className="px-3">
-            <DigimonSelection
+            <DigimonTimelineCard
               title="Adult"
               data={adult}
               onClick={() => selectDigimonLevel('Adult')}
@@ -109,7 +109,7 @@ export function DigimonTimeline({
         </div>
         <Timeline.Content>
           <div className="px-3">
-            <DigimonSelection
+            <DigimonTimelineCard
               title="Perfect"
               data={perfect}
               onClick={() => selectDigimonLevel('Perfect')}
@@ -126,7 +126,7 @@ export function DigimonTimeline({
         </div>
         <Timeline.Content>
           <div className="px-3">
-            <DigimonSelection
+            <DigimonTimelineCard
               title="Ultimate"
               data={ultimate}
               onClick={() => selectDigimonLevel('Ultimate')}

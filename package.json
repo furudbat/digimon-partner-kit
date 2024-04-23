@@ -17,7 +17,7 @@
     "test:watch": "jest --watch",
     "test:ci": "jest --ci",
     "generate": "pnpm plop --plopfile ./.plop/plopfile.js",
-    "run-scraper": "npx tsx scripts/scraper.ts"
+    "scraper": "npx tsx scripts/scraper.ts"
   },
   "engines": {
     "node": ">=18.17.1"

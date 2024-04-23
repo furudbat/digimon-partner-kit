@@ -103,7 +103,7 @@ const HomePage = () => {
     [currentSelectionLevel, digimons]
   );
 
-  const selectableDigimons = React.useMemo<{ id: string; name: string }[] | undefined>(() => {
+  const selectableDigimons = React.useMemo<{ id: string; name: string; canon?: boolean }[] | undefined>(() => {
     switch (currentSelectionLevel) {
       case 'Baby I':
         return baby2?.evolvesFrom;
