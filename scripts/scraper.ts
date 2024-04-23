@@ -189,9 +189,17 @@ class DigimonScraperScraper {
     if (name) {
       console.info(`Parse Digimon ${url} ...`);
 
-      const descriptionTd = $(
-        '#mw-content-text #TopLayerMorphContent1 #pnDigimonRefBookMultiMorphContent1 td[valign="top"]'
-      ).remove('span.pnDigimonRefBookMultiMorphLink2');
+      const descriptionTd = (() => {
+        if ($('#mw-content-text #TopLayerMorphContent1 #pn1aCurrentMultiMorphContent1').length) {
+          return $('#mw-content-text #TopLayerMorphContent1 #pn1aCurrentMultiMorphContent1 td[valign="top"]').remove(
+            'span.pnDigimonRefBookMultiMorphLink2'
+          );
+        }
+
+        return $('#mw-content-text #TopLayerMorphContent1 #pnDigimonRefBookMultiMorphContent1 td[valign="top"]').remove(
+          'span.pnDigimonRefBookMultiMorphLink2'
+        );
+      })();
       const infoBox = $('#StatsBoxMorphContent1 table');
       const img = infoBox.find('a.image img');
 
