@@ -569,7 +569,7 @@ export async function main() {
 
     return digimon?.level === 'Perfect';
   });
-  db.lists.perfect = db.lists.ultimate.filter((d) => {
+  db.lists.ultimate = db.lists.ultimate.filter((d) => {
     const digimon = db.digimons.find((fd) => d.id === fd.id);
 
     return digimon?.level === 'Ultimate';

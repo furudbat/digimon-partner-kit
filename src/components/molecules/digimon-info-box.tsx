@@ -3,11 +3,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { DigimonData } from 'src/models/digimon';
 
-export function DigimonInfoBox({ data }: { data: DigimonData }) {
+export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: string | number }) {
   return (
-    <div className="max-w-full border border-gray-200 rounded-lg shadow p-5" style={{ height: '37rem' }}>
-      <div className="grid grid-flow-row-dense  grid-cols-2 grid-rows-1 px-2">
-        <div className="items-center my-10">
+    <div className="max-w-full border border-gray-200 rounded-lg shadow p-4" style={{ height: height ?? '35rem' }}>
+      <div className="grid grid-flow-row-dense grid-cols-2 grid-rows-1 px-2">
+        <div className="items-center mt-11">
           <Image
             /*crossOrigin="anonymous"*/
             unoptimized
@@ -19,7 +19,7 @@ export function DigimonInfoBox({ data }: { data: DigimonData }) {
           />
         </div>
         <div className="px-2 items-start ml-4 overflow-y-auto" style={{ height: '24rem' }}>
-          <h5 className="text-2xl pb-3 font-bold tracking-tight text-gray-900 dark:text-white">
+          <h5 className="text-2xl pb-2 font-bold tracking-tight text-gray-900 dark:text-white">
             <Link href={data.href} title={data.name} target="_blank" rel="noreferrer">
               {data.name}
             </Link>
@@ -64,7 +64,7 @@ export function DigimonInfoBox({ data }: { data: DigimonData }) {
             </div>
           )}
         </div>
-        <div className="px-4 mt-3 row-start-2 max-h-16">
+        <div className="px-4 mt-1 row-start-2 max-h-12">
           <div className="grid grid-flow-col auto-cols-max items-center">
             {data.categories?.length > 0 &&
               data.categories.map((category) => (

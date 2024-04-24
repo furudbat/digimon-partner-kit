@@ -9,7 +9,7 @@ export function MainHeader() {
           <p className="mb-1 max-w-2xl lg:mb-2">
             Build your own Digimon-Partner Digivolution line. <DarkThemeToggle />
             <br />
-            <em>Select your Child or Adult Digimon first and then select the next/previous Levels.</em>
+            <em>Select your first Digimon and then select the next/previous Levels.</em>
           </p>
         </div>
       </div>
