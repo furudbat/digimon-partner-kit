@@ -265,29 +265,31 @@ const HomePage = () => {
           </div>
         </div>
         <div className="container mx-auto max-w-screen-lg mt-6" style={{ minHeight: '28rem' }}>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2">
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="md:col-span-2">
               {!currentSelectionLevel && !currentDigimon && (
                 <h2 className="pb-2">Select the Level, then the Digimon</h2>
               )}
-              <div style={{ minHeight: infoBoxHeight }}>
+              <div className="px-2 md:px-1" style={{ minHeight: infoBoxHeight }}>
                 {currentDigimon && <DigimonInfoBox data={currentDigimon} height={infoBoxHeight} />}
               </div>
             </div>
-            <DigimonSelectionList
-              selectableDigimons={selectableDigimons}
-              isSelectable={isSelectable}
-              currentSelectionLevel={currentSelectionLevel}
-              selectDigimon={selectDigimon}
-              digimons={digimons}
-              currentDigimon={currentDigimon}
-            />
-            <div className="w-full- px-4 items-end">
-              {selectedLevels.length > 0 && (
-                <Button color="failure" onClick={() => clearAllDigimonLevels()}>
-                  Rest All
-                </Button>
-              )}
+            <div className="order-first md:order-last px-4 md:px-2">
+              <DigimonSelectionList
+                selectableDigimons={selectableDigimons}
+                isSelectable={isSelectable}
+                currentSelectionLevel={currentSelectionLevel}
+                selectDigimon={selectDigimon}
+                digimons={digimons}
+                currentDigimon={currentDigimon}
+              />
+              <div className="w-full px-4 mt-4 items-center md:items-end">
+                {selectedLevels.length > 0 && (
+                  <Button color="failure" onClick={() => clearAllDigimonLevels()}>
+                    Rest All
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>

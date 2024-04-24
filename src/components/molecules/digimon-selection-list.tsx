@@ -30,7 +30,7 @@ export function DigimonSelectionList({
       </div>
       {selectableDigimons && selectableDigimons?.length === 0 && <p>No Digimon to select</p>}
       {selectableDigimons && selectableDigimons?.length > 0 && (
-        <ListGroup className="text-sm w-50 max-h-96 overflow-y-auto">
+        <ListGroup className="text-sm w-full md:max-w-72 max-h-96 overflow-y-auto">
           {selectableDigimons.map((digimon) => {
             return (
               <ListGroup.Item
