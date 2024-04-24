@@ -36,7 +36,7 @@ export function MainFooter() {
               className="text-gray-500 dark:text-gray-400 font-medium h-4 m-2"
               target="_blank"
               rel="noreferrer"
-              href="https://github.com/furudbat"
+              href="https://github.com/furudbat/digimon-partner-kit"
             >
               <FontAwesomeIcon icon={faGithub} height={24} />
             </Link>
