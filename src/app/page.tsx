@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from 'flowbite-react';
 import React from 'react';
 import { useEffect } from 'react';
 import { DigimonDB, DigimonData, DigimonLevel } from 'src/models/digimon';
@@ -20,26 +21,106 @@ const HomePage = () => {
   const [perfect, setPerfect] = React.useState<DigimonData | undefined>(undefined);
   const [ultimate, setUltimate] = React.useState<DigimonData | undefined>(undefined);
 
+  const selectedLevels = React.useMemo(() => {
+    return [baby1?.level, baby2?.level, child?.level, adult?.level, perfect?.level, ultimate?.level].filter(
+      (d) => d
+    ) as DigimonLevel[];
+  }, [baby1, baby2, child, adult, perfect, ultimate]);
+
+  const isSelected = React.useCallback(
+    (levels: DigimonLevel[]): boolean => {
+      return levels.every((a) => selectedLevels.some((b) => a === b));
+    },
+    [selectedLevels]
+  );
+  const isNotSelected = React.useCallback(
+    (levels: DigimonLevel[]): boolean => {
+      return levels.every((a) => !selectedLevels.some((b) => a === b));
+    },
+    [selectedLevels]
+  );
+
   const isSelectable = React.useCallback(
     (level: DigimonLevel): boolean => {
+      if (selectedLevels.length === 0) {
+        return true;
+      }
+
+      /// @TODO: optimize boolean algebra
       switch (level) {
         case 'Baby I':
-          return baby2 !== undefined;
+          return (
+            isNotSelected(['Baby II', 'Child', 'Adult', 'Perfect', 'Ultimate']) ||
+            (isSelected(['Baby I', 'Baby II']) && isNotSelected(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isSelected(['Baby II']) && isNotSelected(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isSelected(['Baby II', 'Child', 'Adult']) && isNotSelected(['Perfect', 'Ultimate'])) ||
+            (isSelected(['Baby II', 'Child', 'Adult', 'Perfect']) && isNotSelected(['Ultimate'])) ||
+            (isSelected(['Baby II', 'Child', 'Adult', 'Perfect', 'Ultimate']) && isNotSelected(['Baby I'])) ||
+            isSelected(['Baby I', 'Baby II', 'Child', 'Adult', 'Perfect', 'Ultimate']) ||
+            (isSelected(['Baby II', 'Child']) && isNotSelected(['Adult', 'Perfect', 'Ultimate'])) ||
+            (isSelected(['Baby II', 'Child', 'Adult']) && isNotSelected(['Perfect', 'Ultimate'])) ||
+            (isSelected(['Baby II', 'Child', 'Adult', 'Perfect']) && isNotSelected(['Ultimate']))
+          );
         case 'Baby II':
-          return child !== undefined && !baby1;
+          return (
+            (isSelected(['Baby I']) && isNotSelected(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isSelected(['Baby I', 'Baby II']) && isNotSelected(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isNotSelected(['Baby I']) && isSelected(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isNotSelected(['Baby I']) && isNotSelected(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isSelected(['Child']) && isNotSelected(['Baby I', 'Baby II', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isSelected(['Child', 'Adult']) && isNotSelected(['Baby I', 'Perfect', 'Ultimate'])) ||
+            (isNotSelected(['Baby II']) && isSelected(['Child', 'Adult'])) ||
+            (isNotSelected(['Baby I']) && isSelected(['Child', 'Adult'])) ||
+            (isNotSelected(['Baby I']) && isSelected(['Child']))
+          );
         case 'Child':
-          return (!adult && !baby2) || (adult && !baby2) || (!child && !adult);
+          return (
+            (isSelected(['Baby I', 'Baby II']) && isNotSelected(['Adult', 'Perfect', 'Ultimate'])) ||
+            (isSelected(['Baby I', 'Baby II', 'Child']) && isNotSelected(['Adult', 'Perfect', 'Ultimate'])) ||
+            (isNotSelected(['Baby I', 'Baby II']) && isSelected(['Adult', 'Perfect', 'Ultimate'])) ||
+            (isSelected(['Child']) && isNotSelected(['Baby I', 'Baby II', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isSelected(['Adult']) && isNotSelected(['Baby I', 'Baby II', 'Child', 'Perfect', 'Ultimate'])) ||
+            (isSelected(['Adult']) && isNotSelected(['Baby I', 'Baby II', 'Perfect', 'Ultimate'])) ||
+            (isSelected(['Baby II']) && isNotSelected(['Baby I', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isNotSelected(['Child']) && isSelected(['Adult', 'Perfect'])) ||
+            (isNotSelected(['Baby II']) && isSelected(['Adult', 'Perfect']))
+          );
         case 'Adult':
-          return (child && !perfect) || (!child && !perfect) || (!child && !adult);
+          return (
+            (isSelected(['Baby I', 'Baby II', 'Child']) && isNotSelected(['Perfect', 'Ultimate'])) ||
+            (isSelected(['Baby I', 'Baby II', 'Child', 'Adult']) && isNotSelected(['Perfect', 'Ultimate'])) ||
+            (isNotSelected(['Baby I', 'Baby II', 'Child']) && isSelected(['Perfect', 'Ultimate'])) ||
+            (isNotSelected(['Perfect', 'Ultimate']) && isSelected(['Child', 'Baby II'])) ||
+            (isNotSelected(['Perfect', 'Ultimate']) && isNotSelected(['Child', 'Baby II', 'Baby I'])) ||
+            (isSelected(['Child']) && isNotSelected(['Perfect', 'Ultimate'])) ||
+            (isSelected(['Perfect']) && isNotSelected(['Adult', 'Ultimate'])) ||
+            (isSelected(['Adult', 'Perfect']) && isNotSelected(['Child', 'Ultimate']))
+          );
         case 'Perfect':
-          return adult !== undefined && !ultimate;
+          return (
+            (isSelected(['Baby I', 'Baby II', 'Child', 'Adult']) && isNotSelected(['Ultimate'])) ||
+            (isSelected(['Baby I', 'Baby II', 'Child', 'Adult', 'Perfect']) && isNotSelected(['Ultimate'])) ||
+            (isNotSelected(['Baby I', 'Baby II', 'Child', 'Adult']) && isSelected(['Ultimate'])) ||
+            (isSelected(['Perfect']) && isNotSelected(['Adult', 'Ultimate'])) ||
+            (isNotSelected(['Baby I', 'Baby II', 'Child', 'Ultimate']) && isSelected(['Adult'])) ||
+            (isSelected(['Child', 'Adult']) && isNotSelected(['Perfect', 'Ultimate'])) ||
+            (isSelected(['Child', 'Adult', 'Perfect']) && isNotSelected(['Ultimate']))
+          );
         case 'Ultimate':
-          return perfect !== undefined;
+          return (
+            isSelected(['Baby I', 'Baby II', 'Child', 'Adult', 'Perfect']) ||
+            isNotSelected(['Baby I', 'Baby II', 'Child', 'Adult', 'Perfect']) ||
+            (isNotSelected(['Baby I', 'Baby II', 'Child', 'Adult']) && isSelected(['Perfect'])) ||
+            (isNotSelected(['Baby I', 'Baby II', 'Child']) && isSelected(['Perfect'])) ||
+            (isNotSelected(['Baby I', 'Baby II']) && isSelected(['Adult', 'Perfect'])) ||
+            (isNotSelected(['Baby I', 'Baby II']) && isSelected(['Child', 'Adult', 'Perfect'])) ||
+            (isNotSelected(['Baby I']) && isSelected(['Baby II', 'Child', 'Adult', 'Perfect']))
+          );
       }
 
       return false;
     },
-    [baby1, baby2, child, adult, perfect, ultimate]
+    [baby1, baby2, child, adult, perfect, ultimate, selectedLevels, isSelected]
   );
 
   const selectDigimonLevel = React.useCallback((level: DigimonLevel) => {
@@ -67,6 +148,15 @@ const HomePage = () => {
         setUltimate(undefined);
         break;
     }
+  }, []);
+
+  const clearAllDigimonLevels = React.useCallback(() => {
+    setBaby1(undefined);
+    setBaby2(undefined);
+    setChild(undefined);
+    setAdult(undefined);
+    setPerfect(undefined);
+    setUltimate(undefined);
   }, []);
 
   const selectDigimon = React.useCallback(
@@ -106,27 +196,17 @@ const HomePage = () => {
   const selectableDigimons = React.useMemo<{ id: string; name: string; canon?: boolean }[] | undefined>(() => {
     switch (currentSelectionLevel) {
       case 'Baby I':
-        return baby2?.evolvesFrom;
+        return baby2?.evolvesFrom ?? db?.lists.baby1;
       case 'Baby II':
-        return child?.evolvesFrom;
-      case 'Child': {
-        if (adult) {
-          return adult.evolvesFrom;
-        }
-
-        return db?.lists.child;
-      }
-      case 'Adult': {
-        if (child) {
-          return child.evolvesTo;
-        }
-
-        return db?.lists.adult;
-      }
+        return baby1?.evolvesTo ?? child?.evolvesFrom ?? db?.lists.baby2;
+      case 'Child':
+        return baby2?.evolvesTo ?? adult?.evolvesFrom ?? db?.lists.child;
+      case 'Adult':
+        return child?.evolvesTo ?? perfect?.evolvesFrom ?? db?.lists.adult;
       case 'Perfect':
-        return adult?.evolvesTo;
+        return adult?.evolvesTo ?? ultimate?.evolvesFrom ?? db?.lists.perfect;
       case 'Ultimate':
-        return perfect?.evolvesTo;
+        return perfect?.evolvesTo ?? db?.lists.ultimate;
     }
 
     return undefined;
@@ -163,6 +243,8 @@ const HomePage = () => {
     });
   }, []);
 
+  const infoBoxHeight = '36rem';
+
   return (
     <div>
       <div className="mx-auto my-2 px-2">
@@ -188,7 +270,9 @@ const HomePage = () => {
               {!currentSelectionLevel && !currentDigimon && (
                 <h2 className="pb-2">Select the Level, then the Digimon</h2>
               )}
-              {currentDigimon && <DigimonInfoBox data={currentDigimon} />}
+              <div style={{ minHeight: infoBoxHeight }}>
+                {currentDigimon && <DigimonInfoBox data={currentDigimon} height={infoBoxHeight} />}
+              </div>
             </div>
             <DigimonSelectionList
               selectableDigimons={selectableDigimons}
@@ -198,6 +282,13 @@ const HomePage = () => {
               digimons={digimons}
               currentDigimon={currentDigimon}
             />
+            <div className="w-full- px-4 items-end">
+              {selectedLevels.length > 0 && (
+                <Button color="failure" onClick={() => clearAllDigimonLevels()}>
+                  Rest All
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
