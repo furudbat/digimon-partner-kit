@@ -1,4 +1,7 @@
 import { Timeline } from 'flowbite-react';
+import React from 'react';
+import { useMediaQuery } from 'react-responsive';
+import { scroller } from 'react-scroll';
 import { DigimonLevel, DigimonData } from 'src/models/digimon';
 
 import { DigimonTimelineCard } from '../molecules/digimon-timeline-card';
@@ -26,6 +29,21 @@ export function DigimonTimeline({
   ultimate?: DigimonData;
   currentSelectionLevel: DigimonLevel;
 }) {
+  const isMobile = useMediaQuery({ maxWidth: 768 });
+
+  const onSelectCard = React.useCallback(
+    (level: DigimonLevel) => {
+      selectDigimonLevel(level);
+      if (isMobile) {
+        scroller.scrollTo('digimonSelectionList', {
+          duration: 500,
+          smooth: true,
+        });
+      }
+    },
+    [isMobile, selectDigimonLevel]
+  );
+
   return (
     <Timeline horizontal>
       <Timeline.Item>
@@ -38,7 +56,7 @@ export function DigimonTimeline({
             <DigimonTimelineCard
               title="Baby I"
               data={baby1}
-              onClick={() => selectDigimonLevel('Baby I')}
+              onClick={() => onSelectCard('Baby I')}
               onReset={() => clearDigimonLevel('Baby I')}
               disabled={!isSelectable('Baby I')}
               selected={currentSelectionLevel === 'Baby I'}
@@ -56,7 +74,7 @@ export function DigimonTimeline({
             <DigimonTimelineCard
               title="Baby II"
               data={baby2}
-              onClick={() => selectDigimonLevel('Baby II')}
+              onClick={() => onSelectCard('Baby II')}
               onReset={() => clearDigimonLevel('Baby II')}
               disabled={!isSelectable('Baby II')}
               selected={currentSelectionLevel === 'Baby II'}
@@ -76,7 +94,7 @@ export function DigimonTimeline({
             <DigimonTimelineCard
               title="Child"
               data={child}
-              onClick={() => selectDigimonLevel('Child')}
+              onClick={() => onSelectCard('Child')}
               onReset={() => clearDigimonLevel('Child')}
               disabled={!isSelectable('Child')}
               selected={currentSelectionLevel === 'Child'}
@@ -94,7 +112,7 @@ export function DigimonTimeline({
             <DigimonTimelineCard
               title="Adult"
               data={adult}
-              onClick={() => selectDigimonLevel('Adult')}
+              onClick={() => onSelectCard('Adult')}
               onReset={() => clearDigimonLevel('Adult')}
               disabled={!isSelectable('Adult')}
               selected={currentSelectionLevel === 'Adult'}
@@ -112,7 +130,7 @@ export function DigimonTimeline({
             <DigimonTimelineCard
               title="Perfect"
               data={perfect}
-              onClick={() => selectDigimonLevel('Perfect')}
+              onClick={() => onSelectCard('Perfect')}
               onReset={() => clearDigimonLevel('Perfect')}
               disabled={!isSelectable('Perfect')}
               selected={currentSelectionLevel === 'Perfect'}
@@ -129,7 +147,7 @@ export function DigimonTimeline({
             <DigimonTimelineCard
               title="Ultimate"
               data={ultimate}
-              onClick={() => selectDigimonLevel('Ultimate')}
+              onClick={() => onSelectCard('Ultimate')}
               onReset={() => clearDigimonLevel('Ultimate')}
               disabled={!isSelectable('Ultimate')}
               selected={currentSelectionLevel === 'Ultimate'}

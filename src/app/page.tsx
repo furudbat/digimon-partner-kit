@@ -27,13 +27,13 @@ const HomePage = () => {
     ) as DigimonLevel[];
   }, [baby1, baby2, child, adult, perfect, ultimate]);
 
-  const isSelected = React.useCallback(
+  const isDigimonLevelSet = React.useCallback(
     (levels: DigimonLevel[]): boolean => {
       return levels.every((a) => selectedLevels.some((b) => a === b));
     },
     [selectedLevels]
   );
-  const isNotSelected = React.useCallback(
+  const isDigimonLevelNotSet = React.useCallback(
     (levels: DigimonLevel[]): boolean => {
       return levels.every((a) => !selectedLevels.some((b) => a === b));
     },
@@ -50,77 +50,86 @@ const HomePage = () => {
       switch (level) {
         case 'Baby I':
           return (
-            isNotSelected(['Baby II', 'Child', 'Adult', 'Perfect', 'Ultimate']) ||
-            (isSelected(['Baby I', 'Baby II']) && isNotSelected(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
-            (isSelected(['Baby II']) && isNotSelected(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
-            (isSelected(['Baby II', 'Child', 'Adult']) && isNotSelected(['Perfect', 'Ultimate'])) ||
-            (isSelected(['Baby II', 'Child', 'Adult', 'Perfect']) && isNotSelected(['Ultimate'])) ||
-            (isSelected(['Baby II', 'Child', 'Adult', 'Perfect', 'Ultimate']) && isNotSelected(['Baby I'])) ||
-            isSelected(['Baby I', 'Baby II', 'Child', 'Adult', 'Perfect', 'Ultimate']) ||
-            (isSelected(['Baby II', 'Child']) && isNotSelected(['Adult', 'Perfect', 'Ultimate'])) ||
-            (isSelected(['Baby II', 'Child', 'Adult']) && isNotSelected(['Perfect', 'Ultimate'])) ||
-            (isSelected(['Baby II', 'Child', 'Adult', 'Perfect']) && isNotSelected(['Ultimate']))
+            isDigimonLevelNotSet(['Baby II', 'Child', 'Adult', 'Perfect', 'Ultimate']) ||
+            (isDigimonLevelSet(['Baby I', 'Baby II']) &&
+              isDigimonLevelNotSet(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Baby II']) && isDigimonLevelNotSet(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Baby II', 'Child', 'Adult']) && isDigimonLevelNotSet(['Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Baby II', 'Child', 'Adult', 'Perfect']) && isDigimonLevelNotSet(['Ultimate'])) ||
+            (isDigimonLevelSet(['Baby II', 'Child', 'Adult', 'Perfect', 'Ultimate']) &&
+              isDigimonLevelNotSet(['Baby I'])) ||
+            isDigimonLevelSet(['Baby I', 'Baby II', 'Child', 'Adult', 'Perfect', 'Ultimate']) ||
+            (isDigimonLevelSet(['Baby II', 'Child']) && isDigimonLevelNotSet(['Adult', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Baby II', 'Child', 'Adult']) && isDigimonLevelNotSet(['Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Baby II', 'Child', 'Adult', 'Perfect']) && isDigimonLevelNotSet(['Ultimate']))
           );
         case 'Baby II':
           return (
-            (isSelected(['Baby I']) && isNotSelected(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
-            (isSelected(['Baby I', 'Baby II']) && isNotSelected(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
-            (isNotSelected(['Baby I']) && isSelected(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
-            (isNotSelected(['Baby I']) && isNotSelected(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
-            (isSelected(['Child']) && isNotSelected(['Baby I', 'Baby II', 'Adult', 'Perfect', 'Ultimate'])) ||
-            (isSelected(['Child', 'Adult']) && isNotSelected(['Baby I', 'Perfect', 'Ultimate'])) ||
-            (isNotSelected(['Baby II']) && isSelected(['Child', 'Adult'])) ||
-            (isNotSelected(['Baby I']) && isSelected(['Child', 'Adult'])) ||
-            (isNotSelected(['Baby I']) && isSelected(['Child']))
+            (isDigimonLevelSet(['Baby I']) && isDigimonLevelNotSet(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Baby I', 'Baby II']) &&
+              isDigimonLevelNotSet(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelNotSet(['Baby I']) && isDigimonLevelSet(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelNotSet(['Baby I']) && isDigimonLevelNotSet(['Child', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Child']) &&
+              isDigimonLevelNotSet(['Baby I', 'Baby II', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Child', 'Adult']) && isDigimonLevelNotSet(['Baby I', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelNotSet(['Baby II']) && isDigimonLevelSet(['Child', 'Adult'])) ||
+            (isDigimonLevelNotSet(['Baby I']) && isDigimonLevelSet(['Child', 'Adult'])) ||
+            (isDigimonLevelNotSet(['Baby I']) && isDigimonLevelSet(['Child']))
           );
         case 'Child':
           return (
-            (isSelected(['Baby I', 'Baby II']) && isNotSelected(['Adult', 'Perfect', 'Ultimate'])) ||
-            (isSelected(['Baby I', 'Baby II', 'Child']) && isNotSelected(['Adult', 'Perfect', 'Ultimate'])) ||
-            (isNotSelected(['Baby I', 'Baby II']) && isSelected(['Adult', 'Perfect', 'Ultimate'])) ||
-            (isSelected(['Child']) && isNotSelected(['Baby I', 'Baby II', 'Adult', 'Perfect', 'Ultimate'])) ||
-            (isSelected(['Adult']) && isNotSelected(['Baby I', 'Baby II', 'Child', 'Perfect', 'Ultimate'])) ||
-            (isSelected(['Adult']) && isNotSelected(['Baby I', 'Baby II', 'Perfect', 'Ultimate'])) ||
-            (isSelected(['Baby II']) && isNotSelected(['Baby I', 'Adult', 'Perfect', 'Ultimate'])) ||
-            (isNotSelected(['Child']) && isSelected(['Adult', 'Perfect'])) ||
-            (isNotSelected(['Baby II']) && isSelected(['Adult', 'Perfect']))
+            (isDigimonLevelSet(['Baby I', 'Baby II']) && isDigimonLevelNotSet(['Adult', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Baby I', 'Baby II', 'Child']) &&
+              isDigimonLevelNotSet(['Adult', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelNotSet(['Baby I', 'Baby II']) && isDigimonLevelSet(['Adult', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Child']) &&
+              isDigimonLevelNotSet(['Baby I', 'Baby II', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Adult']) &&
+              isDigimonLevelNotSet(['Baby I', 'Baby II', 'Child', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Adult']) && isDigimonLevelNotSet(['Baby I', 'Baby II', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Baby II']) && isDigimonLevelNotSet(['Baby I', 'Adult', 'Perfect', 'Ultimate'])) ||
+            (isDigimonLevelNotSet(['Child']) && isDigimonLevelSet(['Adult', 'Perfect'])) ||
+            (isDigimonLevelNotSet(['Baby II']) && isDigimonLevelSet(['Adult', 'Perfect']))
           );
         case 'Adult':
           return (
-            (isSelected(['Baby I', 'Baby II', 'Child']) && isNotSelected(['Perfect', 'Ultimate'])) ||
-            (isSelected(['Baby I', 'Baby II', 'Child', 'Adult']) && isNotSelected(['Perfect', 'Ultimate'])) ||
-            (isNotSelected(['Baby I', 'Baby II', 'Child']) && isSelected(['Perfect', 'Ultimate'])) ||
-            (isNotSelected(['Perfect', 'Ultimate']) && isSelected(['Child', 'Baby II'])) ||
-            (isNotSelected(['Perfect', 'Ultimate']) && isNotSelected(['Child', 'Baby II', 'Baby I'])) ||
-            (isSelected(['Child']) && isNotSelected(['Perfect', 'Ultimate'])) ||
-            (isSelected(['Perfect']) && isNotSelected(['Adult', 'Ultimate'])) ||
-            (isSelected(['Adult', 'Perfect']) && isNotSelected(['Child', 'Ultimate']))
+            (isDigimonLevelSet(['Baby I', 'Baby II', 'Child']) && isDigimonLevelNotSet(['Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Baby I', 'Baby II', 'Child', 'Adult']) &&
+              isDigimonLevelNotSet(['Perfect', 'Ultimate'])) ||
+            (isDigimonLevelNotSet(['Baby I', 'Baby II', 'Child']) && isDigimonLevelSet(['Perfect', 'Ultimate'])) ||
+            (isDigimonLevelNotSet(['Perfect', 'Ultimate']) && isDigimonLevelSet(['Child', 'Baby II'])) ||
+            (isDigimonLevelNotSet(['Perfect', 'Ultimate']) && isDigimonLevelNotSet(['Child', 'Baby II', 'Baby I'])) ||
+            (isDigimonLevelSet(['Child']) && isDigimonLevelNotSet(['Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Perfect']) && isDigimonLevelNotSet(['Adult', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Adult', 'Perfect']) && isDigimonLevelNotSet(['Child', 'Ultimate']))
           );
         case 'Perfect':
           return (
-            (isSelected(['Baby I', 'Baby II', 'Child', 'Adult']) && isNotSelected(['Ultimate'])) ||
-            (isSelected(['Baby I', 'Baby II', 'Child', 'Adult', 'Perfect']) && isNotSelected(['Ultimate'])) ||
-            (isNotSelected(['Baby I', 'Baby II', 'Child', 'Adult']) && isSelected(['Ultimate'])) ||
-            (isSelected(['Perfect']) && isNotSelected(['Adult', 'Ultimate'])) ||
-            (isNotSelected(['Baby I', 'Baby II', 'Child', 'Ultimate']) && isSelected(['Adult'])) ||
-            (isSelected(['Child', 'Adult']) && isNotSelected(['Perfect', 'Ultimate'])) ||
-            (isSelected(['Child', 'Adult', 'Perfect']) && isNotSelected(['Ultimate']))
+            (isDigimonLevelSet(['Baby I', 'Baby II', 'Child', 'Adult']) && isDigimonLevelNotSet(['Ultimate'])) ||
+            (isDigimonLevelSet(['Baby I', 'Baby II', 'Child', 'Adult', 'Perfect']) &&
+              isDigimonLevelNotSet(['Ultimate'])) ||
+            (isDigimonLevelNotSet(['Baby I', 'Baby II', 'Child', 'Adult']) && isDigimonLevelSet(['Ultimate'])) ||
+            (isDigimonLevelSet(['Perfect']) && isDigimonLevelNotSet(['Adult', 'Ultimate'])) ||
+            (isDigimonLevelNotSet(['Baby I', 'Baby II', 'Child', 'Ultimate']) && isDigimonLevelSet(['Adult'])) ||
+            (isDigimonLevelSet(['Child', 'Adult']) && isDigimonLevelNotSet(['Perfect', 'Ultimate'])) ||
+            (isDigimonLevelSet(['Child', 'Adult', 'Perfect']) && isDigimonLevelNotSet(['Ultimate']))
           );
         case 'Ultimate':
           return (
-            isSelected(['Baby I', 'Baby II', 'Child', 'Adult', 'Perfect']) ||
-            isNotSelected(['Baby I', 'Baby II', 'Child', 'Adult', 'Perfect']) ||
-            (isNotSelected(['Baby I', 'Baby II', 'Child', 'Adult']) && isSelected(['Perfect'])) ||
-            (isNotSelected(['Baby I', 'Baby II', 'Child']) && isSelected(['Perfect'])) ||
-            (isNotSelected(['Baby I', 'Baby II']) && isSelected(['Adult', 'Perfect'])) ||
-            (isNotSelected(['Baby I', 'Baby II']) && isSelected(['Child', 'Adult', 'Perfect'])) ||
-            (isNotSelected(['Baby I']) && isSelected(['Baby II', 'Child', 'Adult', 'Perfect']))
+            isDigimonLevelSet(['Baby I', 'Baby II', 'Child', 'Adult', 'Perfect']) ||
+            isDigimonLevelNotSet(['Baby I', 'Baby II', 'Child', 'Adult', 'Perfect']) ||
+            (isDigimonLevelNotSet(['Baby I', 'Baby II', 'Child', 'Adult']) && isDigimonLevelSet(['Perfect'])) ||
+            (isDigimonLevelNotSet(['Baby I', 'Baby II', 'Child']) && isDigimonLevelSet(['Perfect'])) ||
+            (isDigimonLevelNotSet(['Baby I', 'Baby II']) && isDigimonLevelSet(['Adult', 'Perfect'])) ||
+            (isDigimonLevelNotSet(['Baby I', 'Baby II']) && isDigimonLevelSet(['Child', 'Adult', 'Perfect'])) ||
+            (isDigimonLevelNotSet(['Baby I']) && isDigimonLevelSet(['Baby II', 'Child', 'Adult', 'Perfect']))
           );
       }
 
       return false;
     },
-    [baby1, baby2, child, adult, perfect, ultimate, selectedLevels, isSelected]
+    [selectedLevels, isDigimonLevelSet, isDigimonLevelNotSet]
   );
 
   const selectDigimonLevel = React.useCallback((level: DigimonLevel) => {
@@ -210,7 +219,7 @@ const HomePage = () => {
     }
 
     return undefined;
-  }, [baby2, child, adult, perfect, currentSelectionLevel, db]);
+  }, [baby1, baby2, child, adult, perfect, ultimate, currentSelectionLevel, db]);
 
   const currentDigimon = React.useMemo<DigimonData | undefined>(() => {
     switch (currentSelectionLevel) {
@@ -282,6 +291,8 @@ const HomePage = () => {
                 selectDigimon={selectDigimon}
                 digimons={digimons}
                 currentDigimon={currentDigimon}
+                gotoDigimonLevel={(level) => setCurrentSelectionLevel(level)}
+                isDigimonLevelSet={isDigimonLevelSet}
               />
               <div className="w-full px-4 mt-4 items-center md:items-end">
                 {selectedLevels.length > 0 && (
