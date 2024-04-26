@@ -2,6 +2,7 @@ import { Timeline } from 'flowbite-react';
 import React from 'react';
 import { useMediaQuery } from 'react-responsive';
 import { scroller } from 'react-scroll';
+import { Element } from 'react-scroll';
 import { DigimonLevel, DigimonData } from 'src/models/digimon';
 
 import { DigimonTimelineCard } from '../molecules/digimon-timeline-card';
@@ -46,7 +47,8 @@ export function DigimonTimeline({
 
   return (
     <Timeline horizontal>
-      <Timeline.Item>
+      <Timeline.Item id="digimonTimelineBabyI">
+        <Element name="digimonTimelineBabyI"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">I</div>
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
@@ -64,7 +66,8 @@ export function DigimonTimeline({
           </div>
         </Timeline.Content>
       </Timeline.Item>
-      <Timeline.Item>
+      <Timeline.Item id="digimonTimelineBabyII">
+        <Element name="digimonTimelineBabyII"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">II</div>
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
@@ -82,7 +85,8 @@ export function DigimonTimeline({
           </div>
         </Timeline.Content>
       </Timeline.Item>
-      <Timeline.Item>
+      <Timeline.Item id="digimonTimelineChild">
+        <Element name="digimonTimelineChild"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">
             III
@@ -102,7 +106,8 @@ export function DigimonTimeline({
           </div>
         </Timeline.Content>
       </Timeline.Item>
-      <Timeline.Item>
+      <Timeline.Item id="digimonTimelineAdult">
+        <Element name="digimonTimelineAdult"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">IV</div>
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
@@ -120,7 +125,8 @@ export function DigimonTimeline({
           </div>
         </Timeline.Content>
       </Timeline.Item>
-      <Timeline.Item>
+      <Timeline.Item id="digimonTimelinePerfect">
+        <Element name="digimonTimelinePerfect"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">V</div>
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
@@ -138,7 +144,8 @@ export function DigimonTimeline({
           </div>
         </Timeline.Content>
       </Timeline.Item>
-      <Timeline.Item>
+      <Timeline.Item id="digimonTimelineUltimate">
+        <Element name="digimonTimelineUltimate"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">VI</div>
         </div>

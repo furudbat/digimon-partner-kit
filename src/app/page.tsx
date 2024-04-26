@@ -1,8 +1,11 @@
 'use client';
 
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button } from 'flowbite-react';
 import React from 'react';
 import { useEffect } from 'react';
+import { scroller } from 'react-scroll';
 import { DigimonDB, DigimonData, DigimonLevel } from 'src/models/digimon';
 
 import { DigimonInfoBox } from '@/components/molecules/digimon-info-box';
@@ -240,6 +243,45 @@ const HomePage = () => {
     return undefined;
   }, [baby1, baby2, child, adult, perfect, ultimate, currentSelectionLevel]);
 
+  const goToTop = React.useCallback(() => {
+    if (!baby1 && isSelectable('Baby I')) {
+      scroller.scrollTo('digimonTimelineBabyI', {
+        duration: 500,
+        smooth: true,
+      });
+    } else if (!baby2 && isSelectable('Baby II')) {
+      scroller.scrollTo('digimonTimelineBabyII', {
+        duration: 500,
+        smooth: true,
+      });
+    } else if (!child && isSelectable('Child')) {
+      scroller.scrollTo('digimonTimelineChild', {
+        duration: 500,
+        smooth: true,
+      });
+    } else if (!adult && isSelectable('Adult')) {
+      scroller.scrollTo('digimonTimelineAdult', {
+        duration: 500,
+        smooth: true,
+      });
+    } else if (!perfect && isSelectable('Perfect')) {
+      scroller.scrollTo('digimonTimelinePerfect', {
+        duration: 500,
+        smooth: true,
+      });
+    } else if (!ultimate && isSelectable('Ultimate')) {
+      scroller.scrollTo('digimonTimelineUltimate', {
+        duration: 500,
+        smooth: true,
+      });
+    }
+
+    scroller.scrollTo('digimonTimelineBabyI', {
+      duration: 500,
+      smooth: true,
+    });
+  }, [baby1, baby2, child, adult, perfect, ultimate, isSelectable]);
+
   useEffect(() => {
     import('../db/digimon.db.json').then((data) => {
       const db = data.default as DigimonDB;
@@ -302,6 +344,17 @@ const HomePage = () => {
                 )}
               </div>
             </div>
+          </div>
+
+          <div className="relative h-32 w-32 z-90 bottom-0.5 right-0 p-4 m-20">
+            <Button
+              id="to-top-button"
+              onClick={() => goToTop()}
+              title="Go To Top"
+              className="absolute visible md:invisible items-center rounded-full w-16 h-16"
+            >
+              <FontAwesomeIcon icon={faArrowUp} size="2x" />
+            </Button>
           </div>
         </div>
       </div>
