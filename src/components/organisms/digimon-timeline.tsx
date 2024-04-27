@@ -18,7 +18,7 @@ export function DigimonTimeline({
   perfect,
   ultimate,
   currentSelectionLevel,
-  readonly,
+  printMode,
 }: {
   selectDigimonLevel: (level: DigimonLevel) => void;
   clearDigimonLevel: (level: DigimonLevel) => void;
@@ -30,7 +30,7 @@ export function DigimonTimeline({
   perfect?: DigimonData;
   ultimate?: DigimonData;
   currentSelectionLevel: DigimonLevel;
-  readonly?: boolean;
+  printMode?: boolean;
 }) {
   const isMobile = useMediaQuery({ maxWidth: 768 });
 
@@ -64,7 +64,7 @@ export function DigimonTimeline({
               onReset={() => clearDigimonLevel('Baby I')}
               disabled={!isSelectable('Baby I')}
               selected={currentSelectionLevel === 'Baby I'}
-              readonly={readonly}
+              printMode={printMode}
             />
           </div>
         </Timeline.Content>
@@ -76,7 +76,7 @@ export function DigimonTimeline({
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
         </div>
         <Timeline.Content>
-          <div className="px-3">
+          <div className="px-2">
             <DigimonTimelineCard
               title="Baby II"
               data={baby2}
@@ -84,7 +84,7 @@ export function DigimonTimeline({
               onReset={() => clearDigimonLevel('Baby II')}
               disabled={!isSelectable('Baby II')}
               selected={currentSelectionLevel === 'Baby II'}
-              readonly={readonly}
+              printMode={printMode}
             />
           </div>
         </Timeline.Content>
@@ -98,7 +98,7 @@ export function DigimonTimeline({
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
         </div>
         <Timeline.Content>
-          <div className="px-3">
+          <div className="px-2">
             <DigimonTimelineCard
               title="Child"
               data={child}
@@ -106,7 +106,7 @@ export function DigimonTimeline({
               onReset={() => clearDigimonLevel('Child')}
               disabled={!isSelectable('Child')}
               selected={currentSelectionLevel === 'Child'}
-              readonly={readonly}
+              printMode={printMode}
             />
           </div>
         </Timeline.Content>
@@ -118,7 +118,7 @@ export function DigimonTimeline({
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
         </div>
         <Timeline.Content>
-          <div className="px-3">
+          <div className="px-2">
             <DigimonTimelineCard
               title="Adult"
               data={adult}
@@ -126,7 +126,7 @@ export function DigimonTimeline({
               onReset={() => clearDigimonLevel('Adult')}
               disabled={!isSelectable('Adult')}
               selected={currentSelectionLevel === 'Adult'}
-              readonly={readonly}
+              printMode={printMode}
             />
           </div>
         </Timeline.Content>
@@ -138,7 +138,7 @@ export function DigimonTimeline({
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
         </div>
         <Timeline.Content>
-          <div className="px-3">
+          <div className="px-2">
             <DigimonTimelineCard
               title="Perfect"
               data={perfect}
@@ -146,7 +146,7 @@ export function DigimonTimeline({
               onReset={() => clearDigimonLevel('Perfect')}
               disabled={!isSelectable('Perfect')}
               selected={currentSelectionLevel === 'Perfect'}
-              readonly={readonly}
+              printMode={printMode}
             />
           </div>
         </Timeline.Content>
@@ -157,7 +157,7 @@ export function DigimonTimeline({
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">VI</div>
         </div>
         <Timeline.Content>
-          <div className="px-3">
+          <div className="px-2">
             <DigimonTimelineCard
               title="Ultimate"
               data={ultimate}
@@ -165,7 +165,7 @@ export function DigimonTimeline({
               onReset={() => clearDigimonLevel('Ultimate')}
               disabled={!isSelectable('Ultimate')}
               selected={currentSelectionLevel === 'Ultimate'}
-              readonly={readonly}
+              printMode={printMode}
             />
           </div>
         </Timeline.Content>

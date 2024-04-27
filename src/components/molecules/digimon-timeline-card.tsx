@@ -2,6 +2,7 @@ import { Button, Card } from 'flowbite-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { DigimonData } from 'src/models/digimon';
+import useFitText from 'use-fit-text';
 
 import { cn } from '@/lib/utils';
 
@@ -13,7 +14,7 @@ export function DigimonTimelineCard({
   disabled,
   selected,
   highlight,
-  readonly,
+  printMode,
 }: {
   title?: string;
   data?: DigimonData;
@@ -22,16 +23,20 @@ export function DigimonTimelineCard({
   disabled?: boolean;
   selected?: boolean;
   highlight?: boolean;
-  readonly?: boolean;
+  printMode?: boolean;
 }) {
+  const { fontSize, ref } = useFitText();
+
   const bg = (() => {
-    if (disabled) {
-      return !selected
+    if (disabled && !printMode) {
+      return !selected || printMode
         ? 'bg-gray-200 dark:bg-gray-600 dark:text-white'
         : 'bg-gray-300 dark:bg-gray-700 dark:text-white';
     }
 
-    return !selected ? 'bg-white dark:bg-gray-800 dark:text-white' : 'bg-blue-300 dark:bg-blue-900 dark:text-white';
+    return !selected || printMode
+      ? 'bg-white dark:bg-gray-800 dark:text-white'
+      : 'bg-blue-300 dark:bg-blue-900 dark:text-white';
   })();
 
   const imgSize = 240;
@@ -54,14 +59,19 @@ export function DigimonTimelineCard({
                 alt={data.name}
               />
             )}
-            {!data && !disabled && (
-              <p className={`py-4 text-lg font-normal self-center`} style={{ height: imgSize }}>
+            {!data && !printMode && !disabled && (
+              <p className={`py-4 text-lg font-normal self-center`} style={{ height: imgSize - 48 }}>
                 Click Me to Select
               </p>
             )}
-            {!data && disabled && (
-              <p className={`py-4 text-lg self-center`} style={{ height: imgSize }}>
+            {!data && !printMode && disabled && (
+              <p className={`py-4 text-lg self-center`} style={{ height: imgSize - 48 }}>
                 (Select previous Level)
+              </p>
+            )}
+            {!data && printMode && (
+              <p className={`py-4 text-lg self-center`} style={{ height: imgSize - 48 }}>
+                No Data
               </p>
             )}
           </Button>
@@ -70,14 +80,21 @@ export function DigimonTimelineCard({
     >
       {/*Can not customize gap in Card Body, use negative margin */}
       <div className="px-2" style={{ marginTop: -12 }}>
-        <h5 className="text-xl font-medium truncate">{data?.name}</h5>
+        <h5 className={cn('text-xl font-medium', !printMode ? 'truncate' : 'h-14 text-wrap overflow-hidden')}>
+          {printMode && (
+            <div ref={ref} style={{ fontSize }} className="h-14">
+              {data?.name}
+            </div>
+          )}
+          {!printMode && data?.name}
+        </h5>
         <p className="text-sm">{data?.level || title}</p>
       </div>
       <div
         className="grid grid-flow-row-dense grid-cols-3 grid-rows-1 items-center px-2 gap-1"
         style={{ marginTop: -10 }}
       >
-        {!readonly && (
+        {!printMode && (
           <div className="col-span-2">
             <p className="text-xs justify-self-center">
               {data && (
@@ -93,7 +110,7 @@ export function DigimonTimelineCard({
             </p>
           </div>
         )}
-        {!readonly && (
+        {!printMode && (
           <div>
             {data && disabled && (
               <Button color="gray" size="xs" disabled={disabled} onClick={() => onReset && onReset()}>

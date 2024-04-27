@@ -18,6 +18,8 @@ const HomePage = () => {
   const [openCopyPopover, setOpenCopyPopover] = React.useState(false);
   const [inited, setInited] = React.useState(false);
   const [freeMode, setFreeMode] = React.useState(false);
+  const [printMode, setPrintMode] = React.useState(false);
+  const printRef = React.useRef();
 
   const [db, setDB] = React.useState<DigimonDB | undefined>(undefined);
   const [digimons, setDigimons] = React.useState<Record<string, DigimonData> | undefined>(undefined);
@@ -362,6 +364,23 @@ const HomePage = () => {
     setTimeout(() => setOpenCopyPopover(false), 2000);
   }, [baby1Id, baby2Id, childId, adultId, perfectId, ultimateId]);
 
+  /*
+  const exportTimelineToImage = React.useCallback(async () => {
+    setPrintMode(true);
+    setTimeout(async () => {
+      //const element = printRef.current;
+      //const canvas = await html2canvas(element);
+      //const dataURL = canvas.toDataURL('image/png');
+      //downloadjs(dataURL, 'digimon-evol-line.png', 'image/png');
+      exportComponentAsPNG(printRef, {
+        fileName: 'digimon-evol-line.png',
+        html2CanvasOptions: { width: 1600, height: 900 },
+      });
+      setPrintMode(false);
+    }, 900);
+  }, [printRef]);
+  */
+
   useEffect(() => {
     import('../db/digimon.db.json').then((data) => {
       const db = data.default as DigimonDB;
@@ -436,7 +455,12 @@ const HomePage = () => {
     <div>
       <div className="mx-auto my-2 px-2">
         <div className="flex items-center w-full">
-          <div className="mx-auto place-self-center">
+          <div
+            className="mx-auto place-self-center"
+            id="digimonTimeLine"
+            ref={printRef}
+            style={{ height: 400, maxHeight: 1000, maxWidth: 1777, width: printMode ? 1777 : undefined }}
+          >
             <DigimonTimeline
               selectDigimonLevel={selectDigimonLevel}
               clearDigimonLevel={clearDigimonLevel}
@@ -448,6 +472,7 @@ const HomePage = () => {
               perfect={perfect}
               ultimate={ultimate}
               currentSelectionLevel={currentSelectionLevel}
+              printMode={printMode}
             />
           </div>
         </div>
@@ -489,14 +514,21 @@ const HomePage = () => {
                       </div>
                     }
                   >
-                    <Button color="success" onClick={() => copyShareLink()} className="items-center mx-1">
+                    <Button color="info" onClick={() => copyShareLink()} className="items-center mx-1">
                       <FontAwesomeIcon icon={faCopy} className="mx-1 items-center align-center" />
                       Copy Share Link
                     </Button>
                   </Popover>
                 )}
               </div>
-              <div className="w-full flex mx-4 mt-4 items-center">
+              {/*<div className="w-full flex mx-2 mt-4 items-center">
+                {selectedLevels.length > 0 && (
+                  <Button color="success" onClick={() => exportTimelineToImage()} className="items-center mx-1">
+                    Export to Image
+                  </Button>
+                )}
+              </div>*/}
+              <div className="w-full flex mx-2 mt-4 gap-4 items-center">
                 <Tooltip content="Select any Digimon" placement="bottom">
                   <label className="inline-flex items-center cursor-pointer">
                     <input
@@ -506,6 +538,18 @@ const HomePage = () => {
                     />
                     <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
                     <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Free mode</span>
+                  </label>
+                </Tooltip>
+                <Tooltip content="Make Timeline Screenshot friendly" placement="bottom">
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      onChange={(event) => setPrintMode(event.target.checked)}
+                      className="sr-only peer"
+                      checked={printMode}
+                    />
+                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Print mode</span>
                   </label>
                 </Tooltip>
               </div>
