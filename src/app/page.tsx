@@ -19,7 +19,7 @@ const HomePage = () => {
   const [inited, setInited] = React.useState(false);
   const [freeMode, setFreeMode] = React.useState(false);
   const [printMode, setPrintMode] = React.useState(false);
-  const printRef = React.useRef();
+  const printRef = React.useRef<HTMLDivElement | null>(null);
 
   const [db, setDB] = React.useState<DigimonDB | undefined>(undefined);
   const [digimons, setDigimons] = React.useState<Record<string, DigimonData> | undefined>(undefined);
@@ -396,32 +396,32 @@ const HomePage = () => {
   useEffect(() => {
     if (searchParams) {
       setBaby1Id(
-        digimons && searchParams.has('baby1') && searchParams.get('baby1') in digimons
+        digimons && searchParams.has('baby1') && (searchParams!.get('baby1') || '') in digimons
           ? searchParams.get('baby1') || undefined
           : undefined
       );
       setBaby2Id(
-        digimons && searchParams.has('baby2') && searchParams.get('baby2') in digimons
+        digimons && searchParams.has('baby2') && (searchParams.get('baby2') || '') in digimons
           ? searchParams.get('baby2') || undefined
           : undefined
       );
       setChildId(
-        digimons && searchParams.has('child') && searchParams.get('child') in digimons
+        digimons && searchParams.has('child') && (searchParams.get('child') || '') in digimons
           ? searchParams.get('child') || undefined
           : undefined
       );
       setAdultId(
-        digimons && searchParams.has('adult') && searchParams.get('adult') in digimons
+        digimons && searchParams.has('adult') && (searchParams.get('adult') || '') in digimons
           ? searchParams.get('adult') || undefined
           : undefined
       );
       setPerfectId(
-        digimons && searchParams.has('perfect') && searchParams.get('perfect') in digimons
+        digimons && searchParams.has('perfect') && (searchParams.get('perfect') || '') in digimons
           ? searchParams.get('perfect') || undefined
           : undefined
       );
       setUltimateId(
-        digimons && searchParams.has('ultimate') && searchParams.get('ultimate') in digimons
+        digimons && searchParams.has('ultimate') && (searchParams.get('ultimate') || '') in digimons
           ? searchParams.get('ultimate') || undefined
           : undefined
       );

@@ -3,7 +3,7 @@ import '@/styles/globals.css';
 import { ThemeModeScript } from 'flowbite-react';
 import { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { ReactNode } from 'react';
+import { ReactNode, Suspense } from 'react';
 
 import { MainProvider } from '@/components/providers/MainProvider';
 import { MainLayout } from '@/components/templates/MainLayout';
@@ -30,7 +30,9 @@ const RootLayout = ({ children }: RootLayoutProps) => {
       <body className={cn(inter.variable, 'font-primary', 'h-screen')} suppressHydrationWarning>
         <MainProvider>
           <MainLayout>
-            <main>{children}</main>
+            <Suspense>
+              <main>{children}</main>
+            </Suspense>
           </MainLayout>
         </MainProvider>
       </body>
