@@ -87,20 +87,24 @@ function LevelSelectionButtonGroup({
 
 export function DigimonSelectionList({
   selectableDigimons,
+  allSelectableDigimons,
   isSelectable,
   currentSelectionLevel,
   gotoDigimonLevel,
   selectDigimon,
   currentDigimon,
   isDigimonLevelSet,
+  freeMode,
 }: {
   selectableDigimons?: { id: string; name: string; canon?: boolean }[];
+  allSelectableDigimons?: { id: string; name: string; canon?: boolean }[];
   isSelectable: (level: DigimonLevel) => boolean;
   currentSelectionLevel: DigimonLevel;
   gotoDigimonLevel: (level: DigimonLevel) => void;
   selectDigimon: (digimonId: string) => void;
   currentDigimon?: DigimonData;
   isDigimonLevelSet: (levels: DigimonLevel[]) => boolean;
+  freeMode?: boolean;
 }) {
   const [digimonSearch, setDigimonSearch] = React.useState('');
   const debouncedDigimonSearch = useDebouncedCallback(
@@ -145,10 +149,14 @@ export function DigimonSelectionList({
     return undefined;
   }, [currentSelectionLevel]);
 
+  const digimonList = React.useMemo(
+    () => (freeMode ? allSelectableDigimons : selectableDigimons) ?? [],
+    [freeMode, selectableDigimons, allSelectableDigimons]
+  );
+
   const filteredSelectableDigimons = React.useMemo(
-    () =>
-      selectableDigimons?.filter((digimon) => digimon.name.toLowerCase().includes(digimonSearch.toLowerCase())) ?? [],
-    [selectableDigimons, digimonSearch]
+    () => digimonList?.filter((digimon) => digimon.name.toLowerCase().includes(digimonSearch.toLowerCase())),
+    [digimonList, digimonSearch]
   );
 
   return (
@@ -188,8 +196,8 @@ export function DigimonSelectionList({
           </div>
         </form>
       )}
-      {selectableDigimons && selectableDigimons?.length === 0 && <p>No Digimon to select</p>}
-      {selectableDigimons && selectableDigimons?.length > 0 && (
+      {digimonList.length === 0 && <p>No Digimon to select</p>}
+      {digimonList.length > 0 && (
         <ListGroup className="text-sm w-full md:max-w-72 max-h-72 md:max-h-96 overflow-y-auto">
           {filteredSelectableDigimons.map((digimon) => {
             return (
@@ -200,7 +208,15 @@ export function DigimonSelectionList({
                 active={digimon.id === currentDigimon?.id}
                 disabled={!isSelectable(currentSelectionLevel)}
               >
-                {digimon.name}
+                <span
+                  className={
+                    !freeMode || selectableDigimons?.some((sdigimon) => sdigimon.id === digimon.id)
+                      ? 'not-italic'
+                      : 'italic'
+                  }
+                >
+                  {digimon.name}
+                </span>
               </ListGroup.Item>
             );
           })}

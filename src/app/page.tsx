@@ -2,7 +2,7 @@
 
 import { faArrowUp, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button, Popover } from 'flowbite-react';
+import { Button, Popover, Tooltip } from 'flowbite-react';
 import { useSearchParams } from 'next/navigation';
 import React from 'react';
 import { useEffect } from 'react';
@@ -17,6 +17,7 @@ const HomePage = () => {
   const searchParams = useSearchParams();
   const [openCopyPopover, setOpenCopyPopover] = React.useState(false);
   const [inited, setInited] = React.useState(false);
+  const [freeMode, setFreeMode] = React.useState(false);
 
   const [db, setDB] = React.useState<DigimonDB | undefined>(undefined);
   const [digimons, setDigimons] = React.useState<Record<string, DigimonData> | undefined>(undefined);
@@ -253,6 +254,25 @@ const HomePage = () => {
     return undefined;
   }, [baby1, baby2, child, adult, perfect, ultimate, currentSelectionLevel, db]);
 
+  const allSelectableDigimons = React.useMemo<{ id: string; name: string; canon?: boolean }[] | undefined>(() => {
+    switch (currentSelectionLevel) {
+      case 'Baby I':
+        return db?.lists.baby1;
+      case 'Baby II':
+        return db?.lists.baby2;
+      case 'Child':
+        return db?.lists.child;
+      case 'Adult':
+        return db?.lists.adult;
+      case 'Perfect':
+        return db?.lists.perfect;
+      case 'Ultimate':
+        return db?.lists.ultimate;
+    }
+
+    return undefined;
+  }, [currentSelectionLevel, db]);
+
   const currentDigimon = React.useMemo<DigimonData | undefined>(() => {
     switch (currentSelectionLevel) {
       case 'Baby I':
@@ -444,12 +464,14 @@ const HomePage = () => {
             <div className="order-first md:order-last px-4 md:px-2">
               <DigimonSelectionList
                 selectableDigimons={selectableDigimons}
+                allSelectableDigimons={allSelectableDigimons}
                 isSelectable={isSelectable}
                 currentSelectionLevel={currentSelectionLevel}
                 selectDigimon={selectDigimon}
                 currentDigimon={currentDigimon}
                 gotoDigimonLevel={(level) => setCurrentSelectionLevel(level)}
                 isDigimonLevelSet={isDigimonLevelSet}
+                freeMode={freeMode}
               />
               <div className="w-full flex mx-2 mt-4 items-center">
                 {selectedLevels.length > 0 && (
@@ -473,6 +495,19 @@ const HomePage = () => {
                     </Button>
                   </Popover>
                 )}
+              </div>
+              <div className="w-full flex mx-4 mt-4 items-center">
+                <Tooltip content="Select any Digimon" placement="bottom">
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      onChange={(event) => setFreeMode(event.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">Free mode</span>
+                  </label>
+                </Tooltip>
               </div>
             </div>
           </div>
