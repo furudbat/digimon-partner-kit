@@ -459,7 +459,7 @@ const HomePage = () => {
             className="mx-auto place-self-center"
             id="digimonTimeLine"
             ref={printRef}
-            style={{ height: 400, maxHeight: 1000, maxWidth: 1777, width: printMode ? 1777 : undefined }}
+            style={{ height: 400, maxHeight: 1000, maxWidth: 1777 }}
           >
             <DigimonTimeline
               selectDigimonLevel={selectDigimonLevel}
@@ -487,17 +487,19 @@ const HomePage = () => {
               </div>
             </div>
             <div className="order-first md:order-last px-4 md:px-2">
-              <DigimonSelectionList
-                selectableDigimons={selectableDigimons}
-                allSelectableDigimons={allSelectableDigimons}
-                isSelectable={isSelectable}
-                currentSelectionLevel={currentSelectionLevel}
-                selectDigimon={selectDigimon}
-                currentDigimon={currentDigimon}
-                gotoDigimonLevel={(level) => setCurrentSelectionLevel(level)}
-                isDigimonLevelSet={isDigimonLevelSet}
-                freeMode={freeMode}
-              />
+              <div style={{ height: '28rem' }}>
+                <DigimonSelectionList
+                  selectableDigimons={selectableDigimons}
+                  allSelectableDigimons={allSelectableDigimons}
+                  isSelectable={isSelectable}
+                  currentSelectionLevel={currentSelectionLevel}
+                  selectDigimon={selectDigimon}
+                  currentDigimon={currentDigimon}
+                  gotoDigimonLevel={(level) => setCurrentSelectionLevel(level)}
+                  isDigimonLevelSet={isDigimonLevelSet}
+                  freeMode={freeMode}
+                />
+              </div>
               <div className="w-full flex mx-2 mt-4 items-center">
                 {selectedLevels.length > 0 && (
                   <Button color="failure" onClick={() => clearAllDigimonLevels()} className="items-center mx-1">

@@ -198,7 +198,7 @@ export function DigimonSelectionList({
       )}
       {digimonList.length === 0 && <p>No Digimon to select</p>}
       {digimonList.length > 0 && (
-        <ListGroup className="text-sm w-full md:max-w-72 max-h-72 md:max-h-96 overflow-y-auto">
+        <ListGroup className="text-sm w-full md:max-w-72 max-h-72 md:h-max-96 overflow-y-auto">
           {filteredSelectableDigimons.map((digimon) => {
             return (
               <ListGroup.Item
