@@ -1,3 +1,5 @@
+'use client';
+
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, ListGroup } from 'flowbite-react';
@@ -7,13 +9,87 @@ import { DigimonData, DigimonLevel } from 'src/models/digimon';
 
 import { cn } from '@/lib/utils';
 
+function LevelSelectionButtonGroup({
+  prevDigimonLevel,
+  nextDigimonLevel,
+  isSelectable,
+  gotoDigimonLevel,
+  isDigimonLevelSet,
+}: {
+  prevDigimonLevel?: DigimonLevel;
+  nextDigimonLevel?: DigimonLevel;
+  isSelectable: (level: DigimonLevel) => boolean;
+  gotoDigimonLevel: (level: DigimonLevel) => void;
+  isDigimonLevelSet: (levels: DigimonLevel[]) => boolean;
+}) {
+  if (prevDigimonLevel && nextDigimonLevel) {
+    return (
+      <div className="flex justify-center md:w-72">
+        <div className="inline-flex" role="group">
+          <Button
+            outline
+            color="gray"
+            disabled={!isSelectable(prevDigimonLevel) && !isDigimonLevelSet([prevDigimonLevel])}
+            onClick={() => gotoDigimonLevel(prevDigimonLevel)}
+            className="align-start text-center items-center rounded-none rounded-l md:w-36"
+          >
+            <FontAwesomeIcon icon={faArrowLeft} className="mx-1 my-1 inline-block align-middle" />
+            <span className="inline-block align-middle">{prevDigimonLevel}</span>
+          </Button>
+          <Button
+            outline
+            color="gray"
+            disabled={!isSelectable(nextDigimonLevel) && !isDigimonLevelSet([nextDigimonLevel])}
+            onClick={() => gotoDigimonLevel(nextDigimonLevel)}
+            className="align-end text-center items-center rounded-none rounded-r md:w-36"
+          >
+            <span className="inline-block align-middle">{nextDigimonLevel}</span>
+            <FontAwesomeIcon icon={faArrowRight} className="mx-1 my-1 inline-block align-middle" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (prevDigimonLevel) {
+    return (
+      <Button
+        outline
+        color="gray"
+        disabled={!isSelectable(prevDigimonLevel) && !isDigimonLevelSet([prevDigimonLevel])}
+        onClick={() => gotoDigimonLevel(prevDigimonLevel)}
+        className="text-center items-center w-full md:w-72"
+      >
+        <FontAwesomeIcon icon={faArrowLeft} className="mx-1 my-1 inline-block align-middle" />
+        <span className="inline-block align-middle">{prevDigimonLevel}</span>
+      </Button>
+    );
+  }
+
+  if (nextDigimonLevel) {
+    return (
+      <Button
+        outline
+        color="gray"
+        disabled={!isSelectable(nextDigimonLevel) && !isDigimonLevelSet([nextDigimonLevel])}
+        onClick={() => gotoDigimonLevel(nextDigimonLevel)}
+        className="text-center items-center w-full md:w-72"
+      >
+        <span className="inline-block align-middle">{nextDigimonLevel}</span>
+        <FontAwesomeIcon icon={faArrowRight} className="mx-1 my-1 inline-block align-middle" />
+      </Button>
+    );
+  }
+
+  return <></>;
+}
+
 export function DigimonSelectionList({
   selectableDigimons,
   isSelectable,
   currentSelectionLevel,
   gotoDigimonLevel,
   selectDigimon,
-  digimons,
   currentDigimon,
   isDigimonLevelSet,
 }: {
@@ -21,8 +97,7 @@ export function DigimonSelectionList({
   isSelectable: (level: DigimonLevel) => boolean;
   currentSelectionLevel: DigimonLevel;
   gotoDigimonLevel: (level: DigimonLevel) => void;
-  selectDigimon: (digimon: DigimonData) => void;
-  digimons?: Record<string, DigimonData>;
+  selectDigimon: (digimonId: string) => void;
   currentDigimon?: DigimonData;
   isDigimonLevelSet: (levels: DigimonLevel[]) => boolean;
 }) {
@@ -60,73 +135,6 @@ export function DigimonSelectionList({
     return undefined;
   }, [currentSelectionLevel]);
 
-  const LevelSelectionButtonGroup = ({
-    prevDigimonLevel,
-    nextDigimonLevel,
-    isSelectable,
-    gotoDigimonLevel,
-  }: {
-    prevDigimonLevel?: DigimonLevel;
-    nextDigimonLevel?: DigimonLevel;
-    isSelectable: (level: DigimonLevel) => boolean;
-    gotoDigimonLevel: (level: DigimonLevel) => void;
-  }) => {
-    if (prevDigimonLevel && nextDigimonLevel) {
-      return (
-        <Button.Group outline className="w-full items-center">
-          <Button
-            color="gray"
-            disabled={!isSelectable(prevDigimonLevel) && !isDigimonLevelSet([prevDigimonLevel])}
-            onClick={() => gotoDigimonLevel(prevDigimonLevel)}
-            className="text-center items-center w-full"
-          >
-            <FontAwesomeIcon icon={faArrowLeft} className="mx-1 my-1 inline-block align-middle" />
-            <span className="inline-block align-middle">{prevDigimonLevel}</span>
-          </Button>
-          <Button
-            color="gray"
-            disabled={!isSelectable(nextDigimonLevel) && !isDigimonLevelSet([nextDigimonLevel])}
-            onClick={() => gotoDigimonLevel(nextDigimonLevel)}
-            className="text-center items-center w-full"
-          >
-            <span className="inline-block align-middle">{nextDigimonLevel}</span>
-            <FontAwesomeIcon icon={faArrowRight} className="mx-1 my-1 inline-block align-middle" />
-          </Button>
-        </Button.Group>
-      );
-    }
-
-    if (prevDigimonLevel) {
-      return (
-        <Button
-          color="gray"
-          disabled={!isSelectable(prevDigimonLevel)}
-          onClick={() => gotoDigimonLevel(prevDigimonLevel)}
-          className="text-center items-center w-full"
-        >
-          <FontAwesomeIcon icon={faArrowLeft} className="mx-1 my-1 inline-block align-middle" />
-          <span className="inline-block align-middle">{prevDigimonLevel}</span>
-        </Button>
-      );
-    }
-
-    if (nextDigimonLevel) {
-      return (
-        <Button
-          color="gray"
-          disabled={!isSelectable(nextDigimonLevel)}
-          onClick={() => gotoDigimonLevel(nextDigimonLevel)}
-          className="text-center items-center w-full"
-        >
-          <span className="inline-block align-middle">{nextDigimonLevel}</span>
-          <FontAwesomeIcon icon={faArrowRight} className="mx-1 my-1 inline-block align-middle" />
-        </Button>
-      );
-    }
-
-    return undefined;
-  };
-
   return (
     <div className="dark:text-white snap-start md:snap-none" id="digimonSelectionList">
       <Element name="digimonSelectionList"></Element>
@@ -135,6 +143,7 @@ export function DigimonSelectionList({
         prevDigimonLevel={prevDigimonLevel}
         isSelectable={isSelectable}
         gotoDigimonLevel={gotoDigimonLevel}
+        isDigimonLevelSet={isDigimonLevelSet}
       />
       <div className="text-center mt-2">
         {selectableDigimons && isSelectable(currentSelectionLevel) && (
@@ -152,7 +161,7 @@ export function DigimonSelectionList({
               <ListGroup.Item
                 className={cn('truncate', digimon.canon ? 'font-extrabold' : '')}
                 key={digimon.id}
-                onClick={() => digimons && selectDigimon(digimons[digimon.id])}
+                onClick={() => selectDigimon(digimon.id)}
                 active={digimon.id === currentDigimon?.id}
                 disabled={!isSelectable(currentSelectionLevel)}
               >
