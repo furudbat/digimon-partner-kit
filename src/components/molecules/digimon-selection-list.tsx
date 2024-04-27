@@ -1,11 +1,12 @@
 'use client';
 
-import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, ListGroup } from 'flowbite-react';
 import React from 'react';
 import { Element } from 'react-scroll';
 import { DigimonData, DigimonLevel } from 'src/models/digimon';
+import { useDebouncedCallback } from 'use-debounce';
 
 import { cn } from '@/lib/utils';
 
@@ -101,6 +102,15 @@ export function DigimonSelectionList({
   currentDigimon?: DigimonData;
   isDigimonLevelSet: (levels: DigimonLevel[]) => boolean;
 }) {
+  const [digimonSearch, setDigimonSearch] = React.useState('');
+  const debouncedDigimonSearch = useDebouncedCallback(
+    (value) => {
+      setDigimonSearch(value);
+    },
+    // delay in ms
+    230
+  );
+
   const prevDigimonLevel = React.useMemo((): DigimonLevel | undefined => {
     switch (currentSelectionLevel) {
       case 'Baby II':
@@ -135,6 +145,12 @@ export function DigimonSelectionList({
     return undefined;
   }, [currentSelectionLevel]);
 
+  const filteredSelectableDigimons = React.useMemo(
+    () =>
+      selectableDigimons?.filter((digimon) => digimon.name.toLowerCase().includes(digimonSearch.toLowerCase())) ?? [],
+    [selectableDigimons, digimonSearch]
+  );
+
   return (
     <div className="dark:text-white snap-start md:snap-none" id="digimonSelectionList">
       <Element name="digimonSelectionList"></Element>
@@ -153,10 +169,29 @@ export function DigimonSelectionList({
           <h3 className="pb-2 underline">Can not select Digivolution in the middle of the line</h3>
         )}
       </div>
+      {selectableDigimons && isSelectable(currentSelectionLevel) && (
+        <form className="flex items-center max-w-sm mx-auto mb-2">
+          <label htmlFor="simple-search" className="sr-only">
+            Search
+          </label>
+          <div className="relative w-full md:max-w-72">
+            <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+              <FontAwesomeIcon icon={faMagnifyingGlass} />
+            </div>
+            <input
+              type="search"
+              id="digimon-list-search"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              placeholder="Search"
+              onChange={(e) => debouncedDigimonSearch(e.target.value)}
+            />
+          </div>
+        </form>
+      )}
       {selectableDigimons && selectableDigimons?.length === 0 && <p>No Digimon to select</p>}
       {selectableDigimons && selectableDigimons?.length > 0 && (
         <ListGroup className="text-sm w-full md:max-w-72 max-h-72 md:max-h-96 overflow-y-auto">
-          {selectableDigimons.map((digimon) => {
+          {filteredSelectableDigimons.map((digimon) => {
             return (
               <ListGroup.Item
                 className={cn('truncate', digimon.canon ? 'font-extrabold' : '')}

@@ -16,6 +16,7 @@ import { DigimonTimeline } from '@/components/organisms/digimon-timeline';
 const HomePage = () => {
   const searchParams = useSearchParams();
   const [openCopyPopover, setOpenCopyPopover] = React.useState(false);
+  const [inited, setInited] = React.useState(false);
 
   const [db, setDB] = React.useState<DigimonDB | undefined>(undefined);
   const [digimons, setDigimons] = React.useState<Record<string, DigimonData> | undefined>(undefined);
@@ -389,22 +390,25 @@ const HomePage = () => {
   }, [searchParams, digimons]);
 
   useEffect(() => {
-    if (baby1 && isSelectable('Baby I')) {
-      setCurrentSelectionLevel('Baby I');
-    } else if (baby2 && isSelectable('Baby II')) {
-      setCurrentSelectionLevel('Baby II');
-    } else if (child && isSelectable('Child')) {
-      setCurrentSelectionLevel('Child');
-    } else if (adult && isSelectable('Adult')) {
-      setCurrentSelectionLevel('Adult');
-    } else if (perfect && isSelectable('Perfect')) {
-      setCurrentSelectionLevel('Perfect');
-    } else if (ultimate && isSelectable('Ultimate')) {
-      setCurrentSelectionLevel('Ultimate');
-    } else {
-      setCurrentSelectionLevel('Child');
+    if (!inited) {
+      if (baby1 && isSelectable('Baby I')) {
+        setCurrentSelectionLevel('Baby I');
+      } else if (baby2 && isSelectable('Baby II')) {
+        setCurrentSelectionLevel('Baby II');
+      } else if (child && isSelectable('Child')) {
+        setCurrentSelectionLevel('Child');
+      } else if (adult && isSelectable('Adult')) {
+        setCurrentSelectionLevel('Adult');
+      } else if (perfect && isSelectable('Perfect')) {
+        setCurrentSelectionLevel('Perfect');
+      } else if (ultimate && isSelectable('Ultimate')) {
+        setCurrentSelectionLevel('Ultimate');
+      } else {
+        setCurrentSelectionLevel('Child');
+      }
+      setInited(true);
     }
-  }, [searchParams, baby1, baby2, child, adult, perfect, ultimate, isSelectable, currentSelectionLevel]);
+  }, [inited, searchParams, baby1, baby2, child, adult, perfect, ultimate, isSelectable, currentSelectionLevel]);
 
   const InfoBoxHeight = '36rem';
 

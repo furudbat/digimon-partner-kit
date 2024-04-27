@@ -13,6 +13,7 @@ export function DigimonTimelineCard({
   disabled,
   selected,
   highlight,
+  readonly,
 }: {
   title?: string;
   data?: DigimonData;
@@ -21,6 +22,7 @@ export function DigimonTimelineCard({
   disabled?: boolean;
   selected?: boolean;
   highlight?: boolean;
+  readonly?: boolean;
 }) {
   const bg = (() => {
     if (disabled) {
@@ -75,38 +77,42 @@ export function DigimonTimelineCard({
         className="grid grid-flow-row-dense grid-cols-3 grid-rows-1 items-center px-2 gap-1"
         style={{ marginTop: -10 }}
       >
-        <div className="col-span-2">
-          <p className="text-xs justify-self-center">
-            {data && (
-              <Link
-                href={data.href}
-                target="_blank"
-                className="items-center text-center text-blue-800 dark:text-blue-400 hover:underline"
-                rel="noreferrer"
-              >
-                [Go To Wikimon]
-              </Link>
+        {!readonly && (
+          <div className="col-span-2">
+            <p className="text-xs justify-self-center">
+              {data && (
+                <Link
+                  href={data.href}
+                  target="_blank"
+                  className="items-center text-center text-blue-800 dark:text-blue-400 hover:underline"
+                  rel="noreferrer"
+                >
+                  [Go To Wikimon]
+                </Link>
+              )}
+            </p>
+          </div>
+        )}
+        {!readonly && (
+          <div>
+            {data && disabled && (
+              <Button color="gray" size="xs" disabled={disabled} onClick={() => onReset && onReset()}>
+                Reset
+              </Button>
             )}
-          </p>
-        </div>
-        <div>
-          {data && disabled && (
-            <Button color="gray" size="xs" disabled={disabled} onClick={() => onReset && onReset()}>
-              Reset
-            </Button>
-          )}
-          {data && !disabled && (
-            <Button
-              color="gray"
-              size="xs"
-              className="text-gray-900 bg-gray-200 dark:bg-gray-800 dark:text-gray-400"
-              disabled={disabled}
-              onClick={() => onReset && onReset()}
-            >
-              Reset
-            </Button>
-          )}
-        </div>
+            {data && !disabled && (
+              <Button
+                color="gray"
+                size="xs"
+                className="text-gray-900 bg-gray-200 dark:bg-gray-800 dark:text-gray-400"
+                disabled={disabled}
+                onClick={() => onReset && onReset()}
+              >
+                Reset
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </Card>
   );
