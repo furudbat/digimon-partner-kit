@@ -5,8 +5,8 @@ import { DigimonData } from 'src/models/digimon';
 
 export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: string | number }) {
   return (
-    <div className="max-w-full border border-gray-200 rounded-lg shadow p-4" style={{ height: height ?? '35rem' }}>
-      <div className="grid grid-flow-row-dense grid-cols-2 grid-rows-1 px-2">
+    <div className="max-w-full border border-gray-200 rounded-lg shadow p-4" style={{ minHeight: height ?? '35rem' }}>
+      <div className="grid grid-flow-row-dense md:grid-cols-2 md:grid-rows-1 px-2">
         <div className="items-center mt-11">
           <Image
             /*crossOrigin="anonymous"*/
@@ -18,7 +18,7 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
             alt={data.name}
           />
         </div>
-        <div className="px-2 items-start ml-4 overflow-y-auto" style={{ height: '24rem' }}>
+        <div className="px-2 md:items-start ml-4 overflow-y-auto" style={{ height: '24rem' }}>
           <h5 className="text-2xl pb-2 font-bold tracking-tight text-gray-900 dark:text-white">
             <Link href={data.href} title={data.name} target="_blank" rel="noreferrer">
               {data.name}
@@ -64,7 +64,7 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
             </div>
           )}
         </div>
-        <div className="px-4 mt-1 row-start-2 max-h-12">
+        <div className="px-4 mt-1 md:row-start-2 max-h-12">
           <div className="grid grid-flow-col auto-cols-max items-center">
             {data.categories?.length > 0 &&
               data.categories.map((category) => (

@@ -23,22 +23,22 @@ export function MainFooter() {
               .
             </em>
           </span>
-          <div className="flex mt-4 justify-center sm:mt-0 p-2 mx-2 w-16">
+          <div className="flex mt-4 justify-center sm:mt-0 p-2 mx-2 h-14">
             <Link
-              className="text-gray-500 dark:text-gray-400 font-medium h-4 m-2"
+              className="text-gray-500 dark:text-gray-400 font-medium w-8 h-8 m-2 items-center"
               target="_blank"
               rel="noreferrer"
               href="https://twitter.com/furudbat"
             >
-              <FontAwesomeIcon icon={faTwitter} height={24} />
+              <FontAwesomeIcon icon={faTwitter} size="1x" />
             </Link>
             <Link
-              className="text-gray-500 dark:text-gray-400 font-medium h-4 m-2"
+              className="text-gray-500 dark:text-gray-400 font-medium w-8 h-8 m-2 items-center"
               target="_blank"
               rel="noreferrer"
               href="https://github.com/furudbat/digimon-partner-kit"
             >
-              <FontAwesomeIcon icon={faGithub} height={24} />
+              <FontAwesomeIcon icon={faGithub} size="1x" />
             </Link>
           </div>
         </div>

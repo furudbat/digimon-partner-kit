@@ -1,4 +1,8 @@
 import { Timeline } from 'flowbite-react';
+import React from 'react';
+import { useMediaQuery } from 'react-responsive';
+import { scroller } from 'react-scroll';
+import { Element } from 'react-scroll';
 import { DigimonLevel, DigimonData } from 'src/models/digimon';
 
 import { DigimonTimelineCard } from '../molecules/digimon-timeline-card';
@@ -14,6 +18,7 @@ export function DigimonTimeline({
   perfect,
   ultimate,
   currentSelectionLevel,
+  printMode,
 }: {
   selectDigimonLevel: (level: DigimonLevel) => void;
   clearDigimonLevel: (level: DigimonLevel) => void;
@@ -25,10 +30,27 @@ export function DigimonTimeline({
   perfect?: DigimonData;
   ultimate?: DigimonData;
   currentSelectionLevel: DigimonLevel;
+  printMode?: boolean;
 }) {
+  const isMobile = useMediaQuery({ maxWidth: 768 });
+
+  const onSelectCard = React.useCallback(
+    (level: DigimonLevel) => {
+      selectDigimonLevel(level);
+      if (isMobile) {
+        scroller.scrollTo('digimonSelectionList', {
+          duration: 500,
+          smooth: true,
+        });
+      }
+    },
+    [isMobile, selectDigimonLevel]
+  );
+
   return (
     <Timeline horizontal>
-      <Timeline.Item>
+      <Timeline.Item id="digimonTimelineBabyI">
+        <Element name="digimonTimelineBabyI"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">I</div>
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
@@ -38,33 +60,37 @@ export function DigimonTimeline({
             <DigimonTimelineCard
               title="Baby I"
               data={baby1}
-              onClick={() => selectDigimonLevel('Baby I')}
+              onClick={() => onSelectCard('Baby I')}
               onReset={() => clearDigimonLevel('Baby I')}
               disabled={!isSelectable('Baby I')}
               selected={currentSelectionLevel === 'Baby I'}
+              printMode={printMode}
             />
           </div>
         </Timeline.Content>
       </Timeline.Item>
-      <Timeline.Item>
+      <Timeline.Item id="digimonTimelineBabyII">
+        <Element name="digimonTimelineBabyII"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">II</div>
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
         </div>
         <Timeline.Content>
-          <div className="px-3">
+          <div className="px-2">
             <DigimonTimelineCard
               title="Baby II"
               data={baby2}
-              onClick={() => selectDigimonLevel('Baby II')}
+              onClick={() => onSelectCard('Baby II')}
               onReset={() => clearDigimonLevel('Baby II')}
               disabled={!isSelectable('Baby II')}
               selected={currentSelectionLevel === 'Baby II'}
+              printMode={printMode}
             />
           </div>
         </Timeline.Content>
       </Timeline.Item>
-      <Timeline.Item>
+      <Timeline.Item id="digimonTimelineChild">
+        <Element name="digimonTimelineChild"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">
             III
@@ -72,67 +98,74 @@ export function DigimonTimeline({
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
         </div>
         <Timeline.Content>
-          <div className="px-3">
+          <div className="px-2">
             <DigimonTimelineCard
               title="Child"
               data={child}
-              onClick={() => selectDigimonLevel('Child')}
+              onClick={() => onSelectCard('Child')}
               onReset={() => clearDigimonLevel('Child')}
               disabled={!isSelectable('Child')}
               selected={currentSelectionLevel === 'Child'}
+              printMode={printMode}
             />
           </div>
         </Timeline.Content>
       </Timeline.Item>
-      <Timeline.Item>
+      <Timeline.Item id="digimonTimelineAdult">
+        <Element name="digimonTimelineAdult"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">IV</div>
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
         </div>
         <Timeline.Content>
-          <div className="px-3">
+          <div className="px-2">
             <DigimonTimelineCard
               title="Adult"
               data={adult}
-              onClick={() => selectDigimonLevel('Adult')}
+              onClick={() => onSelectCard('Adult')}
               onReset={() => clearDigimonLevel('Adult')}
               disabled={!isSelectable('Adult')}
               selected={currentSelectionLevel === 'Adult'}
+              printMode={printMode}
             />
           </div>
         </Timeline.Content>
       </Timeline.Item>
-      <Timeline.Item>
+      <Timeline.Item id="digimonTimelinePerfect">
+        <Element name="digimonTimelinePerfect"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">V</div>
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
         </div>
         <Timeline.Content>
-          <div className="px-3">
+          <div className="px-2">
             <DigimonTimelineCard
               title="Perfect"
               data={perfect}
-              onClick={() => selectDigimonLevel('Perfect')}
+              onClick={() => onSelectCard('Perfect')}
               onReset={() => clearDigimonLevel('Perfect')}
               disabled={!isSelectable('Perfect')}
               selected={currentSelectionLevel === 'Perfect'}
+              printMode={printMode}
             />
           </div>
         </Timeline.Content>
       </Timeline.Item>
-      <Timeline.Item>
+      <Timeline.Item id="digimonTimelineUltimate">
+        <Element name="digimonTimelineUltimate"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">VI</div>
         </div>
         <Timeline.Content>
-          <div className="px-3">
+          <div className="px-2">
             <DigimonTimelineCard
               title="Ultimate"
               data={ultimate}
-              onClick={() => selectDigimonLevel('Ultimate')}
+              onClick={() => onSelectCard('Ultimate')}
               onReset={() => clearDigimonLevel('Ultimate')}
               disabled={!isSelectable('Ultimate')}
               selected={currentSelectionLevel === 'Ultimate'}
+              printMode={printMode}
             />
           </div>
         </Timeline.Content>
