@@ -3,30 +3,57 @@
 import axios from 'axios';
 import cheerio from 'cheerio';
 import crypto from 'crypto';
-import { existsSync, mkdirSync } from 'fs';
-import fs from 'fs';
+import fs, { existsSync, mkdirSync } from 'fs';
+import { copy } from 'fs-extra';
 import { writeFile } from 'fs/promises';
 import Downloader from 'nodejs-file-downloader';
 import { resolve } from 'path';
+import { getRandom } from 'random-useragent';
 import { promisify } from 'util';
+
+const config = {
+  wikimonUrl: 'https://wikimon.net',
+  baby1Lists: ['https://wikimon.net/Category:Baby_I_Level'],
+  baby2Lists: ['https://wikimon.net/Category:Baby_II_Level'],
+  childLists: [
+    'https://wikimon.net/Category:Child_Level',
+    'https://wikimon.net/index.php?title=Category:Child_Level&pagefrom=Toy+Agumon#mw-pages',
+  ],
+  adultList: [
+    'https://wikimon.net/index.php?title=Category:Adult_Level',
+    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Mad+Leomon%3A+Armed+Mode#mw-pages',
+  ],
+  perfectList: [
+    'https://wikimon.net/Category:Perfect_Level',
+    'https://wikimon.net/index.php?title=Category:Perfect_Level&pagefrom=Mephismon+%28X-Antibody%29#mw-pages',
+  ],
+  ultimateList: [
+    'https://wikimon.net/Category:Ultimate_Level',
+    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Jokermon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=VR-SaintGalgo#mw-pages',
+  ],
+};
 
 const writeFileAsync = promisify(fs.writeFile);
 const readFileAsync = promisify(fs.readFile);
 
-export function filterUnique<T>(arr: T[], pred: (a: T, b: T) => boolean) {
+function flatten<T>(arr: T[][]): T[] {
+  return ([] as T[]).concat(...arr);
+}
+function filterUnique<T>(arr: T[], pred: (a: T, b: T) => boolean) {
   return arr.filter((value, index, self) => {
     return self.findIndex((v) => pred(v, value)) === index;
   });
 }
 
-function getRandom(min: number, max: number) {
+function getRandomValue(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 //async function asyncSleep(ms: number) {
 //  return new Promise((resolve) => setTimeout(resolve, ms));
 //}
 async function asyncRandomSleep(minMs: number, maxMs: number) {
-  return new Promise((resolve) => setTimeout(resolve, getRandom(minMs, maxMs)));
+  return new Promise((resolve) => setTimeout(resolve, getRandomValue(minMs, maxMs)));
 }
 async function executePromisesWithLimit<T>(promises: Promise<T>[], limit: number): Promise<T[]> {
   let index = 0;
@@ -47,7 +74,7 @@ async function executePromisesWithLimit<T>(promises: Promise<T>[], limit: number
               })
               .catch(reject);
           },
-          getRandom(50, 230)
+          getRandomValue(50, 230)
         );
       });
     });
@@ -65,10 +92,11 @@ async function executePromisesWithLimit<T>(promises: Promise<T>[], limit: number
 //  return ([] as T[]).concat(...arr);
 //}
 
+const userAgent = getRandom();
+
 async function scrapeWebsite(url: string) {
   const headers = {
-    'User-Agent':
-      'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+    'User-Agent': userAgent,
     Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
   };
 
@@ -80,7 +108,7 @@ async function scrapeWebsite(url: string) {
   return response.data;
 }
 
-async function fetchFromWebOrCache(url: string, ignoreCache = false) {
+async function fetchFromWebOrCache(url: string, prefix?: string, ignoreCache = false) {
   const generateHash = (data: string) => {
     const hash = crypto.createHash('sha256');
     hash.update(data);
@@ -90,9 +118,11 @@ async function fetchFromWebOrCache(url: string, ignoreCache = false) {
   if (!existsSync(resolve(__dirname, '.cache'))) {
     mkdirSync('.cache');
   }
-  console.info(`Getting data for ${url}`);
+  console.info(`Getting data from ${url}`);
   const hash = generateHash(url);
-  const filename = resolve(__dirname, `.cache/${hash}.html`);
+  const filename = prefix
+    ? resolve(__dirname, `.cache/${prefix}${hash}.html`)
+    : resolve(__dirname, `.cache/${hash}.html`);
   if (!ignoreCache && fs.existsSync(filename)) {
     console.info(`Loading from cache... [${hash}]`);
 
@@ -119,7 +149,7 @@ async function downloadImage(url: string, ignoreCache = false) {
   if (!existsSync(resolve(__dirname, '.cache'))) {
     mkdirSync('.cache');
   }
-  console.info(`Getting data for ${url}`);
+  console.info(`Getting image from ${url}`);
   const hash = generateHash(url);
   const filename = resolve(__dirname, `.cache/i_${hash}.png`);
   if (!ignoreCache && fs.existsSync(filename)) {
@@ -129,8 +159,7 @@ async function downloadImage(url: string, ignoreCache = false) {
   } else {
     console.info(`Loading from Website... [${hash}]`);
     const headers = {
-      'User-Agent':
-        'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+      'User-Agent': userAgent,
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
     };
 
@@ -147,11 +176,8 @@ async function downloadImage(url: string, ignoreCache = false) {
       // @TODO: check for caching header or "lastModified"
       if (!ignoreCache && ret.filePath) {
         console.info(`Write to cache... [${hash}]`);
-        fs.copyFile(ret.filePath, filename, (err) => {
-          if (err) throw err;
-          console.info(`Image Saved ${ret.filePath} => ${filename}`);
-        });
-        await asyncRandomSleep(500, 5000);
+        await copy(ret.filePath, filename);
+        console.info(`Image Saved ${ret.filePath} => ${filename}`);
 
         return filename;
       }
@@ -196,8 +222,28 @@ interface DigimonData {
   evolvesFrom: DigimonDataEvolveElement[];
   evolvesTo: DigimonDataEvolveElement[];
 }
+const hrefToId = (href?: string) => {
+  return href
+    ? decodeURI(href.replace(config.wikimonUrl, '').replace('/', ''))
+        .replaceAll(' ', '_')
+        .replaceAll('+', '_')
+        .replaceAll("'", '')
+        .replaceAll('·', '_')
+        .replaceAll('%20', '_')
+        .replaceAll('%2B', '_')
+        .replaceAll('%27', '')
+        .replace(':', '_')
+        .replace('ä', 'ae')
+        .replace('ö', 'oe')
+        .replace('ü', 'ue')
+        .replaceAll('(', '')
+        .replaceAll(')', '')
+        .replace('.', '_')
+        .replaceAll('__', '_')
+    : undefined;
+};
 class DigimonScraperScraper {
-  readonly baseUrl = 'https://wikimon.net';
+  readonly baseUrl = config.wikimonUrl;
 
   async scrapeDigimon(url: string) {
     const html = await fetchFromWebOrCache(url);
@@ -263,18 +309,6 @@ class DigimonScraperScraper {
     };
 
     if (name) {
-      const hrefToId = (href?: string) => {
-        return href
-          ?.replace('/', '')
-          .replaceAll('%20', '_')
-          .replaceAll('%2B', '_')
-          .replaceAll('%27', '')
-          .replace(':', '_')
-          .replaceAll('(', '')
-          .replaceAll(')', '')
-          .replace('.', '_')
-          .replaceAll('__', '_');
-      };
       console.info(`Parse Digimon ${url} ...`);
 
       const descriptionTd = (() => {
@@ -342,9 +376,10 @@ class DigimonScraperScraper {
           if (cat.downloadImageUrl) {
             const downloadFilename = await downloadImage(cat.downloadImageUrl);
             if (downloadFilename && cat.img) {
-              fs.copyFile(downloadFilename, resolve(__dirname, cat.img), (err) => {
-                if (err) throw err;
-              });
+              const filename = resolve(__dirname, cat.img);
+              if (!fs.existsSync(filename)) {
+                await copy(downloadFilename, filename);
+              }
             }
           }
 
@@ -435,9 +470,10 @@ class DigimonScraperScraper {
         const downloadFilename = await downloadImage(downloadImageUrl);
         const imgFilename = `img/${id.replace('/', '')}.png`;
         if (downloadFilename) {
-          fs.copyFile(downloadFilename, resolve(__dirname, imgFilename), (err) => {
-            if (err) throw err;
-          });
+          const filename = resolve(__dirname, imgFilename);
+          if (!fs.existsSync(filename)) {
+            await copy(downloadFilename, filename);
+          }
         }
 
         console.info(`Scrapped Digimon: ${name} (${levels}) [${attributes}]`);
@@ -474,7 +510,7 @@ class DigimonScraperScraper {
   }
 
   async scrapeDigimonList(url: string) {
-    const html = await fetchFromWebOrCache(url);
+    const html = await fetchFromWebOrCache(url, 'l_');
 
     const $ = cheerio.load(html);
 
@@ -482,7 +518,7 @@ class DigimonScraperScraper {
     $('.mw-category-group a').each((i, e) => {
       if ($(e).attr('href') && $(e).attr('title')) {
         ret.push({
-          id: $(e).attr('href')?.replace('/', '') ?? '',
+          id: hrefToId($(e).attr('href')) ?? '',
           href: this.baseUrl + $(e).attr('href'),
           name: $(e).attr('title')?.trim() ?? '',
         });
@@ -496,69 +532,79 @@ class DigimonScraperScraper {
 async function getBaby1DigimonList() {
   const scraper = new DigimonScraperScraper();
 
-  const baby1List1 = await scraper.scrapeDigimonList('https://wikimon.net/Category:Baby_I_Level');
+  const baby1List = flatten(
+    await executePromisesWithLimit(
+      config.baby1Lists.map((url) => scraper.scrapeDigimonList(url)),
+      1
+    )
+  );
 
-  return [...baby1List1].filter((d) => !d.name.match(/^Baby I$/));
+  return baby1List.filter((d) => !d.name.match(/^Baby I$/));
 }
 
 async function getBaby2DigimonList() {
   const scraper = new DigimonScraperScraper();
 
-  const baby2List1 = await scraper.scrapeDigimonList('https://wikimon.net/Category:Baby_II_Level');
+  const baby2List = flatten(
+    await executePromisesWithLimit(
+      config.baby2Lists.map((url) => scraper.scrapeDigimonList(url)),
+      1
+    )
+  );
 
-  return [...baby2List1].filter((d) => !d.name.match(/^Baby II$/));
+  return baby2List.filter((d) => !d.name.match(/^Baby II$/));
 }
 
 async function getChildDigimonList() {
   const scraper = new DigimonScraperScraper();
 
-  const childList1 = await scraper.scrapeDigimonList('https://wikimon.net/Category:Child_Level');
-  await asyncRandomSleep(250, 520);
-  const childList2 = await scraper.scrapeDigimonList(
-    'https://wikimon.net/index.php?title=Category:Child_Level&pagefrom=Toy+Agumon#mw-pages'
+  const childList = flatten(
+    await executePromisesWithLimit(
+      config.childLists.map((url) => scraper.scrapeDigimonList(url)),
+      1
+    )
   );
 
-  return [...childList1, ...childList2].filter((d) => !d.name.match(/^Child$/));
+  return childList.filter((d) => !d.name.match(/^Child$/));
 }
 
 async function getAdultDigimonList() {
   const scraper = new DigimonScraperScraper();
 
-  const adultList1 = await scraper.scrapeDigimonList('https://wikimon.net/index.php?title=Category:Adult_Level');
-  await asyncRandomSleep(250, 520);
-  const adultList2 = await scraper.scrapeDigimonList(
-    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Mad+Leomon%3A+Armed+Mode#mw-pages'
+  const adultList = flatten(
+    await executePromisesWithLimit(
+      config.adultList.map((url) => scraper.scrapeDigimonList(url)),
+      1
+    )
   );
 
-  return [...adultList1, ...adultList2].filter((d) => !d.name.match(/^Adult$/));
+  return adultList.filter((d) => !d.name.match(/^Adult$/));
 }
 
 async function getPerfectDigimonList() {
   const scraper = new DigimonScraperScraper();
 
-  const perfectList1 = await scraper.scrapeDigimonList('https://wikimon.net/Category:Perfect_Level');
-  await asyncRandomSleep(250, 520);
-  const perfectList2 = await scraper.scrapeDigimonList(
-    'https://wikimon.net/index.php?title=Category:Perfect_Level&pagefrom=Mephismon+%28X-Antibody%29#mw-pages'
+  const perfectList = flatten(
+    await executePromisesWithLimit(
+      config.perfectList.map((url) => scraper.scrapeDigimonList(url)),
+      1
+    )
   );
 
-  return [...perfectList1, ...perfectList2].filter((d) => !d.name.match(/^Perfect$/));
+  return perfectList.filter((d) => !d.name.match(/^Perfect$/));
 }
 
 async function getUltimateDigimonList() {
   const scraper = new DigimonScraperScraper();
 
-  const ultimateList1 = await scraper.scrapeDigimonList('https://wikimon.net/Category:Ultimate_Level');
-  await asyncRandomSleep(250, 520);
-  const ultimateList2 = await scraper.scrapeDigimonList(
-    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Jokermon#mw-pages'
-  );
-  await asyncRandomSleep(100, 260);
-  const ultimateList3 = await scraper.scrapeDigimonList(
-    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=VR-SaintGalgo#mw-pages'
+  const ultimateList = flatten(
+    await executePromisesWithLimit(
+      config.ultimateList.map((url) => scraper.scrapeDigimonList(url)),
+      1
+    )
   );
 
-  return [...ultimateList1, ...ultimateList2, ...ultimateList3].filter((d) => !d.name.match(/^Ultimate$/));
+  return ultimateList.filter((d) => !d.name.match(/^Ultimate$/));
 }
 
 function saveData(filename: string, data: object) {
@@ -611,7 +657,10 @@ export async function main() {
       adult: adultList,
       perfect: perfectList,
       ultimate: ultimateList,
-      all: [...baby1List, ...baby2List, ...childList, ...adultList, ...perfectList, ...ultimateList],
+      all: filterUnique(
+        [...baby1List, ...baby2List, ...childList, ...adultList, ...perfectList, ...ultimateList],
+        (a, b) => a.id === b.id
+      ),
     },
     digimons: [] as DigimonData[],
   };
@@ -640,7 +689,9 @@ export async function main() {
   console.info('clean up Digimons...');
 
   // filter unique digimon (remove duplicates)
+  console.debug(`Before: clean up duplicates: ${db.digimons.length}`);
   db.digimons = filterUnique(db.digimons, (a, b) => a.id === b.id);
+  console.debug(`After: clean up duplicates: ${db.digimons.length}`);
 
   // clean up evols
   db.digimons = db.digimons.map((digimon) => {

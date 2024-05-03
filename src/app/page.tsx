@@ -78,7 +78,7 @@ const HomePage = () => {
 
   const isSelectable = React.useCallback(
     (level: DigimonLevel): boolean => {
-      if (selectedLevels.length === 0) {
+      if (selectedLevels.length === 0 || freeMode) {
         return true;
       }
 
@@ -165,7 +165,7 @@ const HomePage = () => {
 
       return false;
     },
-    [selectedLevels, isDigimonLevelSet, isDigimonLevelNotSet]
+    [freeMode, selectedLevels, isDigimonLevelSet, isDigimonLevelNotSet]
   );
 
   const selectDigimonLevel = React.useCallback((level: DigimonLevel) => {
@@ -401,7 +401,11 @@ const HomePage = () => {
         .replaceAll(' ', '_')
         .replaceAll('+', '_')
         .replaceAll("'", '')
+        .replaceAll('·', '_')
         .replace(':', '_')
+        .replace('ä', 'ae')
+        .replace('ö', 'oe')
+        .replace('ü', 'ue')
         .replaceAll('(', '')
         .replaceAll(')', '')
         .replace('.', '_')

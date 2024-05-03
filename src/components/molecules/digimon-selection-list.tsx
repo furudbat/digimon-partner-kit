@@ -159,6 +159,11 @@ export function DigimonSelectionList({
     [digimonList, digimonSearch]
   );
 
+  const isEvolCanon = React.useCallback(
+    (digimonId: string) => selectableDigimons?.find((s) => s.id == digimonId)?.canon,
+    [selectableDigimons]
+  );
+
   return (
     <div className="dark:text-white snap-start md:snap-none" id="digimonSelectionList">
       <Element name="digimonSelectionList"></Element>
@@ -200,23 +205,38 @@ export function DigimonSelectionList({
       {digimonList.length > 0 && (
         <ListGroup className="text-sm w-full md:max-w-72 max-h-72 md:h-max-96 overflow-y-auto">
           {filteredSelectableDigimons.map((digimon) => {
+            const canon = isEvolCanon(digimon.id);
+
             return (
               <ListGroup.Item
-                className={cn('truncate', digimon.canon ? 'font-extrabold' : '')}
+                className={cn('truncate', canon ? 'font-extrabold' : '')}
                 key={digimon.id}
                 onClick={() => selectDigimon(digimon.id)}
                 active={digimon.id === currentDigimon?.id}
                 disabled={!isSelectable(currentSelectionLevel)}
               >
-                <span
-                  className={
-                    !freeMode || selectableDigimons?.some((sdigimon) => sdigimon.id === digimon.id)
-                      ? 'not-italic'
-                      : 'italic'
-                  }
-                >
-                  {digimon.name}
-                </span>
+                {!canon && (
+                  <span
+                    className={
+                      !freeMode || selectableDigimons?.some((sdigimon) => sdigimon.id === digimon.id)
+                        ? 'not-italic'
+                        : 'italic'
+                    }
+                  >
+                    {digimon.name}
+                  </span>
+                )}
+                {canon && (
+                  <strong
+                    className={
+                      !freeMode || selectableDigimons?.some((sdigimon) => sdigimon.id === digimon.id)
+                        ? 'not-italic'
+                        : 'italic'
+                    }
+                  >
+                    {digimon.name}
+                  </strong>
+                )}
               </ListGroup.Item>
             );
           })}
