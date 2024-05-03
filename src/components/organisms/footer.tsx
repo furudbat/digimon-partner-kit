@@ -15,9 +15,13 @@ export function MainFooter() {
             </Link>
             .{' '}
             <em>
-              This Project is a free fan site and not affiliated with Bandai. Digimon and other media relating to the
-              franchise are registered trademarks by Bandai. Images from{' '}
-              <Link href="https://wikimon.net/" target="_blank" rel="noreferrer">
+              This Project is a free fan site and not affiliated with Bandai Namco. Digimon and other media relating to
+              the franchise are registered trademarks by{' '}
+              <Link href="https://www.bandai.com/" title="Bandai Namco" target="_blank" rel="noreferrer">
+                Bandai Namco
+              </Link>
+              . Images from{' '}
+              <Link href="https://wikimon.net/" title="wikimon" target="_blank" rel="noreferrer">
                 https://wikimon.net/
               </Link>
               .
