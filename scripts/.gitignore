@@ -1,3 +1,6 @@
 /.cache
+!/.cache/.gitkeep
 digimon.db.pretty.json
 digimon.db.json
+/img
+!/img/.gitkeep

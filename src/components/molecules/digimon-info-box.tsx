@@ -1,24 +1,29 @@
 import { List } from 'flowbite-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useMediaQuery } from 'react-responsive';
 import { DigimonData } from 'src/models/digimon';
 
 export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: string | number }) {
+  const isMobile = useMediaQuery({ maxWidth: 768 });
+  //const pathname = usePathname();
+
   return (
-    <div className="max-w-full border border-gray-200 rounded-lg shadow p-4" style={{ minHeight: height ?? '35rem' }}>
+    <div
+      className="max-w-full border border-gray-200 rounded-lg shadow p-4"
+      style={{ minHeight: !isMobile ? height ?? '35rem' : undefined }}
+    >
       <div className="grid grid-flow-row-dense md:grid-cols-2 md:grid-rows-1 px-2">
         <div className="items-center mt-11">
           <Image
-            /*crossOrigin="anonymous"*/
-            unoptimized
             className="self-center h-max-auto w-auto max-w-full rounded-md"
             width={320}
             height={320}
-            src={data.img}
+            src={window.location.pathname + '/' + data.img}
             alt={data.name}
           />
         </div>
-        <div className="px-2 md:items-start ml-4 overflow-y-auto" style={{ height: '24rem' }}>
+        <div className="px-2 md:items-start ml-4 overflow-y-auto" style={{ height: !isMobile ? '24rem' : undefined }}>
           <h5 className="text-2xl pb-2 font-bold tracking-tight text-gray-900 dark:text-white">
             <Link href={data.href} title={data.name} target="_blank" rel="noreferrer">
               {data.name}
@@ -76,10 +81,8 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
                   rel="noreferrer"
                 >
                   <Image
-                    /*crossOrigin="anonymous"*/
-                    unoptimized
                     className="flex flex-inline mx-1 h-auto max-w-full"
-                    src={category.img}
+                    src={window.location.pathname + '/' + category.img}
                     alt={category.name}
                     width={50}
                     height={50}
