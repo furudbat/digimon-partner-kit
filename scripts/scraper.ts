@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import { existsSync, mkdirSync } from 'fs';
 import fs from 'fs';
 import { writeFile } from 'fs/promises';
+import Downloader from 'nodejs-file-downloader';
 import { resolve } from 'path';
 import { promisify } from 'util';
 
@@ -108,6 +109,63 @@ async function fetchFromWebOrCache(url: string, ignoreCache = false) {
     return HTMLData;
   }
 }
+async function downloadImage(url: string, ignoreCache = false) {
+  const generateHash = (data: string) => {
+    const hash = crypto.createHash('sha256');
+    hash.update(data);
+
+    return hash.digest('hex');
+  };
+  if (!existsSync(resolve(__dirname, '.cache'))) {
+    mkdirSync('.cache');
+  }
+  console.info(`Getting data for ${url}`);
+  const hash = generateHash(url);
+  const filename = resolve(__dirname, `.cache/i_${hash}.png`);
+  if (!ignoreCache && fs.existsSync(filename)) {
+    console.info(`Loading from cache... [${hash}]`);
+
+    return filename;
+  } else {
+    console.info(`Loading from Website... [${hash}]`);
+    const headers = {
+      'User-Agent':
+        'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+    };
+
+    const downloader = new Downloader({
+      url,
+      directory: '.cache',
+      headers,
+    });
+
+    try {
+      const ret = await downloader.download();
+      await asyncRandomSleep(1000, 5000);
+
+      // @TODO: check for caching header or "lastModified"
+      if (!ignoreCache && ret.filePath) {
+        console.info(`Write to cache... [${hash}]`);
+        fs.copyFile(ret.filePath, filename, (err) => {
+          if (err) throw err;
+          console.info(`Image Saved ${ret.filePath} => ${filename}`);
+        });
+        await asyncRandomSleep(500, 5000);
+
+        return filename;
+      }
+
+      return ret.filePath;
+    } catch (error) {
+      if (error.responseBody) {
+        console.log({ url, error: error.responseBody });
+      }
+    }
+  }
+
+  return null;
+}
 
 type DigimonLevel = 'Baby I' | 'Baby II' | 'Child' | 'Adult' | 'Perfect' | 'Ultimate';
 interface DigimonDataEvolveElement {
@@ -121,8 +179,10 @@ interface DigimonData {
   href: string;
   id: string;
   name: string;
+  names: Record<string, string>;
   description: string;
   img: string;
+  imgOrigin: string;
   levels: string[];
   level?: DigimonLevel;
   classes: string[];
@@ -146,14 +206,14 @@ class DigimonScraperScraper {
 
     const name = $('#firstHeading').text().trim();
 
-    const getInfoFromInfoBox = (infoBox: cheerio.Cheerio, title: string, text?: string) => {
+    const getInfoFromInfoBox = (infoBox: cheerio.Cheerio, params: { title?: string; text?: string }) => {
       let ret: string[] = [];
 
       const tr = ((): cheerio.Cheerio | undefined => {
-        if (text) {
+        if (params.text && params.title) {
           let ftd: cheerio.Cheerio | undefined;
-          infoBox.find(`td a[title="${title}"]`).each((i, e) => {
-            if ($(e).text().trim() === text && !ftd) {
+          infoBox.find(`td a[title="${params.title}"]`).each((i, e) => {
+            if ($(e).text().trim() === params.text && !ftd) {
               ftd = $(e);
             }
           });
@@ -161,7 +221,22 @@ class DigimonScraperScraper {
           return ftd ? ftd.closest('tr') : undefined;
         }
 
-        return infoBox.find(`td a[title="${title}"]:first`).closest('tr');
+        if (params.title) {
+          return infoBox.find(`td a[title="${params.title}"]:first`).closest('tr');
+        }
+
+        if (params.text) {
+          let ret: cheerio.Cheerio | undefined = undefined;
+          infoBox.find(`td`).each((index, td) => {
+            if ($(td).text().trim() === params.text && !ret) {
+              ret = $(td).closest('tr');
+            }
+          });
+
+          return ret ? ret : infoBox.find(`td:first`).closest('tr');
+        }
+
+        return infoBox.find(`td:first`).closest('tr');
       })();
 
       if (tr) {
@@ -188,6 +263,18 @@ class DigimonScraperScraper {
     };
 
     if (name) {
+      const hrefToId = (href?: string) => {
+        return href
+          ?.replace('/', '')
+          .replaceAll('%20', '_')
+          .replaceAll('%2B', '_')
+          .replaceAll('%27', '')
+          .replace(':', '_')
+          .replaceAll('(', '')
+          .replaceAll(')', '')
+          .replace('.', '_')
+          .replaceAll('__', '_');
+      };
       console.info(`Parse Digimon ${url} ...`);
 
       const descriptionTd = (() => {
@@ -202,13 +289,16 @@ class DigimonScraperScraper {
         );
       })();
       const infoBox = $('#StatsBoxMorphContent1 table');
+      //const nameTable = $('#S2NameEtyMorphContent1 table:first table:first');
       const img = infoBox.find('a.image img');
 
-      const levels = getInfoFromInfoBox(infoBox, 'Evolution Stage', 'Level');
-      const digimonClasses = getInfoFromInfoBox(infoBox, 'Evolution Stage', 'Class');
-      const types = getInfoFromInfoBox(infoBox, 'Type');
-      const attributes = getInfoFromInfoBox(infoBox, 'Attribute');
-      const fields = getInfoFromInfoBox(infoBox, 'Field');
+      const levels = getInfoFromInfoBox(infoBox, { title: 'Evolution Stage', text: 'Level' });
+      const digimonClasses = getInfoFromInfoBox(infoBox, { title: 'Evolution Stage', text: 'Class' });
+      const types = getInfoFromInfoBox(infoBox, { title: 'Type' });
+      const attributes = getInfoFromInfoBox(infoBox, { title: 'Attribute' });
+      const fields = getInfoFromInfoBox(infoBox, { title: 'Field' });
+
+      //const nameDubs = getInfoFromInfoBox(nameTable, { text: 'Dub:' });
 
       const weightTr = infoBox.find('td a[title="Weight"]').closest('tr');
       const weightTgText = weightTr.find('td').eq(1).text().trim().replace('\n', '');
@@ -219,32 +309,72 @@ class DigimonScraperScraper {
 
       const categorieAs = infoBox.find('th a[title^="Category:"]');
 
-      const categories: { name: string; img: string; title?: string; href?: string }[] = [];
+      const preCategories: {
+        id: string;
+        name: string;
+        img?: string;
+        title?: string;
+        href?: string;
+        downloadImageUrl: string;
+      }[] = [];
       categorieAs.each((i, e) => {
+        const catId = hrefToId($(e).attr('href')?.trim().replace('Category:', ''));
         const name = $(e).attr('title')?.trim().replace('Category:', '');
-        const img = $(e).find('img').attr('src');
-        if (name && img) {
-          categories.push({
+        const imgSrc = $(e).find('img').attr('src');
+
+        if (name && catId && imgSrc) {
+          const downloadImageUrl = this.baseUrl + imgSrc;
+          const imgFilename = imgSrc ? `img/${catId}.png` : undefined;
+
+          preCategories.push({
+            id: catId,
             name: name,
-            img: this.baseUrl + img,
+            img: imgFilename,
             title: $(e).attr('title'),
             href: this.baseUrl + $(e).attr('href'),
+            downloadImageUrl,
           });
         }
       });
 
+      const categories: { id: string; name: string; img?: string; title?: string; href?: string }[] = await Promise.all(
+        preCategories.map(async (cat) => {
+          if (cat.downloadImageUrl) {
+            const downloadFilename = await downloadImage(cat.downloadImageUrl);
+            if (downloadFilename && cat.img) {
+              fs.copyFile(downloadFilename, resolve(__dirname, cat.img), (err) => {
+                if (err) throw err;
+              });
+            }
+          }
+
+          return {
+            id: cat.id,
+            name: cat.name,
+            img: cat.img,
+            title: cat.title,
+            href: cat.href,
+          };
+        })
+      );
+
       const evolvesFromLi = $('#Evolves_From').closest('h2').next('ul').children('li');
       const evolvesFrom: DigimonDataEvolveElement[] = [];
       evolvesFromLi.each((i, e) => {
-        const id = $(e).find('a').attr('href');
+        const id = hrefToId($(e).find('a').attr('href'));
         const title = $(e).find('a').attr('title');
         const canon = $(e).find('b').length > 0;
         if (id && title) {
+          const line = $(e)
+            .text()
+            .trim()
+            .replaceAll('\n', '')
+            .replaceAll(/\s+/gm, ' ')
+            .replaceAll(/\\[[0-9]+\\]/gm, '');
+
           const note = (() => {
-            const matches = $(e)
-              .text()
-              .match(/\\((.*)\\)/);
-            if (matches && matches.length) {
+            const matches = line.match(/\\((.*)\\)/);
+            if (matches) {
               return matches[0].replace(title?.trim(), '').replaceAll(/\\[[0-9]+\\]/g, '');
             }
 
@@ -257,10 +387,7 @@ class DigimonScraperScraper {
             url: this.baseUrl + $(e).find('a').attr('href'),
             canon: canon,
             note: note,
-            line: $(e)
-              .text()
-              .trim()
-              .replaceAll(/\\[[0-9]+\\]/g, ''),
+            line: line,
           } as DigimonDataEvolveElement);
         }
       });
@@ -268,16 +395,21 @@ class DigimonScraperScraper {
       const evolvesToLi = $('#Evolves_To').closest('h2').next('ul').children('li');
       const evolvesTo: DigimonDataEvolveElement[] = [];
       evolvesToLi.each((i, e) => {
-        const id = $(e).find('a').attr('href');
+        const id = hrefToId($(e).find('a').attr('href'));
         const title = $(e).find('a').attr('title');
         const canon = $(e).find('b').length > 0;
         if (id && title) {
+          const line = $(e)
+            .text()
+            .trim()
+            .replaceAll('\n', '')
+            .replaceAll(/\s+/gm, ' ')
+            .replaceAll(/\\[[0-9]+\\]/gm, '');
+
           const note = (() => {
-            const matches = $(e)
-              .text()
-              .match(/\\(.*\\)/);
-            if (matches && matches.length === 1) {
-              return matches[0].replace(title?.trim(), '').replaceAll(/\\[[0-9]+\\]/g, '');
+            const matches = line.match(/\\(.*\\)/);
+            if (matches) {
+              return matches[0].replace(title?.trim(), '').replaceAll(/\\[[A-Z\s]?[0-9]+\\]/g, '');
             }
 
             return undefined;
@@ -297,31 +429,45 @@ class DigimonScraperScraper {
         }
       });
 
-      console.info(`Scrapped Digimon: ${name} (${levels}) [${attributes}]`);
+      const id = hrefToId(url.replace(this.baseUrl + '/', ''));
+      if (id) {
+        const downloadImageUrl = this.baseUrl + img.attr('src');
+        const downloadFilename = await downloadImage(downloadImageUrl);
+        const imgFilename = `img/${id.replace('/', '')}.png`;
+        if (downloadFilename) {
+          fs.copyFile(downloadFilename, resolve(__dirname, imgFilename), (err) => {
+            if (err) throw err;
+          });
+        }
 
-      return {
-        href: url,
-        id: url.replace(this.baseUrl, ''),
-        name,
-        description: descriptionTd
-          .text()
-          .trim()
-          .replace(/'^. Japanese'/, '')
-          .replace('⇨ Japanese', ''),
-        img: this.baseUrl + img.attr('src'),
-        levels: levels,
-        level: levels.find((level) => level.match(/(Baby I|Baby II|Child|Adult|Perfect|Ultimate)/)) as DigimonLevel,
-        classes: digimonClasses,
-        digimonClass: digimonClasses.length >= 1 ? digimonClasses[0] : undefined,
-        types: types,
-        attributes: attributes,
-        fields: fields,
-        minWeights: minWeights,
-        minWeight: minWeights.length ? Math.min(...minWeights) : undefined,
-        categories: categories,
-        evolvesFrom: evolvesFrom.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game)/)),
-        evolvesTo: evolvesTo.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game)/)),
-      } as DigimonData;
+        console.info(`Scrapped Digimon: ${name} (${levels}) [${attributes}]`);
+
+        return {
+          href: url,
+          id: id,
+          name,
+          names: {}, ///< @TODO: get dub names
+          description: descriptionTd
+            .text()
+            .trim()
+            .replace(/'^. Japanese'/, '')
+            .replace('⇨ Japanese', ''),
+          img: imgFilename,
+          imgOrigin: downloadImageUrl,
+          levels: levels,
+          level: levels.find((level) => level.match(/(Baby I|Baby II|Child|Adult|Perfect|Ultimate)/)) as DigimonLevel,
+          classes: digimonClasses,
+          digimonClass: digimonClasses.length >= 1 ? digimonClasses[0] : undefined,
+          types: types,
+          attributes: attributes,
+          fields: fields,
+          minWeights: minWeights,
+          minWeight: minWeights.length ? Math.min(...minWeights) : undefined,
+          categories: categories,
+          evolvesFrom: evolvesFrom.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game|Category:)/)),
+          evolvesTo: evolvesTo.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game|Category:)/)),
+        } as DigimonData;
+      }
     }
 
     return undefined;
@@ -336,7 +482,7 @@ class DigimonScraperScraper {
     $('.mw-category-group a').each((i, e) => {
       if ($(e).attr('href') && $(e).attr('title')) {
         ret.push({
-          id: $(e).attr('href') ?? '',
+          id: $(e).attr('href')?.replace('/', '') ?? '',
           href: this.baseUrl + $(e).attr('href'),
           name: $(e).attr('title')?.trim() ?? '',
         });
@@ -428,8 +574,11 @@ export async function main() {
   const scraper = new DigimonScraperScraper();
 
   // test
-  //console.debug(await scraper.scrapeDigimon("https://wikimon.net/Agumon"));
-  //console.debug(await scraper.scrapeDigimon("https://wikimon.net/Agnimon"));
+  //console.debug(await scraper.scrapeDigimon('https://wikimon.net/Agumon'));
+  //console.debug(await scraper.scrapeDigimon('https://wikimon.net/Agumon_(2006_Anime_Version)'));
+  //console.debug(await scraper.scrapeDigimon('https://wikimon.net/Agumon_(Black)_(2006_Anime_Version)'));
+  //console.debug(await scraper.scrapeDigimon('https://wikimon.net/Agnimon'));
+  //return;
 
   const baby1List = await getBaby1DigimonList();
   console.info(`Get Baby I Digimon List: ${baby1List.length}`);

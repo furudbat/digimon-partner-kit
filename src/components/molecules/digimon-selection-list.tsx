@@ -169,7 +169,7 @@ export function DigimonSelectionList({
         gotoDigimonLevel={gotoDigimonLevel}
         isDigimonLevelSet={isDigimonLevelSet}
       />
-      <div className="text-center mt-2">
+      <div className="text-center mt-2 w-full md:w-72">
         {selectableDigimons && isSelectable(currentSelectionLevel) && (
           <h3 className="pb-2">Select {currentSelectionLevel} Level</h3>
         )}

@@ -16,7 +16,7 @@ export function MainFooter() {
             .{' '}
             <em>
               This Project is a free fan site and not affiliated with Bandai. Digimon and other media relating to the
-              franchise are registered trademarks by Bandai. Thanks to{' '}
+              franchise are registered trademarks by Bandai. Images from{' '}
               <Link href="https://wikimon.net/" target="_blank" rel="noreferrer">
                 https://wikimon.net/
               </Link>

@@ -394,35 +394,49 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
+    // for backward compatible ids
+    const hrefToId = (href?: string) => {
+      return href
+        ?.replace('/', '')
+        .replaceAll(' ', '_')
+        .replaceAll('+', '_')
+        .replaceAll("'", '')
+        .replace(':', '_')
+        .replaceAll('(', '')
+        .replaceAll(')', '')
+        .replace('.', '_')
+        .replaceAll('__', '_');
+    };
+
     if (searchParams) {
       setBaby1Id(
         digimons && searchParams.has('baby1') && (searchParams!.get('baby1') || '') in digimons
-          ? searchParams.get('baby1') || undefined
+          ? hrefToId(searchParams.get('baby1') || undefined)
           : undefined
       );
       setBaby2Id(
         digimons && searchParams.has('baby2') && (searchParams.get('baby2') || '') in digimons
-          ? searchParams.get('baby2') || undefined
+          ? hrefToId(searchParams.get('baby2') || undefined)
           : undefined
       );
       setChildId(
         digimons && searchParams.has('child') && (searchParams.get('child') || '') in digimons
-          ? searchParams.get('child') || undefined
+          ? hrefToId(searchParams.get('child') || undefined)
           : undefined
       );
       setAdultId(
         digimons && searchParams.has('adult') && (searchParams.get('adult') || '') in digimons
-          ? searchParams.get('adult') || undefined
+          ? hrefToId(searchParams.get('adult') || undefined)
           : undefined
       );
       setPerfectId(
         digimons && searchParams.has('perfect') && (searchParams.get('perfect') || '') in digimons
-          ? searchParams.get('perfect') || undefined
+          ? hrefToId(searchParams.get('perfect') || undefined)
           : undefined
       );
       setUltimateId(
         digimons && searchParams.has('ultimate') && (searchParams.get('ultimate') || '') in digimons
-          ? searchParams.get('ultimate') || undefined
+          ? hrefToId(searchParams.get('ultimate') || undefined)
           : undefined
       );
     }
@@ -455,12 +469,7 @@ const HomePage = () => {
     <div>
       <div className="mx-auto my-2 px-2">
         <div className="flex items-center w-full">
-          <div
-            className="mx-auto place-self-center"
-            id="digimonTimeLine"
-            ref={printRef}
-            style={{ height: 400, maxHeight: 1000, maxWidth: 1777 }}
-          >
+          <div className="mx-auto place-self-center" id="digimonTimeLine" ref={printRef}>
             <DigimonTimeline
               selectDigimonLevel={selectDigimonLevel}
               clearDigimonLevel={clearDigimonLevel}
@@ -477,7 +486,7 @@ const HomePage = () => {
           </div>
         </div>
         <div className="container mx-auto max-w-screen-lg mt-6" style={{ minHeight: '28rem' }}>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
               {!currentSelectionLevel && !currentDigimon && (
                 <h2 className="pb-2">Select the Level, then the Digimon</h2>
@@ -557,18 +566,18 @@ const HomePage = () => {
               </div>
             </div>
           </div>
-
-          <div className="relative h-32 w-32 z-90 bottom-0.5 right-0 p-4 m-20">
-            <Button
-              id="to-top-button"
-              onClick={() => goToTop()}
-              title="Go To Top"
-              className="absolute visible md:invisible items-center rounded-full w-16 h-16"
-            >
-              <FontAwesomeIcon icon={faArrowUp} size="2x" />
-            </Button>
-          </div>
         </div>
+      </div>
+
+      <div className="fixed h-32 w-32 z-90 bottom-0 right-0 p-4 m-2 items-center">
+        <Button
+          id="to-top-button"
+          onClick={() => goToTop()}
+          title="Go To Top"
+          className="visible md:invisible items-center rounded-full w-16 h-16"
+        >
+          <FontAwesomeIcon icon={faArrowUp} size="2x" />
+        </Button>
       </div>
     </div>
   );

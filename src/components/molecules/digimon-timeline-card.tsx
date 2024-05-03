@@ -26,6 +26,7 @@ export function DigimonTimelineCard({
   printMode?: boolean;
 }) {
   const { fontSize, ref } = useFitText();
+  //const pathname = usePathname();
 
   const bg = (() => {
     if (disabled && !printMode) {
@@ -50,10 +51,8 @@ export function DigimonTimelineCard({
           <Button color="light" onClick={() => onClick && onClick()} disabled={data === undefined && disabled}>
             {data && (
               <Image
-                /*crossOrigin="anonymous"*/
-                unoptimized
                 className="rounded-lg w-auto max-w-full max-h-48"
-                src={data.img}
+                src={window.location.pathname + '/' + data.img}
                 width={imgSize}
                 height={imgSize}
                 alt={data.name}
