@@ -57,3 +57,4 @@ Digimon and other media relating to the franchise are registered trademarks by [
 - https://digimon-api.com/
 - https://github.com/tvanantwerp/scraper-example
 - https://www.youtube.com/watch?v=nwgzHrkBZis
+- https://www.grindosaur.com/
