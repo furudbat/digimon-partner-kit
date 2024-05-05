@@ -1,17 +1,21 @@
+'use client';
+
 import { List } from 'flowbite-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMediaQuery } from 'react-responsive';
 import { DigimonData } from 'src/models/digimon';
 
+import { MediaQueryMobileBreakpoint } from '../constants';
+
 export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: string | number }) {
-  const isMobile = useMediaQuery({ maxWidth: 768 });
+  const isMobile = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
   //const pathname = usePathname();
 
   return (
     <div
       className="max-w-full border border-gray-200 rounded-lg shadow p-4"
-      style={{ minHeight: !isMobile ? height ?? '35rem' : undefined }}
+      style={{ minHeight: !isMobile ? height ?? '32rem' : undefined }}
     >
       <div className="grid grid-flow-row-dense md:grid-cols-2 md:grid-rows-1 px-2">
         <div className="items-center mt-11">
@@ -23,7 +27,7 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
             alt={data.name}
           />
         </div>
-        <div className="px-2 md:items-start ml-4 overflow-y-auto" style={{ height: !isMobile ? '24rem' : undefined }}>
+        <div className="px-2 md:items-start ml-4 overflow-y-auto" style={{ height: !isMobile ? '26rem' : undefined }}>
           <h5 className="text-2xl pb-2 font-bold tracking-tight text-gray-900 dark:text-white">
             <Link href={data.href} title={data.name} target="_blank" rel="noreferrer">
               {data.name}
