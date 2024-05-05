@@ -11,7 +11,7 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
   return (
     <div
       className="max-w-full border border-gray-200 rounded-lg shadow p-4"
-      style={{ minHeight: !isMobile ? height ?? '35rem' : undefined }}
+      style={{ minHeight: !isMobile ? height ?? '32rem' : undefined }}
     >
       <div className="grid grid-flow-row-dense md:grid-cols-2 md:grid-rows-1 px-2">
         <div className="items-center mt-11">
@@ -23,7 +23,7 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
             alt={data.name}
           />
         </div>
-        <div className="px-2 md:items-start ml-4 overflow-y-auto" style={{ height: !isMobile ? '24rem' : undefined }}>
+        <div className="px-2 md:items-start ml-4 overflow-y-auto" style={{ height: !isMobile ? '26rem' : undefined }}>
           <h5 className="text-2xl pb-2 font-bold tracking-tight text-gray-900 dark:text-white">
             <Link href={data.href} title={data.name} target="_blank" rel="noreferrer">
               {data.name}

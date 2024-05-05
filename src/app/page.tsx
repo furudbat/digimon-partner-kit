@@ -467,7 +467,7 @@ const HomePage = () => {
     }
   }, [inited, searchParams, baby1, baby2, child, adult, perfect, ultimate, isSelectable, currentSelectionLevel]);
 
-  const InfoBoxHeight = '36rem';
+  const InfoBoxHeight = '32rem';
 
   return (
     <div>
@@ -489,7 +489,7 @@ const HomePage = () => {
             />
           </div>
         </div>
-        <div className="container mx-auto max-w-screen-lg mt-6" style={{ minHeight: '28rem' }}>
+        <div className="container mx-auto max-w-screen-lg mt-4 md:mt-6" style={{ minHeight: '28rem' }}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
               {!currentSelectionLevel && !currentDigimon && (
@@ -513,7 +513,7 @@ const HomePage = () => {
                   freeMode={freeMode}
                 />
               </div>
-              <div className="w-full flex mx-2 mt-4 items-center">
+              <div className="w-full flex mx-2 mt-2 items-center">
                 {selectedLevels.length > 0 && (
                   <Button color="failure" onClick={() => clearAllDigimonLevels()} className="items-center mx-1">
                     Rest All
@@ -573,7 +573,7 @@ const HomePage = () => {
         </div>
       </div>
 
-      <div className="fixed h-32 w-32 z-90 bottom-0 right-0 p-4 m-2 items-center">
+      <div className="fixed h-32 w-32 z-90 bottom-0 right-0 p-12 m-2 items-center">
         <Button
           id="to-top-button"
           onClick={() => goToTop()}

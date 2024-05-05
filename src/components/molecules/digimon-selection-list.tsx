@@ -168,7 +168,7 @@ export function DigimonSelectionList({
   );
 
   return (
-    <div className="dark:text-white snap-start md:snap-none" id="digimonSelectionList">
+    <div className="dark:text-white snap-start md:snap-none pt-4" id="digimonSelectionList">
       <Element name="digimonSelectionList"></Element>
       <LevelSelectionButtonGroup
         nextDigimonLevel={nextDigimonLevel}

@@ -6,7 +6,7 @@ import Link from 'next/link';
 export function MainFooter() {
   return (
     <Footer container className="footer bottom-0 inset-x-0 rounded-none shadow-none h-14 mt-4 md:mt-6 lg:mt-8">
-      <div className="mx-6 w-full m-4">
+      <div className="m-2 md:mx-6 w-full">
         <div className="sm:flex items-center sm:justify-between w-full h-14">
           <span className="text-sm text-gray-500 dark:text-gray-400">
             © 2024{' '}

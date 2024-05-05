@@ -44,12 +44,12 @@ export function DigimonTimelineCard({
 
   return (
     <Card
-      className={cn('w-60 py-4 px-1 items-center', bg, highlight ? 'border-2' : 'border')}
-      style={{ height: imgSize + 86 }}
+      className={cn('w-60 py-4 px-1 items-center', bg, highlight ? 'border-2' : 'border', printMode ? 'shadow-sm' : '')}
+      style={{ height: imgSize + 78 }}
       renderImage={() => {
         return (
           <div
-            className={cn(data || !disabled ? 'cursor-pointer' : 'cursor-not-allowed')}
+            className={cn('flex items-center', data || !disabled ? 'cursor-pointer' : 'cursor-not-allowed')}
             onClick={() => {
               if ((data || !disabled) && onClick) {
                 onClick();
@@ -85,37 +85,34 @@ export function DigimonTimelineCard({
       }}
     >
       {/*Can not customize gap in Card Body, use negative margin */}
-      <div className="px-2" style={{ marginTop: -12 }}>
-        <h5 className={cn('text-xl font-medium', !printMode ? 'truncate' : 'h-14 text-wrap overflow-hidden')}>
-          {printMode && (
-            <div ref={ref} style={{ fontSize }} className="h-14">
-              {data?.name}
+      <div className="w-56 px-2 mb-2" style={{ marginTop: -10 }}>
+        {data && !printMode && (
+          <Link
+            href={data.href}
+            target="_blank"
+            className="items-center text-center text-blue-800 dark:text-blue-400 hover:underline"
+            rel="noreferrer"
+          >
+            <div className={cn('text-xl font-medium', !printMode ? 'truncate' : 'h-14 text-wrap overflow-hidden')}>
+              {data.name}
             </div>
-          )}
-          {!printMode && data?.name}
-        </h5>
-        <p className="text-sm">{data?.level || title}</p>
+          </Link>
+        )}
+        {data && printMode && (
+          <h5 className={cn('text-xl font-medium', !printMode ? 'truncate' : 'h-14 text-wrap overflow-hidden')}>
+            <div ref={ref} style={{ fontSize }} className="h-14">
+              {data.name}
+            </div>
+          </h5>
+        )}
       </div>
       <div
         className="grid grid-flow-row-dense grid-cols-3 grid-rows-1 items-center px-2 gap-1"
-        style={{ marginTop: -10 }}
+        style={{ marginTop: printMode ? -18 : -14 }}
       >
-        {!printMode && (
-          <div className="col-span-2">
-            <p className="text-xs justify-self-center">
-              {data && (
-                <Link
-                  href={data.href}
-                  target="_blank"
-                  className="items-center text-center text-blue-800 dark:text-blue-400 hover:underline"
-                  rel="noreferrer"
-                >
-                  [Go To Wikimon]
-                </Link>
-              )}
-            </p>
-          </div>
-        )}
+        <div className="col-span-2">
+          <p className="text-sm">{data?.level || title}</p>
+        </div>
         {!printMode && (
           <div>
             {data && disabled && (
