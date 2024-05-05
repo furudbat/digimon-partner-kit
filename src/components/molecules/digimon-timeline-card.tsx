@@ -44,11 +44,18 @@ export function DigimonTimelineCard({
 
   return (
     <Card
-      className={cn('w-60', bg, highlight ? 'border-2' : 'border')}
+      className={cn('w-60 py-4 px-1 items-center', bg, highlight ? 'border-2' : 'border')}
       style={{ height: imgSize + 86 }}
       renderImage={() => {
         return (
-          <Button color="light" onClick={() => onClick && onClick()} disabled={data === undefined && disabled}>
+          <div
+            className={cn(data || !disabled ? 'cursor-pointer' : 'cursor-not-allowed')}
+            onClick={() => {
+              if ((data || !disabled) && onClick) {
+                onClick();
+              }
+            }}
+          >
             {data && (
               <Image
                 className="rounded-lg w-auto max-w-full max-h-48"
@@ -73,7 +80,7 @@ export function DigimonTimelineCard({
                 No Data
               </p>
             )}
-          </Button>
+          </div>
         );
       }}
     >

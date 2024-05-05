@@ -155,7 +155,10 @@ export function DigimonSelectionList({
   );
 
   const filteredSelectableDigimons = React.useMemo(
-    () => digimonList?.filter((digimon) => digimon.name.toLowerCase().includes(digimonSearch.toLowerCase())),
+    () =>
+      digimonSearch
+        ? digimonList?.filter((digimon) => digimon.name.toLowerCase().includes(digimonSearch.toLowerCase()))
+        : digimonList,
     [digimonList, digimonSearch]
   );
 

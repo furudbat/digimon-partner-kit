@@ -695,48 +695,55 @@ export async function main() {
 
   // clean up evols
   db.digimons = db.digimons.map((digimon) => {
-    const evolvesFrom = digimon.evolvesFrom.filter((evo) => {
-      const evoDigimon = db.digimons.find((d) => d.id === evo.id);
-      if (evoDigimon) {
-        switch (digimon.level) {
-          case 'Baby I':
-            return false;
-          case 'Baby II':
-            return evoDigimon?.level === 'Baby I';
-          case 'Child':
-            return evoDigimon?.level === 'Baby II';
-          case 'Adult':
-            return evoDigimon?.level === 'Child';
-          case 'Perfect':
-            return evoDigimon?.level === 'Adult';
-          case 'Ultimate':
-            return evoDigimon?.level === 'Perfect';
+    const evolvesFrom = filterUnique(
+      digimon.evolvesFrom.filter((evo) => {
+        const evoDigimon = db.digimons.find((d) => d.id === evo.id);
+        if (evoDigimon) {
+          switch (digimon.level) {
+            case 'Baby I':
+              return false;
+            case 'Baby II':
+              return evoDigimon?.level === 'Baby I';
+            case 'Child':
+              return evoDigimon?.level === 'Baby II';
+            case 'Adult':
+              return evoDigimon?.level === 'Child';
+            case 'Perfect':
+              return evoDigimon?.level === 'Adult';
+            case 'Ultimate':
+              return evoDigimon?.level === 'Perfect';
+          }
         }
-      }
 
-      return false;
-    });
-    const evolvesTo = digimon.evolvesTo.filter((evo) => {
-      const evoDigimon = db.digimons.find((d) => d.id === evo.id);
-      if (evoDigimon) {
-        switch (digimon.level) {
-          case 'Baby I':
-            return evoDigimon?.level === 'Baby II';
-          case 'Baby II':
-            return evoDigimon?.level === 'Child';
-          case 'Child':
-            return evoDigimon?.level === 'Adult';
-          case 'Adult':
-            return evoDigimon?.level === 'Perfect';
-          case 'Perfect':
-            return evoDigimon?.level === 'Ultimate';
-          case 'Ultimate':
-            return false;
+        return false;
+      }),
+      (a, b) => a.id === b.id
+    );
+
+    const evolvesTo = filterUnique(
+      digimon.evolvesTo.filter((evo) => {
+        const evoDigimon = db.digimons.find((d) => d.id === evo.id);
+        if (evoDigimon) {
+          switch (digimon.level) {
+            case 'Baby I':
+              return evoDigimon?.level === 'Baby II';
+            case 'Baby II':
+              return evoDigimon?.level === 'Child';
+            case 'Child':
+              return evoDigimon?.level === 'Adult';
+            case 'Adult':
+              return evoDigimon?.level === 'Perfect';
+            case 'Perfect':
+              return evoDigimon?.level === 'Ultimate';
+            case 'Ultimate':
+              return false;
+          }
         }
-      }
 
-      return false;
-    });
+        return false;
+      }),
+      (a, b) => a.id === b.id
+    );
 
     return {
       ...digimon,
