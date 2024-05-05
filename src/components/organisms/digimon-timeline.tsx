@@ -1,3 +1,5 @@
+'use client';
+
 import { Timeline } from 'flowbite-react';
 import React from 'react';
 import { useMediaQuery } from 'react-responsive';
@@ -5,6 +7,7 @@ import { scroller } from 'react-scroll';
 import { Element } from 'react-scroll';
 import { DigimonLevel, DigimonData } from 'src/models/digimon';
 
+import { MediaQueryMobileBreakpoint } from '../constants';
 import { DigimonTimelineCard } from '../molecules/digimon-timeline-card';
 
 export function DigimonTimeline({
@@ -32,7 +35,7 @@ export function DigimonTimeline({
   currentSelectionLevel: DigimonLevel;
   printMode?: boolean;
 }) {
-  const isMobile = useMediaQuery({ maxWidth: 768 });
+  const isMobile = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
 
   const onSelectCard = React.useCallback(
     (level: DigimonLevel) => {

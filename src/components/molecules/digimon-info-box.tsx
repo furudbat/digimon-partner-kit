@@ -1,11 +1,15 @@
+'use client';
+
 import { List } from 'flowbite-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMediaQuery } from 'react-responsive';
 import { DigimonData } from 'src/models/digimon';
 
+import { MediaQueryMobileBreakpoint } from '../constants';
+
 export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: string | number }) {
-  const isMobile = useMediaQuery({ maxWidth: 768 });
+  const isMobile = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
   //const pathname = usePathname();
 
   return (

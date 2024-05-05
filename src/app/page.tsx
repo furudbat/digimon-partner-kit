@@ -6,14 +6,18 @@ import { Button, Popover, Tooltip } from 'flowbite-react';
 import { useSearchParams } from 'next/navigation';
 import React from 'react';
 import { useEffect } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import { scroller } from 'react-scroll';
 import { DigimonDB, DigimonData, DigimonLevel } from 'src/models/digimon';
 
+import { MediaQueryMobileBreakpoint } from '@/components/constants';
 import { DigimonInfoBox } from '@/components/molecules/digimon-info-box';
 import { DigimonSelectionList } from '@/components/molecules/digimon-selection-list';
 import { DigimonTimeline } from '@/components/organisms/digimon-timeline';
 
 const HomePage = () => {
+  const isMobile = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
+
   const searchParams = useSearchParams();
   const [openCopyPopover, setOpenCopyPopover] = React.useState(false);
   const [inited, setInited] = React.useState(false);
@@ -573,16 +577,18 @@ const HomePage = () => {
         </div>
       </div>
 
-      <div className="fixed h-32 w-32 z-90 bottom-0 right-0 p-12 m-2 items-center">
-        <Button
-          id="to-top-button"
-          onClick={() => goToTop()}
-          title="Go To Top"
-          className="visible md:invisible items-center rounded-full w-16 h-16"
-        >
-          <FontAwesomeIcon icon={faArrowUp} size="2x" />
-        </Button>
-      </div>
+      {isMobile && (
+        <div className="fixed h-32 w-32 z-90 bottom-0 right-0 p-12 m-2 items-center">
+          <Button
+            id="to-top-button"
+            onClick={() => goToTop()}
+            title="Go To Top"
+            className="visible md:invisible items-center rounded-full w-16 h-16"
+          >
+            <FontAwesomeIcon icon={faArrowUp} size="2x" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
