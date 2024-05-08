@@ -1,3 +1,5 @@
+'use client';
+
 import { Button, Card } from 'flowbite-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -65,9 +67,14 @@ export function DigimonTimelineCard({
                 alt={data.name}
               />
             )}
-            {!data && !printMode && !disabled && (
+            {!data && !printMode && !disabled && !selected && (
               <p className={`py-4 text-lg font-normal self-center`} style={{ height: imgSize - 48 }}>
                 Click Me to Select
+              </p>
+            )}
+            {!data && !printMode && !disabled && selected && (
+              <p className={`py-4 px-2 text-lg font-normal self-center`} style={{ height: imgSize - 48 }}>
+                Select Digimon in the list below
               </p>
             )}
             {!data && !printMode && disabled && (

@@ -23,66 +23,75 @@ function LevelSelectionButtonGroup({
   gotoDigimonLevel: (level: DigimonLevel) => void;
   isDigimonLevelSet: (levels: DigimonLevel[]) => boolean;
 }) {
-  if (prevDigimonLevel && nextDigimonLevel) {
-    return (
-      <div className="flex justify-center md:w-72">
-        <div className="inline-flex" role="group">
-          <Button
-            outline
-            color="gray"
-            disabled={!isSelectable(prevDigimonLevel) && !isDigimonLevelSet([prevDigimonLevel])}
-            onClick={() => gotoDigimonLevel(prevDigimonLevel)}
-            className="align-start text-center items-center rounded-none rounded-l md:w-36"
-          >
-            <FontAwesomeIcon icon={faArrowLeft} className="mx-1 my-1 inline-block align-middle" />
-            <span className="inline-block align-middle">{prevDigimonLevel}</span>
-          </Button>
-          <Button
-            outline
-            color="gray"
-            disabled={!isSelectable(nextDigimonLevel) && !isDigimonLevelSet([nextDigimonLevel])}
-            onClick={() => gotoDigimonLevel(nextDigimonLevel)}
-            className="align-end text-center items-center rounded-none rounded-r md:w-36"
-          >
-            <span className="inline-block align-middle">{nextDigimonLevel}</span>
-            <FontAwesomeIcon icon={faArrowRight} className="mx-1 my-1 inline-block align-middle" />
-          </Button>
+  const buttonGroup = React.useMemo(
+    () =>
+      prevDigimonLevel &&
+      nextDigimonLevel && (
+        <div className="flex justify-center w-full md:w-72">
+          <div className="grow inline-flex" role="group">
+            <Button
+              outline
+              color="gray"
+              disabled={!isSelectable(prevDigimonLevel) && !isDigimonLevelSet([prevDigimonLevel])}
+              onClick={() => gotoDigimonLevel(prevDigimonLevel)}
+              className="align-start text-center items-center rounded-none rounded-l w-2/4 md:w-36"
+            >
+              <FontAwesomeIcon icon={faArrowLeft} className="mx-1 my-1 inline-block align-middle" />
+              <span className="inline-block align-middle">{prevDigimonLevel}</span>
+            </Button>
+            <Button
+              outline
+              color="gray"
+              disabled={!isSelectable(nextDigimonLevel) && !isDigimonLevelSet([nextDigimonLevel])}
+              onClick={() => gotoDigimonLevel(nextDigimonLevel)}
+              className="align-end text-center items-center rounded-none rounded-r w-2/4 md:w-36"
+            >
+              <span className="inline-block align-middle">{nextDigimonLevel}</span>
+              <FontAwesomeIcon icon={faArrowRight} className="mx-1 my-1 inline-block align-middle" />
+            </Button>
+          </div>
         </div>
-      </div>
-    );
-  }
+      ),
+    [prevDigimonLevel, nextDigimonLevel, isSelectable, isDigimonLevelSet, gotoDigimonLevel]
+  );
 
-  if (prevDigimonLevel) {
-    return (
-      <Button
-        outline
-        color="gray"
-        disabled={!isSelectable(prevDigimonLevel) && !isDigimonLevelSet([prevDigimonLevel])}
-        onClick={() => gotoDigimonLevel(prevDigimonLevel)}
-        className="text-center items-center w-full md:w-72"
-      >
-        <FontAwesomeIcon icon={faArrowLeft} className="mx-1 my-1 inline-block align-middle" />
-        <span className="inline-block align-middle">{prevDigimonLevel}</span>
-      </Button>
-    );
-  }
+  const prevDigimonLevelButton = React.useMemo(
+    () =>
+      prevDigimonLevel &&
+      !nextDigimonLevel && (
+        <Button
+          outline
+          color="gray"
+          disabled={!isSelectable(prevDigimonLevel) && !isDigimonLevelSet([prevDigimonLevel])}
+          onClick={() => gotoDigimonLevel(prevDigimonLevel)}
+          className="text-center items-center w-full md:w-72"
+        >
+          <FontAwesomeIcon icon={faArrowLeft} className="mx-1 my-1 inline-block align-middle" />
+          <span className="inline-block align-middle">{prevDigimonLevel}</span>
+        </Button>
+      ),
+    [prevDigimonLevel, nextDigimonLevel, isSelectable, isDigimonLevelSet, gotoDigimonLevel]
+  );
 
-  if (nextDigimonLevel) {
-    return (
-      <Button
-        outline
-        color="gray"
-        disabled={!isSelectable(nextDigimonLevel) && !isDigimonLevelSet([nextDigimonLevel])}
-        onClick={() => gotoDigimonLevel(nextDigimonLevel)}
-        className="text-center items-center w-full md:w-72"
-      >
-        <span className="inline-block align-middle">{nextDigimonLevel}</span>
-        <FontAwesomeIcon icon={faArrowRight} className="mx-1 my-1 inline-block align-middle" />
-      </Button>
-    );
-  }
+  const nextDigimonLevelButton = React.useMemo(
+    () =>
+      !prevDigimonLevel &&
+      nextDigimonLevel && (
+        <Button
+          outline
+          color="gray"
+          disabled={!isSelectable(nextDigimonLevel) && !isDigimonLevelSet([nextDigimonLevel])}
+          onClick={() => gotoDigimonLevel(nextDigimonLevel)}
+          className="text-center items-center w-full md:w-72"
+        >
+          <span className="inline-block align-middle">{nextDigimonLevel}</span>
+          <FontAwesomeIcon icon={faArrowRight} className="mx-1 my-1 inline-block align-middle" />
+        </Button>
+      ),
+    [prevDigimonLevel, nextDigimonLevel, isSelectable, isDigimonLevelSet, gotoDigimonLevel]
+  );
 
-  return <></>;
+  return buttonGroup || prevDigimonLevelButton || nextDigimonLevelButton;
 }
 
 export function DigimonSelectionList({

@@ -8,6 +8,7 @@ import React from 'react';
 import { useEffect } from 'react';
 import { useMediaQuery } from 'react-responsive';
 import { scroller } from 'react-scroll';
+import { Element } from 'react-scroll';
 import { DigimonDB, DigimonData, DigimonLevel } from 'src/models/digimon';
 
 import { MediaQueryMobileBreakpoint } from '@/components/constants';
@@ -29,6 +30,7 @@ const HomePage = () => {
   const [digimons, setDigimons] = React.useState<Record<string, DigimonData> | undefined>(undefined);
   const [currentSelectionLevel, setCurrentSelectionLevel] = React.useState<DigimonLevel>('Child');
 
+  /// @FIXME: can't use useLocalStorage for multiple tabs, open
   const [baby1Id, setBaby1Id] = React.useState<string | undefined>(undefined);
   const [baby2Id, setBaby2Id] = React.useState<string | undefined>(undefined);
   const [childId, setChildId] = React.useState<string | undefined>(undefined);
@@ -176,28 +178,31 @@ const HomePage = () => {
     setCurrentSelectionLevel(level);
   }, []);
 
-  const clearDigimonLevel = React.useCallback((level: DigimonLevel) => {
-    switch (level) {
-      case 'Baby I':
-        setBaby1Id(undefined);
-        break;
-      case 'Baby II':
-        setBaby2Id(undefined);
-        break;
-      case 'Child':
-        setChildId(undefined);
-        break;
-      case 'Adult':
-        setAdultId(undefined);
-        break;
-      case 'Perfect':
-        setPerfectId(undefined);
-        break;
-      case 'Ultimate':
-        setUltimateId(undefined);
-        break;
-    }
-  }, []);
+  const clearDigimonLevel = React.useCallback(
+    (level: DigimonLevel) => {
+      switch (level) {
+        case 'Baby I':
+          setBaby1Id(undefined);
+          break;
+        case 'Baby II':
+          setBaby2Id(undefined);
+          break;
+        case 'Child':
+          setChildId(undefined);
+          break;
+        case 'Adult':
+          setAdultId(undefined);
+          break;
+        case 'Perfect':
+          setPerfectId(undefined);
+          break;
+        case 'Ultimate':
+          setUltimateId(undefined);
+          break;
+      }
+    },
+    [setBaby1Id, setBaby2Id, setChildId, setAdultId, setPerfectId, setUltimateId]
+  );
 
   const clearAllDigimonLevels = React.useCallback(() => {
     setBaby1Id(undefined);
@@ -206,39 +211,45 @@ const HomePage = () => {
     setAdultId(undefined);
     setPerfectId(undefined);
     setUltimateId(undefined);
-  }, []);
+  }, [setBaby1Id, setBaby2Id, setChildId, setAdultId, setPerfectId, setUltimateId]);
 
   const selectDigimon = React.useCallback(
     (digimonId: string) => {
       switch (currentSelectionLevel) {
         case 'Baby I':
           setBaby1Id(digimonId);
+          if (digimonId) localStorage.setItem('baby1', digimonId);
           break;
         case 'Baby II': {
           setBaby2Id(digimonId);
           //if (digimon?.evolvesFrom.length === 1 && digimons) {
           //  setBaby1Id(newDigimon.evolvesFrom[0].id);
           //}
+          if (digimonId) localStorage.setItem('baby2', digimonId);
           break;
         }
         case 'Child':
           setChildId(digimonId);
+          if (digimonId) localStorage.setItem('child', digimonId);
           break;
         case 'Adult':
           setAdultId(digimonId);
+          if (digimonId) localStorage.setItem('adult', digimonId);
           break;
         case 'Perfect':
           setPerfectId(digimonId);
           //if (newDigimon?.evolvesTo.length === 1 && digimons) {
           //  setUltimate(newDigimon.evolvesTo[0].id);
           //}
+          if (digimonId) localStorage.setItem('perfect', digimonId);
           break;
         case 'Ultimate':
           setUltimateId(digimonId);
+          if (digimonId) localStorage.setItem('ultimate', digimonId);
           break;
       }
     },
-    [currentSelectionLevel]
+    [setBaby1Id, setBaby2Id, setChildId, setAdultId, setPerfectId, setUltimateId, currentSelectionLevel]
   );
 
   const selectableDigimons = React.useMemo<{ id: string; name: string; canon?: boolean }[] | undefined>(() => {
@@ -420,35 +431,35 @@ const HomePage = () => {
       setBaby1Id(
         digimons && searchParams.has('baby1') && (searchParams!.get('baby1') || '') in digimons
           ? hrefToId(searchParams.get('baby1') || undefined)
-          : undefined
+          : localStorage.getItem('baby1') || undefined
       );
       setBaby2Id(
         digimons && searchParams.has('baby2') && (searchParams.get('baby2') || '') in digimons
           ? hrefToId(searchParams.get('baby2') || undefined)
-          : undefined
+          : localStorage.getItem('baby2') || undefined
       );
       setChildId(
         digimons && searchParams.has('child') && (searchParams.get('child') || '') in digimons
           ? hrefToId(searchParams.get('child') || undefined)
-          : undefined
+          : localStorage.getItem('child') || undefined
       );
       setAdultId(
         digimons && searchParams.has('adult') && (searchParams.get('adult') || '') in digimons
           ? hrefToId(searchParams.get('adult') || undefined)
-          : undefined
+          : localStorage.getItem('adult') || undefined
       );
       setPerfectId(
         digimons && searchParams.has('perfect') && (searchParams.get('perfect') || '') in digimons
           ? hrefToId(searchParams.get('perfect') || undefined)
-          : undefined
+          : localStorage.getItem('perfect') || undefined
       );
       setUltimateId(
         digimons && searchParams.has('ultimate') && (searchParams.get('ultimate') || '') in digimons
           ? hrefToId(searchParams.get('ultimate') || undefined)
-          : undefined
+          : localStorage.getItem('ultimate') || undefined
       );
     }
-  }, [searchParams, digimons]);
+  }, [searchParams, digimons, setBaby1Id, setBaby2Id, setChildId, setAdultId, setPerfectId, setUltimateId]);
 
   useEffect(() => {
     if (!inited) {
@@ -475,6 +486,7 @@ const HomePage = () => {
 
   return (
     <div>
+      <Element name="mainPage"></Element>
       <div className="mx-auto my-2 px-2">
         <div className="flex items-center w-full">
           <div className="mx-auto place-self-center" id="digimonTimeLine" ref={printRef}>
