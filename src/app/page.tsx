@@ -9,12 +9,14 @@ import { useEffect } from 'react';
 import { useMediaQuery } from 'react-responsive';
 import { scroller } from 'react-scroll';
 import { Element } from 'react-scroll';
-import { DigimonDB, DigimonData, DigimonLevel } from 'src/models/digimon';
+import { DigimonDB, DigimonData, DigimonDataEvolveElement, DigimonLevel, DigimonListElement } from 'src/models/digimon';
 
 import { MediaQueryMobileBreakpoint } from '@/components/constants';
 import { DigimonInfoBox } from '@/components/molecules/digimon-info-box';
 import { DigimonSelectionList } from '@/components/molecules/digimon-selection-list';
 import { DigimonTimeline } from '@/components/organisms/digimon-timeline';
+
+import { getRandomFromArray } from '@/lib/utils';
 
 const HomePage = () => {
   const isMobile = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
@@ -396,6 +398,30 @@ const HomePage = () => {
   }, [printRef]);
   */
 
+  const randomize = React.useCallback(() => {
+    const getRandomDigimon = (lst: (DigimonDataEvolveElement | DigimonListElement)[] | undefined) => {
+      const id = getRandomFromArray(lst)?.id;
+
+      return digimons && id ? digimons[id] : undefined;
+    };
+
+    const child = getRandomDigimon(db?.lists.child);
+
+    const baby2 = getRandomDigimon(!freeMode ? child?.evolvesFrom : db?.lists.baby2);
+    const baby1 = getRandomDigimon(!freeMode ? baby2?.evolvesFrom : db?.lists.baby1);
+
+    const adult = getRandomDigimon(!freeMode ? child?.evolvesTo : db?.lists.adult);
+    const perfect = getRandomDigimon(!freeMode ? adult?.evolvesTo : db?.lists.perfect);
+    const ultimate = getRandomDigimon(!freeMode ? perfect?.evolvesTo : db?.lists.ultimate);
+
+    setBaby1Id(baby1?.id);
+    setBaby2Id(baby2?.id);
+    setChildId(child?.id);
+    setAdultId(adult?.id);
+    setPerfectId(perfect?.id);
+    setUltimateId(ultimate?.id);
+  }, [freeMode, digimons, db]);
+
   useEffect(() => {
     import('../db/digimon.db.json').then((data) => {
       const db = data.default as DigimonDB;
@@ -516,7 +542,7 @@ const HomePage = () => {
               </div>
             </div>
             <div className="order-first md:order-last px-4 md:px-2">
-              <div style={{ height: '28rem' }}>
+              <div style={{ height: '27rem' }}>
                 <DigimonSelectionList
                   selectableDigimons={selectableDigimons}
                   allSelectableDigimons={allSelectableDigimons}
@@ -552,14 +578,12 @@ const HomePage = () => {
                   </Popover>
                 )}
               </div>
-              {/*<div className="w-full flex mx-2 mt-4 items-center">
-                {selectedLevels.length > 0 && (
-                  <Button color="success" onClick={() => exportTimelineToImage()} className="items-center mx-1">
-                    Export to Image
-                  </Button>
-                )}
-              </div>*/}
-              <div className="w-full flex mx-2 mt-4 gap-4 items-center">
+              <div className="w-full flex mx-2 mt-2 items-center">
+                <Button gradientMonochrome="purple" onClick={() => randomize()} className="items-center mx-1">
+                  Randomize
+                </Button>
+              </div>
+              <div className="w-full flex mx-2 mt-6 gap-4 items-center">
                 <Tooltip content="Select any Digimon" placement="bottom">
                   <label className="inline-flex items-center cursor-pointer">
                     <input

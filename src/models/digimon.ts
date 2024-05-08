@@ -1,4 +1,4 @@
-interface DigimonListElement {
+export interface DigimonListElement {
   id: string;
   href: string;
   name: string;
