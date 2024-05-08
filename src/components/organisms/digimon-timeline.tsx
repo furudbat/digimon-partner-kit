@@ -45,6 +45,11 @@ export function DigimonTimeline({
           duration: 500,
           smooth: true,
         });
+      } else {
+        scroller.scrollTo('mainPage', {
+          duration: 100,
+          smooth: true,
+        });
       }
     },
     [isMobile, selectDigimonLevel]
@@ -52,6 +57,7 @@ export function DigimonTimeline({
 
   return (
     <Timeline horizontal>
+      <Element name="digimonTimeline"></Element>
       <Timeline.Item id="digimonTimelineBabyI">
         <Element name="digimonTimelineBabyI"></Element>
         <div className="flex items-center dark:text-white">
