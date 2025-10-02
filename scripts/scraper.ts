@@ -221,7 +221,6 @@ async function fetchFromWebOrCache(
   url: string,
   options: FetchFromWebOrCacheOptions = {}
 ): Promise<{ content: string | null; cached: boolean; status: number | undefined } | undefined> {
-  // eslint-disable-next-line prefer-const
   let { prefix, ignoreCache, forceCache } = {
     ...{ prefix: undefined, ignoreCache: false, forceCache: false },
     ...options,
@@ -353,7 +352,6 @@ async function downloadImage(
   url: string,
   options: DownloadImageOptions = {}
 ): Promise<{ imgFile: string | null; cached: boolean; status: number | undefined } | undefined> {
-  // eslint-disable-next-line prefer-const
   let { ignoreCache, forceCache, polite } = {
     ...{ ignoreCache: false, forceCache: false, polite: POLITE },
     ...options,
@@ -422,8 +420,11 @@ async function downloadImage(
       if (response?.status === 200) {
         console.info(`--Image 200 OK, saved: ${imgFile}`);
         const writer = fs.createWriteStream(imgFile);
-        response.data.pipe(writer);
-        await new Promise((res) => writer.on('finish', res));
+        await new Promise<void>((resolve, reject) => {
+          writer.on('finish', () => resolve());
+          writer.on('error', reject);
+          response.data.pipe(writer);
+        });
 
         await writeFileAsync(
           metaFile,
@@ -461,8 +462,11 @@ async function downloadImage(
   const response = await safeRequest(url, () => axios.get(url, { headers: newHeaders, responseType: 'stream' }));
   if (response?.status == 200) {
     const writer = fs.createWriteStream(imgFile);
-    response.data.pipe(writer);
-    await new Promise((res) => writer.on('finish', res));
+    await new Promise<void>((resolve, reject) => {
+      writer.on('finish', () => resolve());
+      writer.on('error', reject);
+      response.data.pipe(writer);
+    });
 
     await writeFileAsync(
       metaFile,
@@ -555,7 +559,6 @@ class DigimonScraperScraper {
   position = 0;
 
   async scrapeDigimon(url: string, options: ScrapeDigimonOptions = {}): Promise<DigimonData | undefined> {
-    // eslint-disable-next-line prefer-const
     let { ignoreCache, forceCache } = {
       ...{ ignoreCache: false, forceCache: false },
       ...options,
