@@ -22,9 +22,10 @@ const ALWAYS_USE_CACHED = true;
 const CAT_ALWAYS_USE_CACHED = true;
 const FORCE_DOWNLOAD_IMAGES = true;
 const REDOWNLOAD_LIST = false;
+const ONLY_BUILD_DB = true;
 // Crawl-delay: 60
 
-const start_position = 0; /*528*/
+const start_position = 0;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function assert(condition: boolean, msg?: string): asserts condition {
@@ -41,16 +42,16 @@ const config = {
     'https://wikimon.net/Category:Child_Level',
     'https://wikimon.net/index.php?title=Category:Child_Level&pagefrom=Spadamon#mw-pages',
   ],
-  adultList: [
+  adultLists: [
     'https://wikimon.net/index.php?title=Category:Adult_Level',
     'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Liskmon#mw-pages',
     'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Woodmon#mw-pages',
   ],
-  perfectList: [
+  perfectLists: [
     'https://wikimon.net/Category:Perfect_Level',
     'https://wikimon.net/index.php?title=Category:Perfect_Level&pagefrom=Mega+Seadramon#mw-pages',
   ],
-  ultimateList: [
+  ultimateLists: [
     'https://wikimon.net/Category:Ultimate_Level',
     'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Imperialdramon%3A+Dragon+Mode+%28Black%29#mw-pages',
     'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Susanoomon#mw-pages',
@@ -103,21 +104,22 @@ function getRandomValue(min: number, max: number) {
 async function asyncRandomSleep(minMs: number, maxMs: number) {
   return new Promise((resolve) => setTimeout(resolve, getRandomValue(minMs, maxMs)));
 }
-async function executePromisesWithLimit<T>(promises: Promise<T>[], limit: number): Promise<T[]> {
+
+async function executePromisesWithLimit<T>(factories: Array<() => Promise<T>>, limit: number): Promise<T[]> {
   let index = 0;
   const results: T[] = [];
 
   const executeBatch = async (): Promise<void> => {
-    const batch = promises.slice(index, index + limit);
+    const batch = factories.slice(index, index + limit);
     index += limit;
 
-    const executing = batch.map((promise) => {
+    const executing = batch.map((factory) => {
       return new Promise<void>((resolve, reject) => {
         setTimeout(
           () => {
-            promise
+            factory()
               .then((result) => {
-                results.push(result); // Collect the result
+                results.push(result);
                 resolve();
               })
               .catch(reject);
@@ -128,13 +130,15 @@ async function executePromisesWithLimit<T>(promises: Promise<T>[], limit: number
     });
 
     return Promise.allSettled(executing).then(() => {
-      if (index < promises.length) {
+      if (index < factories.length) {
         return executeBatch();
       }
     });
   };
 
-  return executeBatch().then(() => results); // Return the collected results after all promises are executed
+  await executeBatch();
+
+  return results;
 }
 
 type SafeRequestOptions = {
@@ -185,6 +189,7 @@ async function safeRequest<T>(
 async function isPng(filePath: string): Promise<boolean> {
   try {
     const metadata = await sharp(filePath).metadata();
+
     return metadata.format === 'png';
   } catch (err) {
     // Could not read file as image, treat as not PNG
@@ -477,6 +482,11 @@ interface DigimonData {
   evolvesFrom: DigimonDataEvolveElement[];
   evolvesTo: DigimonDataEvolveElement[];
 }
+interface DigimonListElement {
+  id: string;
+  href: string;
+  name: string;
+}
 const hrefToId = (href?: string) => {
   return href
     ? decodeURI(href.replace(config.wikimonUrl, '').replace('/', ''))
@@ -497,11 +507,38 @@ const hrefToId = (href?: string) => {
         .replaceAll('__', '_')
     : undefined;
 };
+type ScrapeDigimonOptions = {
+  ignoreCache?: boolean;
+  forceCache?: boolean;
+};
 class DigimonScraperScraper {
   readonly baseUrl = config.wikimonUrl;
   position = 0;
 
-  async scrapeDigimon(url: string, ignoreCache: boolean = false, forceCache: boolean = false) {
+  async scrapeDigimon(url: string, options: ScrapeDigimonOptions = {}): Promise<DigimonData | undefined> {
+    // eslint-disable-next-line prefer-const
+    let { ignoreCache, forceCache } = {
+      ...{ ignoreCache: false, forceCache: false },
+      ...options,
+    };
+
+    /// @TODO: extract to functions, make reuse cached digimon from url
+    const hash = crypto.createHash('sha256').update(url).digest('hex');
+    const cacheResultDir = resolve(__dirname, '.cache/results');
+    if (!existsSync(cacheResultDir)) mkdirSync(cacheResultDir);
+    const resultFile = resolve(cacheResultDir, `${hash}.json`);
+    if (ONLY_BUILD_DB) {
+      console.debug(`--- Use cached result ${url}: [${hash}] -- ${resultFile}`);
+      if (fs.existsSync(resultFile)) {
+        return JSON.parse(await readFileAsync(resultFile, 'utf8'));
+      }
+      if (TESTING) {
+        throw new AssertionError({ message: `no cache found for ${url}` });
+      }
+
+      return undefined;
+    }
+
     let result: { content: string | null; cached: boolean; status: number | undefined } | undefined = undefined;
     if (this.position < start_position) {
       console.info(`Skip Digimon: ${url} ... (${this.position})`);
@@ -950,14 +987,10 @@ class DigimonScraperScraper {
           evolvesTo: evolvesTo.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game|Category:)/)),
         } as DigimonData;
 
-        const hash = crypto.createHash('sha256').update(url).digest('hex');
-        const cacheDir = resolve(__dirname, '.cache/results');
-        if (!existsSync(cacheDir)) mkdirSync(cacheDir);
-        const resultFile = resolve(cacheDir, `${hash}.json`);
-        await writeFileAsync(
-          resultFile,
-          JSON.stringify(ret, null, 2)
-        );
+        const resultFileAlt = resolve(cacheResultDir, `${id.replace('/', '')}.json`);
+        await writeFileAsync(resultFile, JSON.stringify(ret));
+        await writeFileAsync(resultFileAlt, JSON.stringify(ret, null, 2));
+        console.info(`  Cache Digimon: ${name} -- [${resultFile}] (${resultFileAlt})`);
 
         return ret;
       }
@@ -968,7 +1001,23 @@ class DigimonScraperScraper {
     return undefined;
   }
 
-  async scrapeDigimonList(url: string) {
+  async scrapeDigimonList(url: string, id: string): Promise<DigimonListElement[]> {
+    const hash = crypto.createHash('sha256').update(url).digest('hex');
+    const cacheResultDir = resolve(__dirname, '.cache/results');
+    if (!existsSync(cacheResultDir)) mkdirSync(cacheResultDir);
+    const resultFile = resolve(cacheResultDir, `l_${hash}.json`);
+    if (ONLY_BUILD_DB) {
+      console.debug(`--- Use cached result ${url} (${id}): [${hash}] -- ${resultFile}`);
+      if (fs.existsSync(resultFile)) {
+        return JSON.parse(await readFileAsync(resultFile, 'utf8'));
+      }
+      if (TESTING) {
+        throw new AssertionError({ message: `no cache found for ${url} (${id})` });
+      }
+
+      return [];
+    }
+
     const result = await fetchFromWebOrCache(url, {
       prefix: 'l_',
       ignoreCache: REDOWNLOAD_LIST,
@@ -980,7 +1029,7 @@ class DigimonScraperScraper {
 
     const $ = cheerio.load(html);
 
-    const ret: { id: string; href: string; name: string }[] = [];
+    const ret: DigimonListElement[] = [];
     $('.mw-category-group a').each((i, e) => {
       if ($(e).attr('href') && $(e).attr('title')) {
         ret.push({
@@ -991,6 +1040,11 @@ class DigimonScraperScraper {
       }
     });
 
+    const resultFileAlt = resolve(cacheResultDir, `${id.replace('/', '')}.json`);
+    await writeFileAsync(resultFile, JSON.stringify(ret));
+    await writeFileAsync(resultFileAlt, JSON.stringify(ret, null, 2));
+    console.info(`  Cache Digimon List: ${id} -- [${resultFile}] (${resultFileAlt})`);
+
     return ret;
   }
 }
@@ -998,12 +1052,10 @@ class DigimonScraperScraper {
 async function getBaby1DigimonList() {
   const scraper = new DigimonScraperScraper();
 
-  const baby1List = flatten(
-    await executePromisesWithLimit(
-      config.baby1Lists.map((url) => scraper.scrapeDigimonList(url)),
-      1
-    )
-  );
+  const tasks = config.baby1Lists.map((url) => () => scraper.scrapeDigimonList(url, 'Baby I'));
+  const results = await executePromisesWithLimit<DigimonListElement[]>(tasks, 1);
+
+  const baby1List = flatten(results);
 
   return baby1List.filter((d) => !d.name.match(/^Baby I$/));
 }
@@ -1011,12 +1063,10 @@ async function getBaby1DigimonList() {
 async function getBaby2DigimonList() {
   const scraper = new DigimonScraperScraper();
 
-  const baby2List = flatten(
-    await executePromisesWithLimit(
-      config.baby2Lists.map((url) => scraper.scrapeDigimonList(url)),
-      1
-    )
-  );
+  const tasks = config.baby2Lists.map((url) => () => scraper.scrapeDigimonList(url, 'Baby II'));
+  const results = await executePromisesWithLimit<DigimonListElement[]>(tasks, 1);
+
+  const baby2List = flatten(results);
 
   return baby2List.filter((d) => !d.name.match(/^Baby II$/));
 }
@@ -1024,12 +1074,10 @@ async function getBaby2DigimonList() {
 async function getChildDigimonList() {
   const scraper = new DigimonScraperScraper();
 
-  const childList = flatten(
-    await executePromisesWithLimit(
-      config.childLists.map((url) => scraper.scrapeDigimonList(url)),
-      1
-    )
-  );
+  const tasks = config.childLists.map((url) => () => scraper.scrapeDigimonList(url, 'Child'));
+  const results = await executePromisesWithLimit<DigimonListElement[]>(tasks, 1);
+
+  const childList = flatten(results);
 
   return childList.filter((d) => !d.name.match(/^Child$/));
 }
@@ -1037,12 +1085,10 @@ async function getChildDigimonList() {
 async function getAdultDigimonList() {
   const scraper = new DigimonScraperScraper();
 
-  const adultList = flatten(
-    await executePromisesWithLimit(
-      config.adultList.map((url) => scraper.scrapeDigimonList(url)),
-      1
-    )
-  );
+  const tasks = config.adultLists.map((url) => () => scraper.scrapeDigimonList(url, 'Adult'));
+  const results = await executePromisesWithLimit<DigimonListElement[]>(tasks, 1);
+
+  const adultList = flatten(results);
 
   return adultList.filter((d) => !d.name.match(/^Adult$/));
 }
@@ -1050,12 +1096,10 @@ async function getAdultDigimonList() {
 async function getPerfectDigimonList() {
   const scraper = new DigimonScraperScraper();
 
-  const perfectList = flatten(
-    await executePromisesWithLimit(
-      config.perfectList.map((url) => scraper.scrapeDigimonList(url)),
-      1
-    )
-  );
+  const tasks = config.perfectLists.map((url) => () => scraper.scrapeDigimonList(url, 'Perfect'));
+  const results = await executePromisesWithLimit<DigimonListElement[]>(tasks, 1);
+
+  const perfectList = flatten(results);
 
   return perfectList.filter((d) => !d.name.match(/^Perfect$/));
 }
@@ -1063,12 +1107,10 @@ async function getPerfectDigimonList() {
 async function getUltimateDigimonList() {
   const scraper = new DigimonScraperScraper();
 
-  const ultimateList = flatten(
-    await executePromisesWithLimit(
-      config.ultimateList.map((url) => scraper.scrapeDigimonList(url)),
-      1
-    )
-  );
+  const tasks = config.ultimateLists.map((url) => () => scraper.scrapeDigimonList(url, 'Ultimate'));
+  const results = await executePromisesWithLimit<DigimonListElement[]>(tasks, 1);
+
+  const ultimateList = flatten(results);
 
   return ultimateList.filter((d) => !d.name.match(/^Ultimate$/));
 }
@@ -1092,15 +1134,21 @@ export async function main() {
     console.debug(await scraper.scrapeDigimon('https://wikimon.net/Agnimon'));
     console.debug(await scraper.scrapeDigimon('https://wikimon.net/Xuanwumon'));
     await asyncRandomSleep(2025, 5125);
-    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Agumon', !ALWAYS_USE_CACHED));
+    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Agumon', { ignoreCache: !ALWAYS_USE_CACHED }));
     await asyncRandomSleep(2026, 5125);
-    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Cherubimon_(Virtue)', !ALWAYS_USE_CACHED));
+    console.debug(
+      await scraper.scrapeDigimon('https://wikimon.net/Cherubimon_(Virtue)', { ignoreCache: !ALWAYS_USE_CACHED })
+    );
     await asyncRandomSleep(3254, 4523);
-    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Unnamed_Trailmon_1', !ALWAYS_USE_CACHED));
+    console.debug(
+      await scraper.scrapeDigimon('https://wikimon.net/Unnamed_Trailmon_1', { ignoreCache: !ALWAYS_USE_CACHED })
+    );
     await asyncRandomSleep(1234, 4567);
-    console.debug(await scraper.scrapeDigimon('https://wikimon.net/L%C3%B6wemon', !ALWAYS_USE_CACHED));
+    console.debug(await scraper.scrapeDigimon('https://wikimon.net/L%C3%B6wemon', { ignoreCache: !ALWAYS_USE_CACHED }));
     await asyncRandomSleep(2468, 5461);
-    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Herakle_Kabuterimon', !ALWAYS_USE_CACHED));
+    console.debug(
+      await scraper.scrapeDigimon('https://wikimon.net/Herakle_Kabuterimon', { ignoreCache: !ALWAYS_USE_CACHED })
+    );
     await asyncRandomSleep(1234, 4567);
     console.debug(await scraper.scrapeDigimon('https://wikimon.net/Zino_Garurumon'));
     await asyncRandomSleep(1234, 4567);
@@ -1151,22 +1199,28 @@ export async function main() {
   console.info(`Load ${allDigimonUrls.length} Digimons...`);
 
   const loadSlice = async (start: number, end: number) => {
-    const slice = end >= start ? allDigimonUrls.slice(start, end) : [];
+    const slice = allDigimonUrls.slice(start, end);
     if (slice.length) {
-      const promises = slice.map(async (d) => scraper.scrapeDigimon(d, false, ALWAYS_USE_CACHED));
-      db.digimons = db.digimons.concat((await executePromisesWithLimit(promises, 2)).filter((d) => d) as DigimonData[]);
+      const results = await executePromisesWithLimit<DigimonData | undefined>(
+        slice.map((d) => async () => scraper.scrapeDigimon(d, { ignoreCache: false, forceCache: ALWAYS_USE_CACHED })),
+        POLITE && !ALWAYS_USE_CACHED ? 1 : 5 // concurrency
+      );
+      db.digimons.push(...(results.filter(Boolean) as DigimonData[]));
     }
   };
 
   const loadBatch = POLITE ? 1 : 10;
-  let i = 0;
-  while (i < allDigimonUrls.length) {
+  for (let i = 0; i < allDigimonUrls.length; i += loadBatch) {
     await loadSlice(i, i + loadBatch);
-    i += loadBatch;
   }
+
   // load rest/all
-  const promises = allDigimonUrls.map(async (d) => scraper.scrapeDigimon(d, false, ALWAYS_USE_CACHED));
-  db.digimons = [...db.digimons, ...((await executePromisesWithLimit(promises, 2)).filter((d) => d) as DigimonData[])];
+  // safer version: only creates at most 2 promises at a time
+  const tasks = allDigimonUrls.map(
+    (d) => async () => scraper.scrapeDigimon(d, { ignoreCache: false, forceCache: ALWAYS_USE_CACHED })
+  );
+  const results = await executePromisesWithLimit<DigimonData | undefined>(tasks, POLITE && !ALWAYS_USE_CACHED ? 1 : 5);
+  db.digimons.push(...(results.filter(Boolean) as DigimonData[]));
 
   console.info('clean up Digimons...');
 
