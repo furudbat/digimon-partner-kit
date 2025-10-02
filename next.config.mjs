@@ -4,7 +4,6 @@ import './src/lib/env/env.mjs';
 const nextConfig = {
   basePath: '/digimon-partner-kit',
   assetPrefix: process.env.NODE_ENV === 'production' ? '/digimon-partner-kit/' : '',
-  output: 'export',
   reactStrictMode: true,
   images: {
     unoptimized: true,

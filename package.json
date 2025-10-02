@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "npx serve@latest out",
     "format": "prettier --write .storybook src scripts/*.ts && eslint .storybook src scripts/*.ts --fix",
     "prettier:format": "prettier --write .storybook src scripts/*.ts",
     "prettier:check": "prettier --check \"**/*.{ts,tsx,json}\"",
