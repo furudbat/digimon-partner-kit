@@ -16,7 +16,7 @@ export function MainFooter() {
       <div className="m-2 md:mx-6 w-full">
         <div className="md:flex items-center sm:justify-between w-full h-14">
           <span className="text-sm text-gray-500 dark:text-gray-400">
-            © 2024{' '}
+            © 2025{' '}
             <Link href="https://github.com/furudbat" target="_blank" rel="noreferrer" className="hover:underline">
               furudbat
             </Link>

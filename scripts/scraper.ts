@@ -15,16 +15,17 @@ import { promisify } from 'util';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const TESTING = false;
 const POLITE = true;
 // don't check for 304, just assume cached is always right
 const ALWAYS_USE_CACHED = true;
 const CAT_ALWAYS_USE_CACHED = true;
-const FORCE_DOWNLOAD_IMAGES = true;
+const FORCE_DOWNLOAD_IMAGES = false;
 const REDOWNLOAD_LIST = false;
-const ONLY_BUILD_DB = true;
 // Crawl-delay: 60
 
+// for testing
+const TESTING = false;
+const ONLY_BUILD_DB = false;
 const start_position = 0;
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -325,7 +326,7 @@ async function fetchFromWebOrCache(
     axios.get(url, { headers: newHeaders, validateStatus: (s) => s < 500 })
   );
   if (response?.status === 200) {
-    console.info(`--Image 200 OK, saved: ${htmlFile}`);
+    console.info(`--HTML 200 OK, saved: ${htmlFile}`);
     await writeFileAsync(htmlFile, response.data, 'utf8');
     await writeFileAsync(
       metaFile,
@@ -380,7 +381,7 @@ async function downloadImage(
 
   if (ignoreCache || !fs.existsSync(imgFile)) {
     try {
-      const response = await safeRequest(
+      let response = await safeRequest(
         url,
         () => {
           return axios.get(url, { headers, responseType: 'stream', validateStatus: (s) => s < 500 });
@@ -389,9 +390,31 @@ async function downloadImage(
         5
       );
       if (response?.status === 304) {
-        console.info(`--Image 304 Not Modified, using cache: [${hash}]`);
+        console.info(
+          `--304 Not Modified, using cache image (${url}) -- etag:${headers['If-None-Match']}, lastModified:${headers['If-Modified-Since']}`
+        );
 
-        return { imgFile, cached: true, status: response.status };
+        if (!fs.existsSync(imgFile)) {
+          const newHeaders: Record<string, string> = await getHeaders(metaFile, false);
+          response = await safeRequest(url, () =>
+            axios.get(url, { headers: newHeaders, validateStatus: (s) => s < 500 })
+          );
+        } else {
+          const savedMeta = await getMetaData(metaFile);
+          const newMeta = {
+            etag: response.headers['etag'] || (savedMeta?.etag ?? ''),
+            lastModified: response.headers['last-modified'] || (savedMeta?.lastModified ?? ''),
+          };
+          if (savedMeta && (savedMeta.etag !== newMeta.etag || savedMeta.lastModified !== newMeta.lastModified)) {
+            console.debug(
+              `Metadata changed: etag [${savedMeta.etag}] → [${newMeta.etag}], lastModified [${savedMeta.lastModified}] → [${newMeta.lastModified}]`
+            );
+            ignoreCache = true; // force redownload, invalidated cache
+          } else if (savedMeta && fs.existsSync(imgFile)) {
+            // cached content
+            return { imgFile, cached: true, status: response.status };
+          }
+        }
       }
       if (response?.status === 404) {
         return { imgFile: null, cached: false, status: response.status };
@@ -420,11 +443,17 @@ async function downloadImage(
       console.warn(`Error fetching ${url}, fallback to cached image`);
     }
 
-    if (fs.existsSync(imgFile)) {
-      return { imgFile, cached: true, status: undefined };
+    if (!ignoreCache && fs.existsSync(imgFile)) {
+      console.info(`----Using cache image: [${hash}] (${url})`);
+
+      if (fs.existsSync(imgFile)) {
+        return { imgFile, cached: true, status: undefined };
+      } else {
+        console.error(`----Cached image for ${url} not found`);
+      }
     }
 
-    return { imgFile, cached: false, status: undefined };
+    return { imgFile: null, cached: false, status: undefined };
   }
 
   // No cache -> fresh download
@@ -467,8 +496,8 @@ interface DigimonData {
   name: string;
   names: Record<string, string>;
   description: string;
-  img: string;
-  imgOrigin: string;
+  img: string | null;
+  imgOrigin: string | null;
   levels: string[];
   level?: DigimonLevel;
   classes: string[];
@@ -488,24 +517,34 @@ interface DigimonListElement {
   name: string;
 }
 const hrefToId = (href?: string) => {
-  return href
-    ? decodeURI(href.replace(config.wikimonUrl, '').replace('/', ''))
-        .replaceAll(' ', '_')
-        .replaceAll('+', '_')
-        .replaceAll("'", '')
-        .replaceAll('·', '_')
-        .replaceAll('%20', '_')
-        .replaceAll('%2B', '_')
-        .replaceAll('%27', '')
-        .replace(':', '_')
-        .replace('ä', 'ae')
-        .replace('ö', 'oe')
-        .replace('ü', 'ue')
-        .replaceAll('(', '')
-        .replaceAll(')', '')
-        .replace('.', '_')
-        .replaceAll('__', '_')
-    : undefined;
+  if (!href) return undefined;
+
+  let id = decodeURI(href.replace(config.wikimonUrl, ''))
+    .trim()
+    // replace slashes with underscores
+    .replace(/\//g, '')
+    // normalize umlauts & accents
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // strip accents
+    // remove all quote-like characters
+    .replace(/["'‘’“”«»„]/g, '')
+    // replace anything not alphanumeric or underscore with underscore
+    .replace(/[^a-z0-9_]+/gi, '_')
+    // collapse multiple underscores
+    .replace(/_+/g, '_')
+    // trim underscores
+    .replace(/^_+|_+$/g, '');
+
+  // avoid Windows reserved names
+  const reserved = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/;
+  if (reserved.test(id)) {
+    id = `_${id}`;
+  }
+
+  return id;
 };
 type ScrapeDigimonOptions = {
   ignoreCache?: boolean;
@@ -636,6 +675,7 @@ class DigimonScraperScraper {
         .replaceAll('%20', '_')
         .replaceAll('%2B', '_')
         .replaceAll('%27', '')
+        .replaceAll('%22', '')
         .replace(':', '_')
         .replace('ä', 'ae')
         .replace('ö', 'oe')
@@ -645,14 +685,25 @@ class DigimonScraperScraper {
         .replace('.', '_')
         .replaceAll('__', '_');
 
-      const altNames = [name, altName, altName2, altName3];
+      const altNames = [name, name.split(' ')[0], altName, altName2, altName3];
+      if (name.includes('(X-Antibody)')) {
+        altNames.push(name.split(' ')[0] + 'x');
+      }
+      if (name.includes('(Black)')) {
+        altNames.push(name.split(' ')[0] + ' black');
+      }
+      if (name.split(' ')[1]) {
+        altNames.push(name.split(' ')[0] + ' ' + name.split(' ')[1]);
+      }
 
       const isAltName = (alt: string, altNames: string[]): boolean => {
         return altNames.some((altName) => alt.toLowerCase().includes(altName.toLowerCase()));
       };
+      /*
       const isNotAltName = (alt: string, altNames: string[]): boolean => {
         return altNames.every((altName) => !alt.toLowerCase().includes(altName.toLowerCase()));
       };
+      */
 
       console.debug(`    name: ${name} (${altNames})`);
 
@@ -671,6 +722,7 @@ class DigimonScraperScraper {
       //const nameTable = $('#S2NameEtyMorphContent1 table:first table:first');
       let img = infoBox.find('a.image img');
       if (!img.length) {
+        // fallback query for image
         img = $('#mw-content-text .mw-parser-output > table .tab-pane a.image img').first();
       }
 
@@ -727,16 +779,16 @@ class DigimonScraperScraper {
         const imgSrc = $(e).find('img').attr('src');
 
         if (name && catId && imgSrc) {
-          const downloadImageUrl = this.baseUrl + imgSrc;
-          const imgFilename = imgSrc ? `img/${catId}.png` : undefined;
+          const catDownloadImageUrl = this.baseUrl + imgSrc;
+          const catImgFilename = imgSrc ? `img/${catId}.png` : undefined;
 
           preCategories.push({
             id: catId,
             name: name,
-            img: imgFilename,
+            img: catImgFilename,
             title: $(e).attr('title'),
             href: this.baseUrl + $(e).attr('href'),
-            downloadImageUrl,
+            downloadImageUrl: catDownloadImageUrl,
           });
         }
       });
@@ -775,13 +827,15 @@ class DigimonScraperScraper {
         });
       }
 
+      const ignoreEvolvesRegex = /^Any .*(Baby|Child|Adult|Perfect|Ultimate|Super).*Digimon/;
       const evolvesFromLi = $('#Evolves_From').closest('h2').next('ul').children('li');
       const evolvesFrom: DigimonDataEvolveElement[] = [];
       evolvesFromLi.each((i, e) => {
-        const id = hrefToId($(e).find('a').attr('href'));
-        const title = $(e).find('a').attr('title');
+        const eid = hrefToId($(e).find('a').attr('href'));
+        const etitle = $(e).find('a').attr('title');
         const canon = $(e).find('b').length > 0;
-        if (id && title) {
+        if (eid && etitle) {
+          const ename = etitle.trim();
           const line = $(e)
             .text()
             .trim()
@@ -792,15 +846,26 @@ class DigimonScraperScraper {
           const note = (() => {
             const matches = line.match(/\\((.*)\\)/);
             if (matches) {
-              return matches[0].replace(title?.trim(), '').replaceAll(/\\[[0-9]+\\]/g, '');
+              return matches[0].replace(etitle?.trim(), '').replaceAll(/\\[[0-9]+\\]/g, '');
             }
 
             return undefined;
           })();
 
+          // skip Card Games
+          if (ename.includes('Card Battle Colors and Level') || ename.includes('Card Game Colors and Level')) {
+            return;
+          }
+          if (ignoreEvolvesRegex.test(ename)) {
+            return;
+          }
+          if ($(e).find('a').attr('href')?.includes('/index.php') || ename.includes('(page does not exist')) {
+            return;
+          }
+
           evolvesFrom.push({
-            id: id,
-            name: title.trim(),
+            id: eid,
+            name: ename,
             url: this.baseUrl + $(e).find('a').attr('href'),
             canon: canon,
             note: note,
@@ -813,10 +878,11 @@ class DigimonScraperScraper {
       const evolvesToLi = $('#Evolves_To').closest('h2').next('ul').children('li');
       const evolvesTo: DigimonDataEvolveElement[] = [];
       evolvesToLi.each((i, e) => {
-        const id = hrefToId($(e).find('a').attr('href'));
-        const title = $(e).find('a').attr('title');
+        const eid = hrefToId($(e).find('a').attr('href'));
+        const etitle = $(e).find('a').attr('title');
         const canon = $(e).find('b').length > 0;
-        if (id && title) {
+        if (eid && etitle) {
+          const ename = etitle.trim();
           const line = $(e)
             .text()
             .trim()
@@ -827,15 +893,26 @@ class DigimonScraperScraper {
           const note = (() => {
             const matches = line.match(/\\(.*\\)/);
             if (matches) {
-              return matches[0].replace(title?.trim(), '').replaceAll(/\\[[A-Z\s]?[0-9]+\\]/g, '');
+              return matches[0].replace(etitle?.trim(), '').replaceAll(/\\[[A-Z\s]?[0-9]+\\]/g, '');
             }
 
             return undefined;
           })();
 
+          // skip Card Games
+          if (ename.includes('Card Battle Colors and Level') || ename.includes('Card Game Colors and Level')) {
+            return;
+          }
+          if (ignoreEvolvesRegex.test(ename)) {
+            return;
+          }
+          if ($(e).find('a').attr('href')?.includes('/index.php') || ename.includes('(page does not exist')) {
+            return;
+          }
+
           evolvesTo.push({
-            id: id,
-            name: title.trim(),
+            id: eid,
+            name: ename,
             url: this.baseUrl + $(e).find('a').attr('href'),
             canon: canon,
             note: note,
@@ -850,15 +927,18 @@ class DigimonScraperScraper {
 
       const id = hrefToId(url.replace(this.baseUrl + '/', ''));
       if (id) {
-        let downloadFilename: string | null = null;
         let imgFilename: string | null = null;
         let downloadImageUrl: string | null = null;
+        let image_found = false;
+
+        // download img artwork
         for (let i = 0; i < img.length; i++) {
           const e = img[i];
           const src = $(e).attr('src');
-          const alt = $(e).attr('alt');
-          if (!downloadFilename) {
-            if (alt && isNotAltName(alt, altNames)) continue;
+          //const alt = $(e).attr('alt');
+          if (!downloadImageUrl) {
+            console.debug(`   get artwork for '${name}' -- ${src}`);
+            //if (alt && isNotAltName(alt, altNames)) continue;
             if (src) {
               downloadImageUrl = this.baseUrl + src;
               console.debug(`   '${name}' -- ${url} download image: ${downloadImageUrl}`);
@@ -867,14 +947,31 @@ class DigimonScraperScraper {
                 forceCache: !FORCE_DOWNLOAD_IMAGES && (!cached || ALWAYS_USE_CACHED),
                 polite: POLITE || cached,
               });
+
+              if (TESTING) {
+                console.debug({ imgResult });
+              }
+
+              let downloadFilename: string | null = null;
               if ((imgResult?.status === 200 || imgResult?.cached) && imgResult?.imgFile) {
                 imgFilename = `img/${id.replace('/', '')}.png`;
                 downloadFilename = imgResult?.imgFile ?? null;
-                const filename = resolve(__dirname, imgFilename);
-                if (!fs.existsSync(filename) || !(await isPng(filename))) {
-                  await sharp(downloadFilename).png().toFile(filename);
-                  console.debug(`    Saved PNG: ${filename}`);
+                if (downloadFilename && fs.existsSync(downloadFilename)) {
+                  const filename = resolve(__dirname, imgFilename);
+                  if (!fs.existsSync(filename) || !(await isPng(filename))) {
+                    await sharp(downloadFilename).png().toFile(filename);
+                    console.debug(`    Saved PNG: ${filename}`);
+                  }
                 }
+              }
+              if (downloadFilename) {
+                const filename = resolve(__dirname, `img/${id.replace('/', '')}.png`);
+                if (fs.existsSync(filename)) {
+                  imgFilename = `img/${id.replace('/', '')}.png`;
+                }
+                downloadImageUrl = this.baseUrl + src;
+                image_found = true;
+                console.debug(`    Image found for ${name}: ${imgFilename} (${downloadImageUrl})`);
               }
             } else {
               console.warn(`image not found for ${id}`);
@@ -886,8 +983,9 @@ class DigimonScraperScraper {
           }
         }
         // still no image ?
-        if (!downloadFilename) {
-          console.debug(`    still no image - img found: ${img.length}`);
+        if (!image_found && !downloadImageUrl) {
+          console.debug(`    still no image - img found (${image_found}): ${img.length}`);
+          console.debug(`        downloadImageUrl: ${downloadImageUrl}`);
           for (let i = 0; i < img.length; i++) {
             const e = img[i];
             const src = $(e).attr('src');
@@ -896,32 +994,54 @@ class DigimonScraperScraper {
               console.debug(`        src: ${src} (${alt})`);
             }
 
-            if (!downloadFilename && alt && isAltName(alt, altNames)) {
-              if (src) {
-                const downloadImageUrl =
-                  this.baseUrl + src.replace(/^\/images\/thumb(.*?)([^/]+)\/[^/]+$/, '/images$1$2');
-                console.debug(`   '${name}' -- ${url} download image: ${downloadImageUrl}`);
-                const imgResult = await downloadImage(downloadImageUrl, {
-                  ignoreCache,
-                  forceCache: !cached,
-                  polite: POLITE || cached || ALWAYS_USE_CACHED,
-                });
-                if ((imgResult?.status === 200 || imgResult?.cached) && imgResult?.imgFile) {
-                  imgFilename = `img/${id.replace('/', '')}.png`;
-                  downloadFilename = imgResult?.imgFile ?? null;
-                  const filename = resolve(__dirname, imgFilename);
-                  if (!fs.existsSync(filename) || !(await isPng(filename))) {
-                    await sharp(downloadFilename).png().toFile(filename);
-                    console.debug(`    Saved PNG: ${filename}`);
+            if (!downloadImageUrl) {
+              if (alt && isAltName(alt, altNames)) {
+                if (src) {
+                  console.debug(`   get artwork for '${name}'`);
+                  const newDownloadImageUrl =
+                    this.baseUrl + src.replace(/^\/images\/thumb(.*?)([^/]+)\/[^/]+$/, '/images$1$2');
+                  console.debug(`   '${name}' -- ${url} download image: ${newDownloadImageUrl}`);
+                  const imgResult = await downloadImage(newDownloadImageUrl, {
+                    ignoreCache,
+                    forceCache: !cached,
+                    polite: POLITE || cached || ALWAYS_USE_CACHED,
+                  });
+
+                  if (TESTING) {
+                    console.debug({ imgResult });
+                  }
+
+                  let downloadFilename: string | null = null;
+                  if ((imgResult?.status === 200 || imgResult?.cached) && imgResult?.imgFile) {
+                    imgFilename = `img/${id.replace('/', '')}.png`;
+                    downloadFilename = imgResult?.imgFile ?? null;
+                    if (downloadFilename && fs.existsSync(downloadFilename)) {
+                      const filename = resolve(__dirname, imgFilename);
+                      if (!fs.existsSync(filename) || !(await isPng(filename))) {
+                        await sharp(downloadFilename).png().toFile(filename);
+                        console.debug(`    Saved PNG: ${filename}`);
+                      }
+                    }
+
+                    if (downloadFilename) {
+                      const filename = resolve(__dirname, `img/${id.replace('/', '')}.png`);
+                      if (fs.existsSync(filename)) {
+                        imgFilename = `img/${id.replace('/', '')}.png`;
+                      }
+                      downloadImageUrl = newDownloadImageUrl;
+                      image_found = true;
+                      console.debug(`    Image found for ${name}: ${imgFilename} (${downloadImageUrl}) -- 2. try`);
+                    }
                   }
                 }
               }
             }
           }
         }
-        if (!downloadFilename) {
+        if (!image_found && !downloadImageUrl) {
+          console.debug(`    STILL no image - img found (${image_found}): ${img.length}`);
+          console.debug(`        downloadImageUrl: ${downloadImageUrl}`);
           img = $('#mw-content-text .mw-parser-output > table .tab-pane a.image img').first();
-          console.debug(`    STILL no image - img found: ${img.length}`);
           for (let i = 0; i < img.length; i++) {
             const e = img[i];
             const src = $(e).attr('src');
@@ -930,29 +1050,65 @@ class DigimonScraperScraper {
               console.debug(`        src: ${src} (${alt})`);
             }
 
-            console.debug({ downloadFilename, alt, altNames, is: isAltName(alt, altNames) });
+            if (TESTING) {
+              console.debug({ downloadImageUrl, alt, altNames, is: isAltName(alt, altNames) });
+            }
 
-            if (!downloadFilename && alt && isAltName(alt, altNames)) {
-              if (src) {
-                const downloadImageUrl =
-                  this.baseUrl + src.replace(/^\/images\/thumb(.*?)([^/]+)\/[^/]+$/, '/images$1$2');
-                console.debug(`   '${name}' -- ${url} download image: ${downloadImageUrl}`);
-                const imgResult = await downloadImage(downloadImageUrl, {
-                  ignoreCache,
-                  forceCache: !cached,
-                  polite: POLITE || cached || ALWAYS_USE_CACHED,
-                });
-                if ((imgResult?.status === 200 || imgResult?.cached) && imgResult?.imgFile) {
-                  imgFilename = `img/${id.replace('/', '')}.png`;
-                  downloadFilename = imgResult?.imgFile ?? null;
-                  const filename = resolve(__dirname, imgFilename);
-                  if (!fs.existsSync(filename) || !(await isPng(filename))) {
-                    await sharp(downloadFilename).png().toFile(filename);
-                    console.debug(`    Saved PNG: ${filename}`);
+            if (!downloadImageUrl) {
+              if (alt && isAltName(alt, altNames)) {
+                if (src) {
+                  console.debug(`   get artwork for '${name}'`);
+                  const newDownloadImageUrl =
+                    this.baseUrl + src.replace(/^\/images\/thumb(.*?)([^/]+)\/[^/]+$/, '/images$1$2');
+                  console.debug(`   '${name}' -- ${url} download image: ${newDownloadImageUrl}`);
+                  const imgResult = await downloadImage(newDownloadImageUrl, {
+                    ignoreCache,
+                    forceCache: !cached,
+                    polite: POLITE || cached || ALWAYS_USE_CACHED,
+                  });
+
+                  if (TESTING) {
+                    console.debug({ imgResult });
+                  }
+
+                  let downloadFilename: string | null = null;
+                  if ((imgResult?.status === 200 || imgResult?.cached) && imgResult?.imgFile) {
+                    imgFilename = `img/${id.replace('/', '')}.png`;
+                    downloadFilename = imgResult?.imgFile ?? null;
+                    if (downloadFilename && fs.existsSync(downloadFilename)) {
+                      const filename = resolve(__dirname, imgFilename);
+                      if (!fs.existsSync(filename) || !(await isPng(filename))) {
+                        await sharp(downloadFilename).png().toFile(filename);
+                        console.debug(`    Saved PNG: ${filename}`);
+                      }
+                    }
+                    if (downloadFilename) {
+                      const filename = resolve(__dirname, `img/${id.replace('/', '')}.png`);
+                      if (fs.existsSync(filename)) {
+                        imgFilename = `img/${id.replace('/', '')}.png`;
+                      }
+                      downloadImageUrl = newDownloadImageUrl;
+                      image_found = true;
+                      console.debug(`    Image found for ${name}: ${imgFilename} (${downloadImageUrl}) -- 3. try`);
+                    }
                   }
                 }
               }
             }
+          }
+        }
+        if (!downloadImageUrl || !image_found) {
+          const filename = resolve(__dirname, `img/${id.replace('/', '')}.png`);
+          if (fs.existsSync(filename)) {
+            imgFilename = `img/${id.replace('/', '')}.png`;
+            image_found = true;
+          } else {
+            imgFilename = null;
+          }
+        }
+        if (TESTING) {
+          if (!image_found) {
+            throw new AssertionError({ message: `image not found for ${url} (${id}): ${downloadImageUrl}` });
           }
         }
 
@@ -990,7 +1146,7 @@ class DigimonScraperScraper {
         const resultFileAlt = resolve(cacheResultDir, `${id.replace('/', '')}.json`);
         await writeFileAsync(resultFile, JSON.stringify(ret));
         await writeFileAsync(resultFileAlt, JSON.stringify(ret, null, 2));
-        console.info(`  Cache Digimon: ${name} -- [${resultFile}] (${resultFileAlt})`);
+        console.info(`  Save Digimon: ${name} -- [${resultFile}] (${resultFileAlt})`);
 
         return ret;
       }
@@ -1043,7 +1199,7 @@ class DigimonScraperScraper {
     const resultFileAlt = resolve(cacheResultDir, `${id.replace('/', '')}.json`);
     await writeFileAsync(resultFile, JSON.stringify(ret));
     await writeFileAsync(resultFileAlt, JSON.stringify(ret, null, 2));
-    console.info(`  Cache Digimon List: ${id} -- [${resultFile}] (${resultFileAlt})`);
+    console.info(`  Save Digimon List: ${id} -- [${resultFile}] (${resultFileAlt})`);
 
     return ret;
   }
@@ -1152,6 +1308,22 @@ export async function main() {
     await asyncRandomSleep(1234, 4567);
     console.debug(await scraper.scrapeDigimon('https://wikimon.net/Zino_Garurumon'));
     await asyncRandomSleep(1234, 4567);
+    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Agumon_(X-Antibody)'));
+    await asyncRandomSleep(4536, 5642);
+
+    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Algomon_(Baby_I)'));
+    await asyncRandomSleep(3124, 3875);
+    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Yggdrasill_7D6'));
+    await asyncRandomSleep(1234, 2436);
+
+    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Bombmon'));
+    await asyncRandomSleep(5462, 6423);
+    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Algomon_(Baby_II)'));
+    await asyncRandomSleep(5462, 6423);
+    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Kodokugumon_Baby'));
+    await asyncRandomSleep(5462, 6423);
+    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Tokomon_(X-Antibody)'));
+    await asyncRandomSleep(5462, 6423);
 
     return;
   }
@@ -1317,6 +1489,12 @@ export async function main() {
     const digimon = db.digimons.find((fd) => d.id === fd.id);
 
     return digimon?.level === 'Ultimate';
+  });
+
+  db.digimons.forEach((d) => {
+    if (!d.img) {
+      console.warn(`No Image found for '${d.name}': ${d.imgOrigin} -- ${d.href}`);
+    }
   });
 
   console.info(`Save ${db.digimons.length} Digimons...`);

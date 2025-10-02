@@ -6,7 +6,7 @@ Build your own digimon-partner digivolution line.
 
 - Select your starter Digimon (Child- or Adult-Level)
 - Select the next/prev. Level from the line
-- Chose from a huge library of Digimon (over 1300 Digimons), thanks to [wikimon](https://wikimon.net) 
+- Chose from a huge library of Digimon (over 1400 Digimon), thanks to [wikimon](https://wikimon.net) 
 
 
 ### Limitations
@@ -44,7 +44,7 @@ pnpm start
 
 ## License
 
-Licensed under the MIT License, Copyright © 2024
+Licensed under the MIT License, Copyright © 2025
 
 See [LICENSE](LICENSE) for more information.
 
@@ -55,6 +55,6 @@ Digimon and other media relating to the franchise are registered trademarks by [
 
 - https://wikimon.net/
 - https://digimon-api.com/
-- https://github.com/tvanantwerp/scraper-example
-- https://www.youtube.com/watch?v=nwgzHrkBZis
+- [Digimon-Partner Baukasten](https://www.youtube.com/watch?v=nwgzHrkBZis)
 - https://www.grindosaur.com/
+- https://digimon.fandom.com/wiki/Digimon_Wiki

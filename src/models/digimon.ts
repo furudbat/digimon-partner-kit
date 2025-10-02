@@ -19,7 +19,7 @@ export interface DigimonData {
   id: string;
   name: string;
   description: string;
-  img: string;
+  img: string | null;
   levels: string[];
   level?: DigimonLevel;
   classes: string[];

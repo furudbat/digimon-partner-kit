@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useMediaQuery } from 'react-responsive';
 import { DigimonData } from 'src/models/digimon';
 
-import { MediaQueryMobileBreakpoint } from '../constants';
+import { MediaQueryMobileBreakpoint, NOT_FOUND_IMAGE } from '../constants';
 
 export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: string | number }) {
   const isMobile = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
@@ -23,7 +23,7 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
             className="self-center h-max-auto w-auto max-w-full rounded-md"
             width={320}
             height={320}
-            src={window.location.pathname + '/' + data.img}
+            src={window.location.pathname + '/' + (data.img || NOT_FOUND_IMAGE)}
             alt={data.name}
           />
         </div>
