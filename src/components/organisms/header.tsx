@@ -14,6 +14,10 @@ export function MainHeader() {
             Build your own Digimon-Partner Digivolution line. <DarkThemeToggle />
             <br />
             <em>Select your first Digimon and then select the next/previous Levels.</em>
+            <br />
+            <em>
+              <small>(Recommendation: Select Child level first, if you don't know where to start)</small>
+            </em>
           </p>
         </div>
       </div>
