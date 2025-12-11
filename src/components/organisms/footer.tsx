@@ -20,7 +20,27 @@ export function MainFooter() {
             <Link href="https://github.com/furudbat" target="_blank" rel="noreferrer" className="hover:underline">
               furudbat
             </Link>
-            .{' '}
+            <span> - </span>
+            <Link
+              href={'https://github.com/furudbat/digimon-partner-kit'}
+              title="License"
+              target="_blank"
+              rel="noopener"
+              className="hover:underline"
+            >
+              digimon-partner-kit v1.2.3
+            </Link>
+            <span> - </span>
+            <Link
+              href={'https://github.com/furudbat/digimon-partner-kit/blob/main/LICENSE'}
+              title="License"
+              target="_blank"
+              rel="noopener"
+              className="hover:underline"
+            >
+              MIT
+            </Link>
+            <br />
             <em>
               This Project is a free fan site and not affiliated with Bandai Namco. Digimon and other media relating to
               the franchise are registered trademarks by{' '}
