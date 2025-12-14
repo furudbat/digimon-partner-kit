@@ -9,6 +9,7 @@ import { MainProvider } from '@/components/providers/MainProvider';
 import { MainLayout } from '@/components/templates/MainLayout';
 
 import { cn } from '@/lib/utils';
+import Head from 'next/head';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-primary' });
 
@@ -24,9 +25,9 @@ interface RootLayoutProps {
 const RootLayout = ({ children }: RootLayoutProps) => {
   return (
     <html lang="en">
-      <head>
+      <Head>
         <ThemeModeScript />
-      </head>
+      </Head>
       <body className={cn(inter.variable, 'font-primary', 'h-screen')} suppressHydrationWarning>
         <MainProvider>
           <MainLayout>

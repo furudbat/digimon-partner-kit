@@ -1,6 +1,6 @@
 'use client';
 
-import { List } from 'flowbite-react';
+import { List, ListItem } from 'flowbite-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMediaQuery } from 'react-responsive';
@@ -41,9 +41,9 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
               <strong>Type:</strong>{' '}
               <List unstyled>
                 {data.types.map((type) => (
-                  <List.Item key={type} className="ml-3">
+                  <ListItem key={type} className="ml-3">
                     {type}
-                  </List.Item>
+                  </ListItem>
                 ))}
               </List>
             </div>
@@ -53,9 +53,9 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
               <strong>Attributes:</strong>{' '}
               <List unstyled>
                 {data.attributes.map((attribute) => (
-                  <List.Item key={attribute} className="ml-2">
+                  <ListItem key={attribute} className="ml-2">
                     {attribute}
-                  </List.Item>
+                  </ListItem>
                 ))}
               </List>
             </div>
@@ -65,9 +65,9 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
               <strong>Field:</strong>{' '}
               <List unstyled>
                 {data.fields.map((field) => (
-                  <List.Item key={field} className="ml-2">
+                  <ListItem key={field} className="ml-2">
                     {field}
-                  </List.Item>
+                  </ListItem>
                 ))}
               </List>
             </div>

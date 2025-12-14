@@ -1,4 +1,3 @@
-import { Flowbite } from 'flowbite-react';
 import { ReactNode } from 'react';
 
 import { MainFooter } from '@/components/organisms/footer';
@@ -18,11 +17,9 @@ export const MainLayout = ({ children, className }: MainLayoutProps) => {
 
   return (
     <div className={wrapperStyles}>
-      <Flowbite>
-        <MainHeader />
-        <main className="flex-2 flex-grow snap-start">{children}</main>
-        <MainFooter />
-      </Flowbite>
+      <MainHeader />
+      <main className="flex-2 flex-grow snap-start">{children}</main>
+      <MainFooter />
     </div>
   );
 };

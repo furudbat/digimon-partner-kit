@@ -1,6 +1,6 @@
 'use client';
 
-import { Timeline } from 'flowbite-react';
+import { Timeline, TimelineContent, TimelineItem } from 'flowbite-react';
 import React from 'react';
 import { useMediaQuery } from 'react-responsive';
 import { scroller } from 'react-scroll';
@@ -58,13 +58,13 @@ export function DigimonTimeline({
   return (
     <Timeline horizontal>
       <Element name="digimonTimeline"></Element>
-      <Timeline.Item id="digimonTimelineBabyI">
+      <TimelineItem id="digimonTimelineBabyI">
         <Element name="digimonTimelineBabyI"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">I</div>
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
         </div>
-        <Timeline.Content>
+        <TimelineContent>
           <div className="px-3">
             <DigimonTimelineCard
               title="Baby I"
@@ -76,15 +76,15 @@ export function DigimonTimeline({
               printMode={printMode}
             />
           </div>
-        </Timeline.Content>
-      </Timeline.Item>
-      <Timeline.Item id="digimonTimelineBabyII">
+        </TimelineContent>
+      </TimelineItem>
+      <TimelineItem id="digimonTimelineBabyII">
         <Element name="digimonTimelineBabyII"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">II</div>
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
         </div>
-        <Timeline.Content>
+        <TimelineContent>
           <div className="px-2">
             <DigimonTimelineCard
               title="Baby II"
@@ -96,9 +96,9 @@ export function DigimonTimeline({
               printMode={printMode}
             />
           </div>
-        </Timeline.Content>
-      </Timeline.Item>
-      <Timeline.Item id="digimonTimelineChild">
+        </TimelineContent>
+      </TimelineItem>
+      <TimelineItem id="digimonTimelineChild">
         <Element name="digimonTimelineChild"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">
@@ -106,7 +106,7 @@ export function DigimonTimeline({
           </div>
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
         </div>
-        <Timeline.Content>
+        <TimelineContent>
           <div className="px-2">
             <DigimonTimelineCard
               title="Child"
@@ -118,15 +118,15 @@ export function DigimonTimeline({
               printMode={printMode}
             />
           </div>
-        </Timeline.Content>
-      </Timeline.Item>
-      <Timeline.Item id="digimonTimelineAdult">
+        </TimelineContent>
+      </TimelineItem>
+      <TimelineItem id="digimonTimelineAdult">
         <Element name="digimonTimelineAdult"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">IV</div>
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
         </div>
-        <Timeline.Content>
+        <TimelineContent>
           <div className="px-2">
             <DigimonTimelineCard
               title="Adult"
@@ -138,15 +138,15 @@ export function DigimonTimeline({
               printMode={printMode}
             />
           </div>
-        </Timeline.Content>
-      </Timeline.Item>
-      <Timeline.Item id="digimonTimelinePerfect">
+        </TimelineContent>
+      </TimelineItem>
+      <TimelineItem id="digimonTimelinePerfect">
         <Element name="digimonTimelinePerfect"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">V</div>
           <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
         </div>
-        <Timeline.Content>
+        <TimelineContent>
           <div className="px-2">
             <DigimonTimelineCard
               title="Perfect"
@@ -158,14 +158,14 @@ export function DigimonTimeline({
               printMode={printMode}
             />
           </div>
-        </Timeline.Content>
-      </Timeline.Item>
-      <Timeline.Item id="digimonTimelineUltimate">
+        </TimelineContent>
+      </TimelineItem>
+      <TimelineItem id="digimonTimelineUltimate">
         <Element name="digimonTimelineUltimate"></Element>
         <div className="flex items-center dark:text-white">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">VI</div>
         </div>
-        <Timeline.Content>
+        <TimelineContent>
           <div className="px-2">
             <DigimonTimelineCard
               title="Ultimate"
@@ -177,8 +177,8 @@ export function DigimonTimeline({
               printMode={printMode}
             />
           </div>
-        </Timeline.Content>
-      </Timeline.Item>
+        </TimelineContent>
+      </TimelineItem>
     </Timeline>
   );
 }

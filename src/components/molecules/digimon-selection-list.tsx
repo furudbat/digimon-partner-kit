@@ -2,7 +2,7 @@
 
 import { faArrowLeft, faArrowRight, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button, ListGroup } from 'flowbite-react';
+import { Button, ListGroup, ListGroupItem } from 'flowbite-react';
 import React from 'react';
 import { Element } from 'react-scroll';
 import { DigimonData, DigimonLevel } from 'src/models/digimon';
@@ -220,7 +220,7 @@ export function DigimonSelectionList({
             const canon = isEvolCanon(digimon.id);
 
             return (
-              <ListGroup.Item
+              <ListGroupItem
                 className={cn('truncate', canon ? 'font-extrabold' : '')}
                 key={digimon.id}
                 onClick={() => selectDigimon(digimon.id)}
@@ -249,7 +249,7 @@ export function DigimonSelectionList({
                     {digimon.name}
                   </strong>
                 )}
-              </ListGroup.Item>
+              </ListGroupItem>
             );
           })}
         </ListGroup>

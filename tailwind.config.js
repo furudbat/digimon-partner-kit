@@ -1,9 +1,12 @@
-const flowbite = require("flowbite-react/tailwind");
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   mode: 'jit',
-  content: ['./src/app/**/*.{js,ts,jsx,tsx}', './src/components/**/*.{js,ts,jsx,tsx}', flowbite.content(),],
+  content: [
+    "./src/app/**/*.{js,ts,jsx,tsx}",
+    "./src/components/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/flowbite/**/*.js",
+    "./node_modules/flowbite-react/**/*.js",
+  ],
   theme: {
     extend: {
       fontFamily: {
@@ -16,6 +19,6 @@ module.exports = {
   },
   plugins: [
     require('tailwind-scrollbar'),
-    flowbite.plugin(),
+    require("flowbite/plugin"),
   ]
 };

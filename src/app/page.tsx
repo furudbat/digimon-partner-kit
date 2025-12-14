@@ -579,7 +579,7 @@ const HomePage = () => {
                 )}
               </div>
               <div className="w-full flex mx-2 mt-2 items-center">
-                <Button gradientMonochrome="purple" onClick={() => randomize()} className="items-center mx-1">
+                <Button color="purple" onClick={() => randomize()} className="items-center mx-1">
                   Randomize
                 </Button>
               </div>
