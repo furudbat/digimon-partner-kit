@@ -5,7 +5,6 @@ import tsPlugin from '@typescript-eslint/eslint-plugin';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import prettierPlugin from 'eslint-plugin-prettier';
-// 1. Import the Next.js plugin
 import nextPlugin from '@next/eslint-plugin-next';
 
 export default [
@@ -30,14 +29,12 @@ export default [
       '@typescript-eslint': tsPlugin,
       'react-hooks': reactHooks,
       prettier: prettierPlugin,
-      // 2. Add the Next.js plugin here
       '@next/next': nextPlugin,
     },
     settings: {
       react: { version: 'detect' },
     },
     rules: {
-      // 3. Spread the recommended Next.js rules
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs['core-web-vitals'].rules,
 
