@@ -23,11 +23,11 @@ interface RootLayoutProps {
 
 const RootLayout = ({ children }: RootLayoutProps) => {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
-        <ThemeModeScript />
+        <ThemeModeScript mode="light" />
       </head>
-      <body className={cn(inter.variable, 'font-primary', 'h-screen')} suppressHydrationWarning>
+      <body className={cn(inter.variable, 'font-primary', 'h-screen')}>
         <MainProvider>
           <MainLayout>
             <Suspense>

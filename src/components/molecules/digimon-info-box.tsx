@@ -1,6 +1,6 @@
 'use client';
 
-import { List } from 'flowbite-react';
+import { List, ListItem } from 'flowbite-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useMediaQuery } from 'react-responsive';
@@ -14,8 +14,8 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
 
   return (
     <div
-      className="max-w-full border border-gray-200 rounded-lg shadow p-4"
-      style={{ minHeight: !isMobile ? height ?? '32rem' : undefined }}
+      className="max-w-full border rounded-lg shadow p-4"
+      style={{ minHeight: !isMobile ? (height ?? '32rem') : undefined }}
     >
       <div className="grid grid-flow-row-dense md:grid-cols-2 md:grid-rows-1 px-2">
         <div className="items-center mt-11">
@@ -25,49 +25,50 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
             height={320}
             src={window.location.pathname + '/' + (data.img || NOT_FOUND_IMAGE)}
             alt={data.name}
+            loading="eager"
           />
         </div>
         <div className="px-2 md:items-start ml-4 overflow-y-auto" style={{ height: !isMobile ? '26rem' : undefined }}>
-          <h5 className="text-2xl pb-2 font-bold tracking-tight text-gray-900 dark:text-white">
+          <h5 className="text-2xl pb-2 font-bold tracking-tight">
             <Link href={data.href} title={data.name} target="_blank" rel="noreferrer">
               {data.name}
             </Link>
           </h5>
-          <p className="font-normal text-gray-700 dark:text-gray-400">
+          <p className="font-normal">
             <strong>Level:</strong> {data.level}
           </p>
           {data.types?.length > 0 && (
-            <div className="font-normal text-gray-700 dark:text-gray-400">
+            <div className="font-normal">
               <strong>Type:</strong>{' '}
               <List unstyled>
                 {data.types.map((type) => (
-                  <List.Item key={type} className="ml-3">
+                  <ListItem key={type} className="ml-3">
                     {type}
-                  </List.Item>
+                  </ListItem>
                 ))}
               </List>
             </div>
           )}
           {data.attributes?.length > 0 && (
-            <div className="font-normal text-gray-700 dark:text-gray-400">
+            <div className="font-normal">
               <strong>Attributes:</strong>{' '}
               <List unstyled>
                 {data.attributes.map((attribute) => (
-                  <List.Item key={attribute} className="ml-2">
+                  <ListItem key={attribute} className="ml-2">
                     {attribute}
-                  </List.Item>
+                  </ListItem>
                 ))}
               </List>
             </div>
           )}
           {data.fields?.length > 0 && (
-            <div className="font-normal text-gray-700 dark:text-gray-400">
+            <div className="font-normal">
               <strong>Field:</strong>{' '}
               <List unstyled>
                 {data.fields.map((field) => (
-                  <List.Item key={field} className="ml-2">
+                  <ListItem key={field} className="ml-2">
                     {field}
-                  </List.Item>
+                  </ListItem>
                 ))}
               </List>
             </div>
@@ -85,11 +86,12 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
                   rel="noreferrer"
                 >
                   <Image
-                    className="flex flex-inline mx-1 h-auto max-w-full"
+                    className="flex flex-inline mx-1 h-max-auto max-w-full"
                     src={window.location.pathname + '/' + category.img}
                     alt={category.name}
                     width={50}
                     height={50}
+                    loading="eager"
                   />
                 </Link>
               ))}
@@ -97,7 +99,7 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
         </div>
       </div>
       <div className="p-1 px-2 my-2 ml-6">
-        <div className="overflow-hidden h-12 w-full dark:text-white" style={{ maxLines: 2 }}>
+        <div className="overflow-hidden h-12 w-full" style={{ maxLines: 2 }}>
           <p className="text-ellipsis" style={{ lineClamp: 2, whiteSpace: 'pre-line' }}>
             {data.description}
           </p>

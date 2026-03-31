@@ -14,13 +14,33 @@ export function MainFooter() {
   return (
     <Footer container className="footer bottom-0 inset-x-0 rounded-none shadow-none h-14 mt-4 md:mt-6 lg:mt-8">
       <div className="m-2 md:mx-6 w-full">
-        <div className="md:flex items-center sm:justify-between w-full h-14">
+        <div className="md:flex items-center sm:justify-between w-full h-14 p-1">
           <span className="text-sm text-gray-500 dark:text-gray-400">
             © 2025{' '}
             <Link href="https://github.com/furudbat" target="_blank" rel="noreferrer" className="hover:underline">
               furudbat
             </Link>
-            .{' '}
+            <span> - </span>
+            <Link
+              href={'https://github.com/furudbat/digimon-partner-kit'}
+              title="License"
+              target="_blank"
+              rel="noopener"
+              className="hover:underline"
+            >
+              digimon-partner-kit v1.2.3
+            </Link>
+            <span> - </span>
+            <Link
+              href={'https://github.com/furudbat/digimon-partner-kit/blob/main/LICENSE'}
+              title="License"
+              target="_blank"
+              rel="noopener"
+              className="hover:underline"
+            >
+              MIT
+            </Link>
+            <br />
             <em>
               This Project is a free fan site and not affiliated with Bandai Namco. Digimon and other media relating to
               the franchise are registered trademarks by{' '}

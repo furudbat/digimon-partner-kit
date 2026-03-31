@@ -1,21 +1,22 @@
-const flowbite = require("flowbite-react/tailwind");
-
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   mode: 'jit',
-  content: ['./src/app/**/*.{js,ts,jsx,tsx}', './src/components/**/*.{js,ts,jsx,tsx}', flowbite.content(),],
+  content: [
+    './src/app/**/*.{js,ts,jsx,tsx}',
+    './src/components/**/*.{js,ts,jsx,tsx}',
+    './node_modules/flowbite/**/*.js',
+    './node_modules/flowbite-react/**/*.js',
+  ],
   theme: {
     extend: {
       fontFamily: {
-        primary: ['var(--font-primary)']
-      }
-    }
+        primary: ['var(--font-primary)'],
+      },
+    },
   },
   variants: {
-    extend: {}
+    extend: {},
   },
-  plugins: [
-    require('tailwind-scrollbar'),
-    flowbite.plugin(),
-  ]
+  plugins: [require('tailwind-scrollbar'), require('flowbite/plugin')],
 };

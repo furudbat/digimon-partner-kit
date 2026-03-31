@@ -4,7 +4,7 @@ import { DarkThemeToggle } from 'flowbite-react';
 
 export function MainHeader() {
   return (
-    <section className="dark:text-white">
+    <section>
       <div className="mx-auto grid max-w-screen-xl px-1 py-1 text-center lg:py-2 lg:pt-4">
         <div className="mx-auto place-self-center">
           <h1 className="mt-2 mb-4 md:mb-2 max-w-2xl font-extrabold leading-none tracking-tight">

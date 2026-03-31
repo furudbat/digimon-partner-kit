@@ -46,7 +46,7 @@ export function DigimonTimelineCard({
 
   return (
     <Card
-      className={cn('w-60 py-4 px-1 items-center', bg, highlight ? 'border-2' : 'border', printMode ? 'shadow-sm' : '')}
+      className={cn('w-60 py-4 px-1 items-center', highlight ? 'border-2' : 'border', printMode ? 'shadow-sm' : '')}
       style={{ height: imgSize + 78 }}
       renderImage={() => {
         return (
@@ -65,6 +65,7 @@ export function DigimonTimelineCard({
                 width={imgSize}
                 height={imgSize}
                 alt={data.name}
+                loading="eager"
               />
             )}
             {!data && !printMode && !disabled && !selected && (
@@ -128,13 +129,7 @@ export function DigimonTimelineCard({
               </Button>
             )}
             {data && !disabled && (
-              <Button
-                color="gray"
-                size="xs"
-                className="text-gray-900 bg-gray-200 dark:bg-gray-800 dark:text-gray-400"
-                disabled={disabled}
-                onClick={() => onReset && onReset()}
-              >
+              <Button color="gray" size="xs" disabled={disabled} onClick={() => onReset && onReset()}>
                 Reset
               </Button>
             )}
