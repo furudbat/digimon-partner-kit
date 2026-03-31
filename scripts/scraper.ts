@@ -41,21 +41,22 @@ const config = {
   baby2Lists: ['https://wikimon.net/Category:Baby_II_Level'],
   childLists: [
     'https://wikimon.net/Category:Child_Level',
-    'https://wikimon.net/index.php?title=Category:Child_Level&pagefrom=Soundbirdmon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Child_Level&pagefrom=Snow+Goburimon#mw-pages',
   ],
   adultLists: [
     'https://wikimon.net/index.php?title=Category:Adult_Level',
-    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Liskmon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Algomon+%28Adult%29#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Lynxmon#mw-pages',
     'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Woodmon#mw-pages',
   ],
   perfectLists: [
     'https://wikimon.net/Category:Perfect_Level',
-    'https://wikimon.net/index.php?title=Category:Perfect_Level&pagefrom=Mega+Seadramon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Perfect_Level&pagefrom=Matadrmon#mw-pages',
   ],
   ultimateLists: [
     'https://wikimon.net/Category:Ultimate_Level',
-    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Imperialdramon%3A+Dragon+Mode+%28Black%29#mw-pages',
-    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Susanoomon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Holy+Digitamamon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Skull+Mammon+%28X-Antibody%29#mw-pages',
   ],
 };
 
@@ -65,7 +66,7 @@ const readFileAsync = promisify(fs.readFile);
 function getBaseHeaders() {
   return {
     'User-Agent': POLITE
-      ? 'digimon-partner-kit-scrapper/1.1 (+https://furudbat.github.io/digimon-partner-kit)'
+      ? 'digimon-partner-kit-scrapper/1.2 (+https://furudbat.github.io/digimon-partner-kit)'
       : getRandom(),
     'Accept-Language': 'en-US,en;q=0.9',
     Referer: config.wikimonUrl,
