@@ -60,9 +60,9 @@ export function DigimonTimeline({
       <Element name="digimonTimeline"></Element>
       <TimelineItem id="digimonTimelineBabyI">
         <Element name="digimonTimelineBabyI"></Element>
-        <div className="flex items-center dark:text-white">
+        <div className="flex items-center">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">I</div>
-          <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
+          <div className="hidden sm:flex w-full h-0.5"></div>
         </div>
         <TimelineContent>
           <div className="px-3">
@@ -80,9 +80,9 @@ export function DigimonTimeline({
       </TimelineItem>
       <TimelineItem id="digimonTimelineBabyII">
         <Element name="digimonTimelineBabyII"></Element>
-        <div className="flex items-center dark:text-white">
+        <div className="flex items-center ">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">II</div>
-          <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
+          <div className="hidden sm:flex w-full h-0.5"></div>
         </div>
         <TimelineContent>
           <div className="px-2">
@@ -100,11 +100,11 @@ export function DigimonTimeline({
       </TimelineItem>
       <TimelineItem id="digimonTimelineChild">
         <Element name="digimonTimelineChild"></Element>
-        <div className="flex items-center dark:text-white">
+        <div className="flex items-center ">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">
             III
           </div>
-          <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
+          <div className="hidden sm:flex w-full h-0.5"></div>
         </div>
         <TimelineContent>
           <div className="px-2">
@@ -122,9 +122,9 @@ export function DigimonTimeline({
       </TimelineItem>
       <TimelineItem id="digimonTimelineAdult">
         <Element name="digimonTimelineAdult"></Element>
-        <div className="flex items-center dark:text-white">
+        <div className="flex items-center">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">IV</div>
-          <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
+          <div className="hidden sm:flex w-full h-0.5"></div>
         </div>
         <TimelineContent>
           <div className="px-2">
@@ -142,9 +142,9 @@ export function DigimonTimeline({
       </TimelineItem>
       <TimelineItem id="digimonTimelinePerfect">
         <Element name="digimonTimelinePerfect"></Element>
-        <div className="flex items-center dark:text-white">
+        <div className="flex items-center ">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">V</div>
-          <div className="hidden sm:flex w-full bg-gray-200 h-0.5 dark:bg-gray-700"></div>
+          <div className="hidden sm:flex w-full h-0.5 "></div>
         </div>
         <TimelineContent>
           <div className="px-2">
@@ -162,7 +162,7 @@ export function DigimonTimeline({
       </TimelineItem>
       <TimelineItem id="digimonTimelineUltimate">
         <Element name="digimonTimelineUltimate"></Element>
-        <div className="flex items-center dark:text-white">
+        <div className="flex items-center">
           <div className="z-10 flex items-center justify-center w-6 h-6 rounded-full ring-0 sm:ring-1 shrink-0">VI</div>
         </div>
         <TimelineContent>

@@ -14,7 +14,7 @@ export function MainFooter() {
   return (
     <Footer container className="footer bottom-0 inset-x-0 rounded-none shadow-none h-14 mt-4 md:mt-6 lg:mt-8">
       <div className="m-2 md:mx-6 w-full">
-        <div className="md:flex items-center sm:justify-between w-full h-14">
+        <div className="md:flex items-center sm:justify-between w-full h-14 p-1">
           <span className="text-sm text-gray-500 dark:text-gray-400">
             © 2025{' '}
             <Link href="https://github.com/furudbat" target="_blank" rel="noreferrer" className="hover:underline">

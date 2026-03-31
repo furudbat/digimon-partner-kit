@@ -1,7 +1,7 @@
 /* eslint no-console: off */
 
 import axios from 'axios';
-import cheerio from 'cheerio';
+import cheerio, { Cheerio } from 'cheerio';
 import crypto from 'crypto';
 import fs, { existsSync, mkdirSync } from 'fs';
 import { writeFile } from 'fs/promises';
@@ -608,12 +608,12 @@ class DigimonScraperScraper {
 
     const name = $('#firstHeading').text().trim();
 
-    const getInfoFromInfoBox = (infoBox: cheerio.Cheerio, params: { title?: string; text?: string }) => {
+    const getInfoFromInfoBox = (infoBox: Cheerio<any>, params: { title?: string; text?: string }) => {
       let ret: string[] = [];
 
-      const tr = ((): cheerio.Cheerio | undefined => {
+      const tr = ((): Cheerio<any> | undefined => {
         if (params.text && params.title) {
-          let ftd: cheerio.Cheerio | undefined;
+          let ftd: Cheerio<any> | undefined;
           infoBox.find(`td a[title="${params.title}"]`).each((i, e) => {
             if ($(e).text().trim() === params.text && !ftd) {
               ftd = $(e);
@@ -628,7 +628,7 @@ class DigimonScraperScraper {
         }
 
         if (params.text) {
-          let ret: cheerio.Cheerio | undefined = undefined;
+          let ret: Cheerio<any> | undefined = undefined;
           infoBox.find(`td`).each((index, td) => {
             if ($(td).text().trim() === params.text && !ret) {
               ret = $(td).closest('tr');

@@ -2,7 +2,7 @@
 
 import { faArrowLeft, faArrowRight, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button, ListGroup, ListGroupItem } from 'flowbite-react';
+import { Button, ListGroup, ListGroupItem, TextInput } from 'flowbite-react';
 import React from 'react';
 import { Element } from 'react-scroll';
 import { DigimonData, DigimonLevel } from 'src/models/digimon';
@@ -177,7 +177,7 @@ export function DigimonSelectionList({
   );
 
   return (
-    <div className="dark:text-white snap-start md:snap-none pt-4" id="digimonSelectionList">
+    <div className="snap-start md:snap-none pt-4" id="digimonSelectionList">
       <Element name="digimonSelectionList"></Element>
       <LevelSelectionButtonGroup
         nextDigimonLevel={nextDigimonLevel}
@@ -203,10 +203,10 @@ export function DigimonSelectionList({
             <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
               <FontAwesomeIcon icon={faMagnifyingGlass} />
             </div>
-            <input
+            <TextInput
               type="search"
               id="digimon-list-search"
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+              className="block w-full ps-10 p-2.5"
               placeholder="Search"
               onChange={(e) => debouncedDigimonSearch(e.target.value)}
             />

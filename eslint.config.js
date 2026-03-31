@@ -1,4 +1,3 @@
-// eslint.config.js
 import js from '@eslint/js';
 import globals from 'globals';
 import tsParser from '@typescript-eslint/parser';
@@ -6,21 +5,19 @@ import tsPlugin from '@typescript-eslint/eslint-plugin';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import prettierPlugin from 'eslint-plugin-prettier';
+// 1. Import the Next.js plugin
+import nextPlugin from '@next/eslint-plugin-next';
 
 export default [
   js.configs.recommended,
-
   {
     files: ['**/*.{js,jsx,ts,tsx,mjs}'],
-
     languageOptions: {
       parser: tsParser,
-      ecmaVersion: 11,
+      ecmaVersion: 'latest', // Use latest for Next.js 15
       sourceType: 'module',
       parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
+        ecmaFeatures: { jsx: true },
       },
       globals: {
         ...globals.browser,
@@ -28,46 +25,42 @@ export default [
         ...globals.jest,
       },
     },
-
     plugins: {
       react: reactPlugin,
       '@typescript-eslint': tsPlugin,
       'react-hooks': reactHooks,
       prettier: prettierPlugin,
+      // 2. Add the Next.js plugin here
+      '@next/next': nextPlugin,
     },
-
     settings: {
-      react: {
-        version: 'detect',
-      },
+      react: { version: 'detect' },
     },
-
     rules: {
+      // 3. Spread the recommended Next.js rules
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs['core-web-vitals'].rules,
+
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
       'newline-before-return': 'error',
       'react/prop-types': 'off',
       'react/react-in-jsx-scope': 'off',
-
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-
       'no-console': ['error', { allow: ['warn', 'error'] }],
-
       'prettier/prettier': 'error',
     },
   },
-
   {
     ignores: [
-      '**/node_modules/*',
-      '**/out/*',
-      '**/.next/*',
-      '**/coverage',
+      'node_modules/',
+      '.next/',
+      'out/',
+      'dist/',
+      'build/',
+      'coverage/',
       'src/styles/globals.css',
-      'dist',
-      'build',
-      'out',
     ],
   },
 ];

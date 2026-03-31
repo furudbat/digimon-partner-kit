@@ -13,7 +13,10 @@ interface MainLayoutProps {
 // This is the place responsible for wrapping your app.
 // Add here components like Footer, Nav etc.
 export const MainLayout = ({ children, className }: MainLayoutProps) => {
-  const wrapperStyles = cn('flex flex-col min-h-full bg-white dark:bg-gray-900 snap-y', className);
+  const wrapperStyles = cn(
+    'flex flex-col min-h-full snap-y bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100',
+    className
+  );
 
   return (
     <div className={wrapperStyles}>

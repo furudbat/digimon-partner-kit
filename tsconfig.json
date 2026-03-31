@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "incremental": true, // https://nextjs.org/docs/basic-features/typescript#incremental-type-checking
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@/components/*": ["./src/components/*"],
@@ -31,6 +32,6 @@
       }
     ]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "additional-modules.d.ts"],
   "exclude": ["node_modules"]
 }
