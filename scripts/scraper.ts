@@ -1,9 +1,8 @@
 /* eslint no-console: off */
 
-import axios from 'axios';
-import cheerio, { Cheerio } from 'cheerio';
+import { load } from 'cheerio';
+import type { Cheerio, Element, CheerioAPI } from 'cheerio';
 import crypto from 'crypto';
-import fs, { existsSync, mkdirSync } from 'fs';
 import { writeFile } from 'fs/promises';
 import { AssertionError } from 'node:assert';
 import { dirname, resolve } from 'path';
@@ -11,15 +10,18 @@ import { getRandom } from 'random-useragent';
 import sharp from 'sharp';
 import { fileURLToPath } from 'url';
 import { promisify } from 'util';
+import { finished } from 'node:stream/promises'; // Use the promises subpath
+import { Readable } from 'node:stream';
+import fs, { createWriteStream, existsSync, mkdirSync } from 'node:fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const POLITE = true;
 // don't check for 304, just assume cached is always right
-const ALWAYS_USE_CACHED = true;
+const ALWAYS_USE_CACHED = false;
 const CAT_ALWAYS_USE_CACHED = true;
-const FORCE_DOWNLOAD_IMAGES = true; // try to re-download images or update final image from cache (ALWAYS_USE_CACHED)
+const FORCE_DOWNLOAD_IMAGES = false; // try to re-download images or update final image from cache (ALWAYS_USE_CACHED)
 const REDOWNLOAD_LIST = false;
 // Crawl-delay: 60
 
@@ -35,6 +37,11 @@ function assert(condition: boolean, msg?: string): asserts condition {
   }
 }
 
+function logInfo(...args: any[]) {
+  const timestamp = new Date().toISOString();
+  console.info(`[${timestamp}]`, ...args);
+}
+
 const config = {
   wikimonUrl: 'https://wikimon.net',
   baby1Lists: ['https://wikimon.net/Category:Baby_I_Level'],
@@ -45,18 +52,17 @@ const config = {
   ],
   adultLists: [
     'https://wikimon.net/index.php?title=Category:Adult_Level',
-    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Algomon+%28Adult%29#mw-pages',
-    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Lynxmon#mw-pages',
-    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Woodmon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Lianpumon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Witchmon#mw-pages',
   ],
   perfectLists: [
     'https://wikimon.net/Category:Perfect_Level',
-    'https://wikimon.net/index.php?title=Category:Perfect_Level&pagefrom=Matadrmon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Perfect_Level&pagefrom=Mechanorimon#mw-pages',
   ],
   ultimateLists: [
     'https://wikimon.net/Category:Ultimate_Level',
-    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Holy+Digitamamon#mw-pages',
-    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Skull+Mammon+%28X-Antibody%29#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Hi+Andromon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Skull+Mammon#mw-pages',
   ],
 };
 
@@ -146,42 +152,63 @@ async function executePromisesWithLimit<T>(factories: Array<() => Promise<T>>, l
 type SafeRequestOptions = {
   polite?: boolean;
 };
-async function safeRequest<T>(
+
+async function safeRequest(
   url: string,
-  fn: () => Promise<T>,
+  fn: () => Promise<Response>, // Changed to expect a Fetch Response
   options: SafeRequestOptions = {},
   retries: number = 3
-): Promise<T | null> {
-  const { polite } = { ...{ polite: POLITE }, ...options };
+): Promise<Response | null> {
+  const { polite } = { polite: POLITE, ...options };
+
   try {
     console.debug(`----safeRequest (${retries})... ${url}`);
 
-    return await fn();
-  } catch (err: unknown) {
-    if (axios.isAxiosError(err)) {
-      console.error('-----Axios error message:', err.message);
-      console.error('-----Axios error code:', err.code);
-      // @ts-expect-error
-      if (retries > 0 && (err.response?.status === 429 || err.response?.status >= 500)) {
+    const response = await fn();
+
+    // Fetch does not throw on 4xx/5xx, so we handle them here
+    if (!response.ok) {
+      const status = response.status;
+
+      // Rate limited (429) or Server Error (500+)
+      if (retries > 0 && (status === 429 || status >= 500)) {
         const wait = polite ? 60 * 1000 : getRandomValue(3000, 7000);
-        console.warn(`-----Rate limited, retrying after ${wait}ms...`);
+        console.warn(`-----Status ${status}, retrying after ${wait}ms...`);
 
         await asyncRandomSleep(wait, wait + 2000);
 
         return safeRequest(url, fn, options, retries - 1);
       }
 
-      if (retries > 0 && err.response?.status === 404) {
-        console.warn(`-----Not Found: ${err.config?.url}`);
-
+      // Not Found (404)
+      if (status === 404) {
+        console.warn(`-----Not Found: ${url}`);
         const wait = getRandomValue(3000, 7000);
-        console.warn(`-----retrying after ${wait}ms...`);
+        console.warn(`-----waiting ${wait}ms before returning null...`);
 
         await asyncRandomSleep(wait, wait + 2000);
 
         return null;
       }
+
+      // Throw for other non-ok statuses to hit the catch block
+      throw new Error(`Request failed with status ${status}`);
     }
+
+    return response;
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      console.error('-----Fetch/Network error message:', err.message);
+    }
+
+    // If it's a network error and we have retries left, you could add retry logic here too
+    if (retries > 0) {
+      console.warn('-----Network error encountered, retrying...');
+      await asyncRandomSleep(3000, 5000);
+
+      return safeRequest(url, fn, options, retries - 1);
+    }
+
     throw err;
   }
 }
@@ -221,9 +248,12 @@ async function fetchFromWebOrCache(
   options: FetchFromWebOrCacheOptions = {}
 ): Promise<{ content: string | null; cached: boolean; status: number | undefined } | undefined> {
   let { prefix, ignoreCache, forceCache } = {
-    ...{ prefix: undefined, ignoreCache: false, forceCache: false },
+    prefix: undefined,
+    ignoreCache: false,
+    forceCache: false,
     ...options,
   };
+
   const hash = crypto.createHash('sha256').update(url).digest('hex');
   const cacheDir = resolve(__dirname, '.cache');
   if (!existsSync(cacheDir)) mkdirSync(cacheDir);
@@ -233,12 +263,9 @@ async function fetchFromWebOrCache(
 
   const headers: Record<string, string> = await getHeaders(metaFile, ignoreCache);
 
-  //console.log({options});
-
-  //console.debug({ url, metaFile, htmlFile, ignoreCache, exists: fs.existsSync(htmlFile) });
   if (forceCache) {
     if (fs.existsSync(htmlFile)) {
-      console.info(`----Using cache: [${hash}] (${url})`);
+      logInfo(`----Using cache: [${hash}] (${url})`);
 
       return { content: await readFileAsync(htmlFile, 'utf8'), cached: true, status: undefined };
     }
@@ -250,96 +277,67 @@ async function fetchFromWebOrCache(
   if (ignoreCache || !fs.existsSync(htmlFile)) {
     try {
       console.debug(`--Download HTML... ${url}`);
-      let response = await safeRequest(url, () => axios.get(url, { headers, validateStatus: (s) => s < 500 }));
+
+      // Note: safeRequest now receives a Fetch call
+      let response = await safeRequest(url, () => fetch(url, { headers }));
+
       if (response?.status === 304) {
-        console.info(
-          `--304 Not Modified, using cache (${url}) -- etag:${headers['If-None-Match']}, lastModified:${headers['If-Modified-Since']}`
-        );
+        logInfo(`--304 Not Modified, using cache (${url})`);
         if (!fs.existsSync(htmlFile)) {
-          const newHeaders: Record<string, string> = await getHeaders(metaFile, false);
-          response = await safeRequest(url, () =>
-            axios.get(url, { headers: newHeaders, validateStatus: (s) => s < 500 })
-          );
+          const newHeaders = await getHeaders(metaFile, false);
+          response = await safeRequest(url, () => fetch(url, { headers: newHeaders }));
         } else {
           const savedMeta = await getMetaData(metaFile);
           const newMeta = {
-            etag: response.headers['etag'] || (savedMeta?.etag ?? ''),
-            lastModified: response.headers['last-modified'] || (savedMeta?.lastModified ?? ''),
+            etag: response.headers.get('etag') || (savedMeta?.etag ?? ''),
+            lastModified: response.headers.get('last-modified') || (savedMeta?.lastModified ?? ''),
           };
           if (savedMeta && (savedMeta.etag !== newMeta.etag || savedMeta.lastModified !== newMeta.lastModified)) {
-            console.debug(
-              `Metadata changed: etag [${savedMeta.etag}] → [${newMeta.etag}], lastModified [${savedMeta.lastModified}] → [${newMeta.lastModified}]`
-            );
-            ignoreCache = true; // force redownload, invalidated cache
-          } else if (savedMeta && fs.existsSync(htmlFile)) {
-            // cached content
+            ignoreCache = true;
+          } else {
             return { content: await readFileAsync(htmlFile, 'utf8'), cached: true, status: response.status };
           }
         }
       }
+
       if (response?.status === 200) {
-        await writeFileAsync(htmlFile, response.data, 'utf8');
+        const text = await response.text();
+        await writeFileAsync(htmlFile, text, 'utf8');
         await writeFileAsync(
           metaFile,
           JSON.stringify(
             {
-              etag: response.headers.etag,
-              lastModified: response.headers['last-modified'],
+              etag: response.headers.get('etag'),
+              lastModified: response.headers.get('last-modified'),
             },
             null,
             2
           )
         );
-        console.info(`--Cached saved: [${hash}] (${url}) -- ${response.headers['last-modified']}`);
+        logInfo(`--Cached saved: [${hash}] (${url}) -- ${response.headers.get('last-modified')}`);
+
         if (POLITE) {
           const wait = getRandomValue(60 * 1000, 60 * 1234);
-          console.info(`---Polite wait ${wait}ms...`);
+          logInfo(`---Polite wait ${wait}ms...`);
 
           await asyncRandomSleep(wait, wait + 2000);
         }
 
-        return { content: response?.data ?? null, cached: false, status: response.status };
+        return { content: text, cached: false, status: response?.status };
       } else {
-        return { content: response?.data ?? null, cached: false, status: response?.status };
+        return { content: null, cached: false, status: response?.status };
       }
     } catch (err) {
-      console.warn(`Error fetching ${url}, fallback to cache`);
+      console.warn(`Error fetching ${url}, fallback to cache`, err);
     }
   }
 
+  // Final fallback to disk
   if (!ignoreCache && fs.existsSync(htmlFile)) {
-    console.info(`----Using cache: [${hash}] (${url})`);
-
-    if (fs.existsSync(htmlFile)) {
-      return { content: await readFileAsync(htmlFile, 'utf8'), cached: true, status: undefined };
-    } else {
-      console.error(`----Cached file for ${url} not found`);
-    }
+    return { content: await readFileAsync(htmlFile, 'utf8'), cached: true, status: undefined };
   }
 
-  // Fallback: fresh fetch
-  const newHeaders: Record<string, string> = await getHeaders(metaFile, true);
-  console.debug(`--Download HTML... ${url}`);
-  const response = await safeRequest(url, () =>
-    axios.get(url, { headers: newHeaders, validateStatus: (s) => s < 500 })
-  );
-  if (response?.status === 200) {
-    console.info(`--HTML 200 OK, saved: ${htmlFile}`);
-    await writeFileAsync(htmlFile, response.data, 'utf8');
-    await writeFileAsync(
-      metaFile,
-      JSON.stringify(
-        {
-          etag: response.headers.etag,
-          lastModified: response.headers['last-modified'],
-        },
-        null,
-        2
-      )
-    );
-  }
-
-  return { content: response?.data ?? null, cached: false, status: response !== null ? response.status : 404 };
+  return { content: null, cached: false, status: 404 };
 }
 
 type DownloadImageOptions = {
@@ -352,7 +350,9 @@ async function downloadImage(
   options: DownloadImageOptions = {}
 ): Promise<{ imgFile: string | null; cached: boolean; status: number | undefined } | undefined> {
   let { ignoreCache, forceCache, polite } = {
-    ...{ ignoreCache: false, forceCache: false, polite: POLITE },
+    ignoreCache: false,
+    forceCache: false,
+    polite: POLITE,
     ...options,
   };
 
@@ -362,127 +362,75 @@ async function downloadImage(
 
   const metaFile = resolve(cacheDir, `i_${hash}.meta.json`);
   const imgFile = resolve(cacheDir, `i_${hash}.png`);
+  const headers = await getHeaders(metaFile);
 
-  const headers: Record<string, string> = await getHeaders(metaFile);
-
-  if (forceCache) {
-    if (fs.existsSync(imgFile)) {
-      console.info(`----Using cache: [${hash}] (${url})`);
-
-      return { imgFile, cached: true, status: undefined };
-    }
-    console.error(`----Cached file for ${url} not found`);
-
-    return { imgFile: null, cached: false, status: undefined };
+  // 1. Force Cache Logic
+  if (forceCache && existsSync(imgFile)) {
+    return { imgFile, cached: true, status: undefined };
   }
 
-  if (ignoreCache || !fs.existsSync(imgFile)) {
+  // 2. Fetch Logic
+  if (ignoreCache || !existsSync(imgFile)) {
     try {
-      let response = await safeRequest(
-        url,
-        () => {
-          return axios.get(url, { headers, responseType: 'stream', validateStatus: (s) => s < 500 });
-        },
-        { polite },
-        5
-      );
-      if (response?.status === 304) {
-        console.info(
-          `--304 Not Modified, using cache image (${url}) -- etag:${headers['If-None-Match']}, lastModified:${headers['If-Modified-Since']}`
-        );
+      const response = await safeRequest(url, () => fetch(url, { headers }), { polite }, 5);
 
-        if (!fs.existsSync(imgFile)) {
-          const newHeaders: Record<string, string> = await getHeaders(metaFile, false);
-          response = await safeRequest(url, () =>
-            axios.get(url, { headers: newHeaders, validateStatus: (s) => s < 500 })
-          );
-        } else {
-          const savedMeta = await getMetaData(metaFile);
-          const newMeta = {
-            etag: response.headers['etag'] || (savedMeta?.etag ?? ''),
-            lastModified: response.headers['last-modified'] || (savedMeta?.lastModified ?? ''),
-          };
-          if (savedMeta && (savedMeta.etag !== newMeta.etag || savedMeta.lastModified !== newMeta.lastModified)) {
-            console.debug(
-              `Metadata changed: etag [${savedMeta.etag}] → [${newMeta.etag}], lastModified [${savedMeta.lastModified}] → [${newMeta.lastModified}]`
-            );
-            ignoreCache = true; // force redownload, invalidated cache
-          } else if (savedMeta && fs.existsSync(imgFile)) {
-            // cached content
-            return { imgFile, cached: true, status: response.status };
-          }
-        }
+      if (!response) throw new Error('No response received');
+
+      // Handle 304 Not Modified
+      if (response.status === 304 && existsSync(imgFile)) {
+        logInfo(`--304 Not Modified, using cache: ${url}`);
+
+        return { imgFile, cached: true, status: 304 };
       }
-      if (response?.status === 404) {
-        return { imgFile: null, cached: false, status: response.status };
-      }
-      if (response?.status === 200) {
-        console.info(`--Image 200 OK, saved: ${imgFile}`);
-        const writer = fs.createWriteStream(imgFile);
-        await new Promise<void>((resolve, reject) => {
-          writer.on('finish', () => resolve());
-          writer.on('error', reject);
-          response.data.pipe(writer);
-        });
+
+      // Handle 200 OK and Stream to Disk
+      if (response.status === 200 && response.body) {
+        logInfo(`--Image 200 OK, saving: ${imgFile}`);
+        const writer = createWriteStream(imgFile);
+
+        // Convert Web Stream to Node Stream and pipe it
+        const nodeStream = Readable.fromWeb(response.body as any);
+        nodeStream.pipe(writer);
+
+        // Await the promise version of finished to ensure it's fully written to disk
+        await finished(writer);
 
         await writeFileAsync(
           metaFile,
           JSON.stringify(
             {
-              etag: response.headers.etag,
-              lastModified: response.headers['last-modified'],
+              etag: response.headers.get('etag'),
+              lastModified: response.headers.get('last-modified'),
             },
             null,
             2
           )
         );
 
-        return { imgFile, cached: false, status: response.status };
+        if (POLITE) {
+          const wait = getRandomValue(60 * 1000, 60 * 1234);
+          logInfo(`---Polite wait ${wait}ms...`);
+
+          await asyncRandomSleep(wait, wait + 2000);
+        }
+
+        return { imgFile, cached: false, status: 200 };
+      }
+
+      if (response.status === 404) {
+        return { imgFile: null, cached: false, status: 404 };
       }
     } catch (err) {
-      console.warn(`Error fetching ${url}, fallback to cached image`);
+      console.warn(`Error fetching ${url}, checking for fallback...`, err);
     }
-
-    if (!ignoreCache && fs.existsSync(imgFile)) {
-      console.info(`----Using cache image: [${hash}] (${url})`);
-
-      if (fs.existsSync(imgFile)) {
-        return { imgFile, cached: true, status: undefined };
-      } else {
-        console.error(`----Cached image for ${url} not found`);
-      }
-    }
-
-    return { imgFile: null, cached: false, status: undefined };
   }
 
-  // No cache -> fresh download
-  const newHeaders: Record<string, string> = await getHeaders(metaFile, true);
-  const response = await safeRequest(url, () => axios.get(url, { headers: newHeaders, responseType: 'stream' }));
-  if (response?.status == 200) {
-    const writer = fs.createWriteStream(imgFile);
-    await new Promise<void>((resolve, reject) => {
-      writer.on('finish', () => resolve());
-      writer.on('error', reject);
-      response.data.pipe(writer);
-    });
-
-    await writeFileAsync(
-      metaFile,
-      JSON.stringify(
-        {
-          etag: response.headers.etag,
-          lastModified: response.headers['last-modified'],
-        },
-        null,
-        2
-      )
-    );
-
-    return { imgFile, cached: false, status: response.status };
+  // 3. Fallback to existing file if fetch failed or wasn't needed
+  if (existsSync(imgFile)) {
+    return { imgFile, cached: true, status: undefined };
   }
 
-  return { imgFile: null, cached: false, status: response?.status !== null ? response?.status : undefined };
+  return { imgFile: null, cached: false, status: 404 };
 }
 
 type DigimonLevel = 'Baby I' | 'Baby II' | 'Child' | 'Adult' | 'Perfect' | 'Ultimate';
@@ -582,10 +530,10 @@ class DigimonScraperScraper {
 
     let result: { content: string | null; cached: boolean; status: number | undefined } | undefined = undefined;
     if (this.position < start_position) {
-      console.info(`Skip Digimon: ${url} ... (${this.position})`);
+      logInfo(`Skip Digimon: ${url} ... (${this.position})`);
       result = await fetchFromWebOrCache(url, { ignoreCache: false, forceCache: true });
     } else {
-      console.info(`Scrap Digimon: ${url} ... (${this.position})`);
+      logInfo(`Scrap Digimon: ${url} ... (${this.position})`);
       if (!isAllowedUrl(url)) {
         throw new Error(`URL disallowed by robots: ${url}`);
       }
@@ -596,12 +544,12 @@ class DigimonScraperScraper {
     //console.verbose({result});
     if (!html) return undefined;
 
-    const $ = cheerio.load(html);
+    const $ = load(html);
 
     const no_article = $('#bodyContent .noarticletext');
     const no_article_text = $('#bodyContent .noarticletext p').text().trim();
     if (no_article.length && no_article_text.includes('There is currently no text in this page.')) {
-      console.info(`Not Article found for Digimon: ${url} ... (${this.position})`);
+      logInfo(`Not Article found for Digimon: ${url} ... (${this.position})`);
 
       return undefined;
     }
@@ -665,7 +613,7 @@ class DigimonScraperScraper {
     };
 
     if (name) {
-      console.info(`  Parse Digimon: ${url} ...`);
+      logInfo(`  Parse Digimon: ${url} ...`);
 
       const altName = name.replace('ä', 'a').replace('ö', 'o').replace('ü', 'u');
       const altName2 = name.replace('ä', 'a').replace('ö', 'o').replace('ü', 'u').replaceAll(' ', '');
@@ -1179,7 +1127,7 @@ class DigimonScraperScraper {
           }
         }
 
-        console.info(`Scrapped Digimon: ${name} (${levels}) [${attributes}]`);
+        logInfo(`Scrapped Digimon: ${name} (${levels}) [${attributes}]`);
 
         this.position++;
 
@@ -1213,7 +1161,7 @@ class DigimonScraperScraper {
         const resultFileAlt = resolve(cacheResultDir, `${id.replace('/', '')}.json`);
         await writeFileAsync(resultFile, JSON.stringify(ret));
         await writeFileAsync(resultFileAlt, JSON.stringify(ret, null, 2));
-        console.info(`  Save Digimon: ${name} -- [${resultFile}] (${resultFileAlt})`);
+        logInfo(`  Save Digimon: ${name} -- [${resultFile}] (${resultFileAlt})`);
 
         return ret;
       }
@@ -1250,7 +1198,7 @@ class DigimonScraperScraper {
     //const cached = result?.cached ?? false;
     if (!html) return [];
 
-    const $ = cheerio.load(html);
+    const $ = load(html);
 
     const ret: DigimonListElement[] = [];
     $('.mw-category-group a').each((i, e) => {
@@ -1266,7 +1214,7 @@ class DigimonScraperScraper {
     const resultFileAlt = resolve(cacheResultDir, `${id.replace('/', '')}.json`);
     await writeFileAsync(resultFile, JSON.stringify(ret));
     await writeFileAsync(resultFileAlt, JSON.stringify(ret, null, 2));
-    console.info(`  Save Digimon List: ${id} -- [${resultFile}] (${resultFileAlt})`);
+    logInfo(`  Save Digimon List: ${id} -- [${resultFile}] (${resultFileAlt})`);
 
     return ret;
   }
@@ -1415,34 +1363,38 @@ export async function main() {
     await asyncRandomSleep(1243, 3124);
     */
 
+    /*
     console.debug(await scraper.scrapeDigimon('https://wikimon.net/Angemon'));
     await asyncRandomSleep(3241, 4582);
+    */
+
+    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Agumon'));
 
     return;
   }
 
   const baby1List = await getBaby1DigimonList();
-  console.info(`Get Baby I Digimon List: ${baby1List.length}`);
+  logInfo(`Get Baby I Digimon List: ${baby1List.length}`);
 
   await asyncRandomSleep(1234, 4567);
   const baby2List = await getBaby2DigimonList();
-  console.info(`Get Baby II Digimon List: ${baby2List.length}`);
+  logInfo(`Get Baby II Digimon List: ${baby2List.length}`);
 
   await asyncRandomSleep(1100, 4861);
   const childList = await getChildDigimonList();
-  console.info(`Get Child Digimon List: ${childList.length}`);
+  logInfo(`Get Child Digimon List: ${childList.length}`);
 
   await asyncRandomSleep(2356, 8745);
   const adultList = await getAdultDigimonList();
-  console.info(`Get Adult Digimon List: ${adultList.length}`);
+  logInfo(`Get Adult Digimon List: ${adultList.length}`);
 
   await asyncRandomSleep(3254, 3652);
   const perfectList = await getPerfectDigimonList();
-  console.info(`Get Perfect Digimon List: ${perfectList.length}`);
+  logInfo(`Get Perfect Digimon List: ${perfectList.length}`);
 
   await asyncRandomSleep(5684, 6543);
   const ultimateList = await getUltimateDigimonList();
-  console.info(`Get Ultimate Digimon List: ${ultimateList.length}`);
+  logInfo(`Get Ultimate Digimon List: ${ultimateList.length}`);
 
   const db = {
     lists: {
@@ -1461,7 +1413,7 @@ export async function main() {
   };
 
   const allDigimonUrls = db.lists.all.map((d) => d.href);
-  console.info(`Load ${allDigimonUrls.length} Digimons...`);
+  logInfo(`Load ${allDigimonUrls.length} Digimons...`);
 
   const loadSlice = async (start: number, end: number) => {
     const slice = allDigimonUrls.slice(start, end);
@@ -1487,7 +1439,7 @@ export async function main() {
   const results = await executePromisesWithLimit<DigimonData | undefined>(tasks, POLITE && !ALWAYS_USE_CACHED ? 1 : 5);
   db.digimons.push(...(results.filter(Boolean) as DigimonData[]));
 
-  console.info('clean up Digimons...');
+  logInfo('clean up Digimons...');
 
   // filter unique digimon (remove duplicates)
   console.debug(`Before: clean up duplicates: ${db.digimons.length}`);
@@ -1590,7 +1542,7 @@ export async function main() {
     }
   });
 
-  console.info(`Save ${db.digimons.length} Digimons...`);
+  logInfo(`Save ${db.digimons.length} Digimons...`);
   saveData('digimon.db', db);
 }
 

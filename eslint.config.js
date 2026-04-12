@@ -47,6 +47,7 @@ export default [
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'no-console': ['error', { allow: ['warn', 'error'] }],
       'prettier/prettier': 'error',
+      'no-useless-assignment': 'warn',
     },
   },
   {
