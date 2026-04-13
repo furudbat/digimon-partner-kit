@@ -1,7 +1,7 @@
 /* eslint no-console: off */
 
 import { load } from 'cheerio';
-import type { Cheerio, Element, CheerioAPI } from 'cheerio';
+import type { Cheerio } from 'cheerio';
 import crypto from 'crypto';
 import { writeFile } from 'fs/promises';
 import { AssertionError } from 'node:assert';
