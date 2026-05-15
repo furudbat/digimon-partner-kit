@@ -53,7 +53,7 @@ const config = {
   adultLists: [
     'https://wikimon.net/index.php?title=Category:Adult_Level',
     'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Lianpumon#mw-pages',
-    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Witchmon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Whamon#mw-pages',
   ],
   perfectLists: [
     'https://wikimon.net/Category:Perfect_Level',
