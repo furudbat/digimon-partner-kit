@@ -4,12 +4,12 @@ import { faArrowUp, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, Popover, Tooltip } from 'flowbite-react';
 import { useSearchParams } from 'next/navigation';
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useEffect } from 'react';
 import { useMediaQuery } from 'react-responsive';
 import { scroller } from 'react-scroll';
 import { Element } from 'react-scroll';
-import { DigimonDB, DigimonData, DigimonDataEvolveElement, DigimonLevel, DigimonListElement } from 'src/models/digimon';
+import { DigimonDB, DigimonData, DigimonLevel } from 'src/models/digimon';
 
 import { MediaQueryMobileBreakpoint } from '@/components/constants';
 import { DigimonInfoBox } from '@/components/molecules/digimon-info-box';
@@ -17,29 +17,60 @@ import { DigimonSelectionList } from '@/components/molecules/digimon-selection-l
 import { DigimonTimeline } from '@/components/organisms/digimon-timeline';
 
 import { getRandomFromArray } from '@/lib/utils';
-import { ClientOnly } from '@/components/atoms/client-only';
+import ClientOnly from '@/components/atoms/client-only';
 
-const HomePage = () => {
+type DigimonSelection = {
+  baby1Id?: string;
+  baby2Id?: string;
+  childId?: string;
+  adultId?: string;
+  perfectId?: string;
+  ultimateId?: string;
+  currentSelectionLevel: DigimonLevel;
+};
+
+// for backward compatible ids
+const hrefToId = (href?: string) => {
+  return (
+    href
+      ?.replace('/', '')
+      .replaceAll(' ', '_')
+      .replaceAll('+', '_')
+      .replaceAll("'", '')
+      .replaceAll('·', '_')
+      .replace(':', '_')
+      .replace('ä', 'ae')
+      .replace('ö', 'oe')
+      .replace('ü', 'ue')
+      .replaceAll('(', '')
+      .replaceAll(')', '')
+      .replace('.', '_')
+      .replaceAll('__', '_') ?? ''
+  );
+};
+
+const HomePageInner = () => {
   const isMobile = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
 
   const searchParams = useSearchParams();
   const [openCopyPopover, setOpenCopyPopover] = React.useState(false);
-  const [inited, setInited] = React.useState(false);
   const [freeMode, setFreeMode] = React.useState(false);
   const [printMode, setPrintMode] = React.useState(false);
   const printRef = React.useRef<HTMLDivElement | null>(null);
 
   const [db, setDB] = React.useState<DigimonDB | undefined>(undefined);
   const [digimons, setDigimons] = React.useState<Record<string, DigimonData> | undefined>(undefined);
-  const [currentSelectionLevel, setCurrentSelectionLevel] = React.useState<DigimonLevel>('Child');
 
-  /// @FIXME: can't use useLocalStorage for multiple tabs, open
-  const [baby1Id, setBaby1Id] = React.useState<string | undefined>(undefined);
-  const [baby2Id, setBaby2Id] = React.useState<string | undefined>(undefined);
-  const [childId, setChildId] = React.useState<string | undefined>(undefined);
-  const [adultId, setAdultId] = React.useState<string | undefined>(undefined);
-  const [perfectId, setPerfectId] = React.useState<string | undefined>(undefined);
-  const [ultimateId, setUltimateId] = React.useState<string | undefined>(undefined);
+  const [selection, setSelection] = React.useState<DigimonSelection>({
+    currentSelectionLevel: 'Child',
+  });
+
+  const { baby1Id, baby2Id, childId, adultId, perfectId, ultimateId, currentSelectionLevel } = selection;
+
+  const patchSelection = React.useCallback(
+    (patch: Partial<DigimonSelection>) => setSelection((prev) => ({ ...prev, ...patch })),
+    []
+  );
 
   const baby1 = React.useMemo<DigimonData | undefined>(
     () => (baby1Id && digimons && baby1Id in digimons ? digimons[baby1Id] : undefined),
@@ -177,82 +208,55 @@ const HomePage = () => {
     [freeMode, selectedLevels, isDigimonLevelSet, isDigimonLevelNotSet]
   );
 
-  const selectDigimonLevel = React.useCallback((level: DigimonLevel) => {
-    setCurrentSelectionLevel(level);
-  }, []);
+  const selectDigimonLevel = React.useCallback(
+    (level: DigimonLevel) => patchSelection({ currentSelectionLevel: level }),
+    [patchSelection]
+  );
 
   const clearDigimonLevel = React.useCallback(
     (level: DigimonLevel) => {
-      switch (level) {
-        case 'Baby I':
-          setBaby1Id(undefined);
-          break;
-        case 'Baby II':
-          setBaby2Id(undefined);
-          break;
-        case 'Child':
-          setChildId(undefined);
-          break;
-        case 'Adult':
-          setAdultId(undefined);
-          break;
-        case 'Perfect':
-          setPerfectId(undefined);
-          break;
-        case 'Ultimate':
-          setUltimateId(undefined);
-          break;
-      }
+      const map: Record<DigimonLevel, keyof DigimonSelection> = {
+        'Baby I': 'baby1Id',
+        'Baby II': 'baby2Id',
+        Child: 'childId',
+        Adult: 'adultId',
+        Perfect: 'perfectId',
+        Ultimate: 'ultimateId',
+      };
+      patchSelection({ [map[level]]: undefined });
     },
-    [setBaby1Id, setBaby2Id, setChildId, setAdultId, setPerfectId, setUltimateId]
+    [patchSelection]
   );
 
   const clearAllDigimonLevels = React.useCallback(() => {
-    setBaby1Id(undefined);
-    setBaby2Id(undefined);
-    setChildId(undefined);
-    setAdultId(undefined);
-    setPerfectId(undefined);
-    setUltimateId(undefined);
-  }, [setBaby1Id, setBaby2Id, setChildId, setAdultId, setPerfectId, setUltimateId]);
+    setSelection((prev) => ({
+      currentSelectionLevel: prev.currentSelectionLevel,
+      // all IDs omitted → undefined
+    }));
+  }, []);
 
   const selectDigimon = React.useCallback(
     (digimonId: string) => {
-      switch (currentSelectionLevel) {
-        case 'Baby I':
-          setBaby1Id(digimonId);
-          if (digimonId) localStorage.setItem('baby1', digimonId);
-          break;
-        case 'Baby II': {
-          setBaby2Id(digimonId);
-          //if (digimon?.evolvesFrom.length === 1 && digimons) {
-          //  setBaby1Id(newDigimon.evolvesFrom[0].id);
-          //}
-          if (digimonId) localStorage.setItem('baby2', digimonId);
-          break;
-        }
-        case 'Child':
-          setChildId(digimonId);
-          if (digimonId) localStorage.setItem('child', digimonId);
-          break;
-        case 'Adult':
-          setAdultId(digimonId);
-          if (digimonId) localStorage.setItem('adult', digimonId);
-          break;
-        case 'Perfect':
-          setPerfectId(digimonId);
-          //if (newDigimon?.evolvesTo.length === 1 && digimons) {
-          //  setUltimate(newDigimon.evolvesTo[0].id);
-          //}
-          if (digimonId) localStorage.setItem('perfect', digimonId);
-          break;
-        case 'Ultimate':
-          setUltimateId(digimonId);
-          if (digimonId) localStorage.setItem('ultimate', digimonId);
-          break;
-      }
+      const keyMap: Record<DigimonLevel, keyof DigimonSelection> = {
+        'Baby I': 'baby1Id',
+        'Baby II': 'baby2Id',
+        Child: 'childId',
+        Adult: 'adultId',
+        Perfect: 'perfectId',
+        Ultimate: 'ultimateId',
+      };
+      const storageKeyMap: Record<DigimonLevel, string> = {
+        'Baby I': 'baby1',
+        'Baby II': 'baby2',
+        Child: 'child',
+        Adult: 'adult',
+        Perfect: 'perfect',
+        Ultimate: 'ultimate',
+      };
+      if (digimonId) localStorage.setItem(storageKeyMap[currentSelectionLevel], digimonId);
+      patchSelection({ [keyMap[currentSelectionLevel]]: digimonId });
     },
-    [setBaby1Id, setBaby2Id, setChildId, setAdultId, setPerfectId, setUltimateId, currentSelectionLevel]
+    [currentSelectionLevel, patchSelection]
   );
 
   const selectableDigimons = React.useMemo<{ id: string; name: string; canon?: boolean }[] | undefined>(() => {
@@ -400,114 +404,83 @@ const HomePage = () => {
   */
 
   const randomize = React.useCallback(() => {
-    const getRandomDigimon = (lst: (DigimonDataEvolveElement | DigimonListElement)[] | undefined) => {
+    const pick = (lst?: { id: string }[]) => {
       const id = getRandomFromArray(lst)?.id;
-
       return digimons && id ? digimons[id] : undefined;
     };
 
-    const child = getRandomDigimon(db?.lists.child);
+    const ch = pick(db?.lists.child);
+    const b2 = pick(!freeMode ? ch?.evolvesFrom : db?.lists.baby2);
+    const b1 = pick(!freeMode ? b2?.evolvesFrom : db?.lists.baby1);
+    const ad = pick(!freeMode ? ch?.evolvesTo : db?.lists.adult);
+    const pe = pick(!freeMode ? ad?.evolvesTo : db?.lists.perfect);
+    const ul = pick(!freeMode ? pe?.evolvesTo : db?.lists.ultimate);
 
-    const baby2 = getRandomDigimon(!freeMode ? child?.evolvesFrom : db?.lists.baby2);
-    const baby1 = getRandomDigimon(!freeMode ? baby2?.evolvesFrom : db?.lists.baby1);
-
-    const adult = getRandomDigimon(!freeMode ? child?.evolvesTo : db?.lists.adult);
-    const perfect = getRandomDigimon(!freeMode ? adult?.evolvesTo : db?.lists.perfect);
-    const ultimate = getRandomDigimon(!freeMode ? perfect?.evolvesTo : db?.lists.ultimate);
-
-    setBaby1Id(baby1?.id);
-    setBaby2Id(baby2?.id);
-    setChildId(child?.id);
-    setAdultId(adult?.id);
-    setPerfectId(perfect?.id);
-    setUltimateId(ultimate?.id);
+    setSelection((prev) => ({
+      ...prev,
+      baby1Id: b1?.id,
+      baby2Id: b2?.id,
+      childId: ch?.id,
+      adultId: ad?.id,
+      perfectId: pe?.id,
+      ultimateId: ul?.id,
+    }));
   }, [freeMode, digimons, db]);
+
+  const searchParamsRef = React.useRef(searchParams);
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  });
 
   useEffect(() => {
     import('../db/digimon.db.json').then((data) => {
       const db = data.default as DigimonDB;
       setDB(db);
+
       const digimons: Record<string, DigimonData> = {};
-      db.digimons.forEach((digimon) => {
-        digimons[digimon.id] = digimon;
+      db.digimons.forEach((d) => {
+        digimons[d.id] = d;
       });
       setDigimons(digimons);
+
+      const sp = searchParamsRef.current;
+      const resolve = (key: string): string | undefined => {
+        const fromUrl = sp?.get(key);
+        const normalized = fromUrl ? hrefToId(fromUrl) : undefined;
+        if (normalized && normalized in digimons) return normalized;
+        const fromStorage = localStorage.getItem(key);
+        if (fromStorage && fromStorage in digimons) return fromStorage;
+        return undefined;
+      };
+
+      const baby1Id = resolve('baby1');
+      const baby2Id = resolve('baby2');
+      const childId = resolve('child');
+      const adultId = resolve('adult');
+      const perfectId = resolve('perfect');
+      const ultimateId = resolve('ultimate');
+
+      const computeInitialLevel = (): DigimonLevel => {
+        if (baby1Id) return 'Baby I';
+        if (baby2Id) return 'Baby II';
+        if (childId) return 'Child';
+        if (adultId) return 'Adult';
+        if (perfectId) return 'Perfect';
+        if (ultimateId) return 'Ultimate';
+        return 'Child';
+      };
+
+      setSelection({
+        baby1Id,
+        baby2Id,
+        childId,
+        adultId,
+        perfectId,
+        ultimateId,
+        currentSelectionLevel: computeInitialLevel(),
+      });
     });
   }, []);
-
-  useEffect(() => {
-    // for backward compatible ids
-    const hrefToId = (href?: string) => {
-      return href
-        ?.replace('/', '')
-        .replaceAll(' ', '_')
-        .replaceAll('+', '_')
-        .replaceAll("'", '')
-        .replaceAll('·', '_')
-        .replace(':', '_')
-        .replace('ä', 'ae')
-        .replace('ö', 'oe')
-        .replace('ü', 'ue')
-        .replaceAll('(', '')
-        .replaceAll(')', '')
-        .replace('.', '_')
-        .replaceAll('__', '_');
-    };
-
-    if (searchParams) {
-      setBaby1Id(
-        digimons && searchParams.has('baby1') && (searchParams!.get('baby1') || '') in digimons
-          ? hrefToId(searchParams.get('baby1') || undefined)
-          : localStorage.getItem('baby1') || undefined
-      );
-      setBaby2Id(
-        digimons && searchParams.has('baby2') && (searchParams.get('baby2') || '') in digimons
-          ? hrefToId(searchParams.get('baby2') || undefined)
-          : localStorage.getItem('baby2') || undefined
-      );
-      setChildId(
-        digimons && searchParams.has('child') && (searchParams.get('child') || '') in digimons
-          ? hrefToId(searchParams.get('child') || undefined)
-          : localStorage.getItem('child') || undefined
-      );
-      setAdultId(
-        digimons && searchParams.has('adult') && (searchParams.get('adult') || '') in digimons
-          ? hrefToId(searchParams.get('adult') || undefined)
-          : localStorage.getItem('adult') || undefined
-      );
-      setPerfectId(
-        digimons && searchParams.has('perfect') && (searchParams.get('perfect') || '') in digimons
-          ? hrefToId(searchParams.get('perfect') || undefined)
-          : localStorage.getItem('perfect') || undefined
-      );
-      setUltimateId(
-        digimons && searchParams.has('ultimate') && (searchParams.get('ultimate') || '') in digimons
-          ? hrefToId(searchParams.get('ultimate') || undefined)
-          : localStorage.getItem('ultimate') || undefined
-      );
-    }
-  }, [searchParams, digimons, setBaby1Id, setBaby2Id, setChildId, setAdultId, setPerfectId, setUltimateId]);
-
-  useEffect(() => {
-    if (!inited) {
-      if (baby1 && isSelectable('Baby I')) {
-        setCurrentSelectionLevel('Baby I');
-      } else if (baby2 && isSelectable('Baby II')) {
-        setCurrentSelectionLevel('Baby II');
-      } else if (child && isSelectable('Child')) {
-        setCurrentSelectionLevel('Child');
-      } else if (adult && isSelectable('Adult')) {
-        setCurrentSelectionLevel('Adult');
-      } else if (perfect && isSelectable('Perfect')) {
-        setCurrentSelectionLevel('Perfect');
-      } else if (ultimate && isSelectable('Ultimate')) {
-        setCurrentSelectionLevel('Ultimate');
-      } else {
-        setCurrentSelectionLevel('Child');
-      }
-      setInited(true);
-    }
-  }, [inited, searchParams, baby1, baby2, child, adult, perfect, ultimate, isSelectable, currentSelectionLevel]);
 
   const InfoBoxHeight = '32rem';
 
@@ -551,15 +524,15 @@ const HomePage = () => {
                   currentSelectionLevel={currentSelectionLevel}
                   selectDigimon={selectDigimon}
                   currentDigimon={currentDigimon}
-                  gotoDigimonLevel={(level) => setCurrentSelectionLevel(level)}
+                  gotoDigimonLevel={(level) => selectDigimonLevel(level)}
                   isDigimonLevelSet={isDigimonLevelSet}
                   freeMode={freeMode}
                 />
               </div>
               <div className="w-full flex mx-2 mt-2 items-center">
                 {selectedLevels.length > 0 && (
-                  <Button color="failure" onClick={() => clearAllDigimonLevels()} className="items-center mx-1">
-                    Rest All
+                  <Button color="red" onClick={() => clearAllDigimonLevels()} className="items-center mx-1">
+                    Reset All
                   </Button>
                 )}
                 {selectedLevels.length > 0 && (
@@ -583,25 +556,21 @@ const HomePage = () => {
               <div className="w-full flex mx-2 mt-6 gap-4 items-center">
                 <Tooltip content="Select any Digimon" placement="bottom">
                   <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      onChange={(event) => setFreeMode(event.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="relative w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                    <span className="ms-3 text-sm font-medium">Free mode</span>
+                    <input type="checkbox" onChange={(e) => setFreeMode(e.target.checked)} className="sr-only peer" />
+                    <div className="relative w-11 h-6 rounded-full bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:border-gray-400 dark:after:border-gray-600 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full" />
+                    <span className="ms-3 text-sm font-medium text-gray-700 dark:text-gray-400">Free mode</span>
                   </label>
                 </Tooltip>
                 <Tooltip content="Make Timeline Screenshot friendly" placement="bottom">
                   <label className="inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
-                      onChange={(event) => setPrintMode(event.target.checked)}
+                      onChange={(e) => setPrintMode(e.target.checked)}
                       className="sr-only peer"
                       checked={printMode}
                     />
-                    <div className="relative w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                    <span className="ms-3 text-sm font-medium">Print mode</span>
+                    <div className="relative w-11 h-6 rounded-full bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-500 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:border-gray-400 dark:after:border-gray-600 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full" />
+                    <span className="ms-3 text-sm font-medium text-gray-700 dark:text-gray-400">Print mode</span>
                   </label>
                 </Tooltip>
               </div>
@@ -627,5 +596,11 @@ const HomePage = () => {
     </div>
   );
 };
+
+const HomePage = () => (
+  <Suspense fallback={null}>
+    <HomePageInner />
+  </Suspense>
+);
 
 export default HomePage;

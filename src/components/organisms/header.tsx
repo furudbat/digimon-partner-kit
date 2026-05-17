@@ -16,7 +16,7 @@ export function MainHeader() {
             <em>Select your first Digimon and then select the next/previous Levels.</em>
             <br />
             <em>
-              <small>(Recommendation: Select Child level first, if you don't know where to start)</small>
+              <small>(Recommendation: Select Child level first, if you don&#39;t know where to start)</small>
             </em>
           </p>
         </div>

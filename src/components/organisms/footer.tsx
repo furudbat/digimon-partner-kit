@@ -28,7 +28,7 @@ export function MainFooter() {
               rel="noopener"
               className="hover:underline"
             >
-              digimon-partner-kit v1.2.3
+              digimon-partner-kit v1.2.5
             </Link>
             <span> - </span>
             <Link

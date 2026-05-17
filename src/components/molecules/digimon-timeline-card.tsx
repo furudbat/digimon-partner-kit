@@ -30,18 +30,6 @@ export function DigimonTimelineCard({
   const { fontSize, ref } = useFitText();
   //const pathname = usePathname();
 
-  const bg = (() => {
-    if (disabled && !printMode) {
-      return !selected || printMode
-        ? 'bg-gray-200 dark:bg-gray-600 dark:text-white'
-        : 'bg-gray-300 dark:bg-gray-700 dark:text-white';
-    }
-
-    return !selected || printMode
-      ? 'bg-white dark:bg-gray-800 dark:text-white'
-      : 'bg-blue-300 dark:bg-blue-900 dark:text-white';
-  })();
-
   const imgSize = 240;
 
   return (
@@ -129,7 +117,7 @@ export function DigimonTimelineCard({
               </Button>
             )}
             {data && !disabled && (
-              <Button color="gray" size="xs" disabled={disabled} onClick={() => onReset && onReset()}>
+              <Button color="" size="xs" disabled={disabled} onClick={() => onReset && onReset()}>
                 Reset
               </Button>
             )}
