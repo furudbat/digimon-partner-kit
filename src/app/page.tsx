@@ -3,6 +3,7 @@
 import { faArrowUp, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, Popover, Tooltip } from 'flowbite-react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import React, { Suspense } from 'react';
 import { useEffect } from 'react';
@@ -30,26 +31,43 @@ type DigimonSelection = {
 };
 
 // for backward compatible ids
-const hrefToId = (href?: string) => {
-  return (
-    href
-      ?.replace('/', '')
-      .replaceAll(' ', '_')
-      .replaceAll('+', '_')
-      .replaceAll("'", '')
-      .replaceAll('·', '_')
-      .replace(':', '_')
-      .replace('ä', 'ae')
-      .replace('ö', 'oe')
-      .replace('ü', 'ue')
-      .replaceAll('(', '')
-      .replaceAll(')', '')
-      .replace('.', '_')
-      .replaceAll('__', '_') ?? ''
-  );
+const hrefToId = (href?: string) =>
+  href
+    ?.replace('/', '')
+    .replaceAll(' ', '_')
+    .replaceAll('+', '_')
+    .replaceAll("'", '')
+    .replaceAll('·', '_')
+    .replace(':', '_')
+    .replace('ä', 'ae')
+    .replace('ö', 'oe')
+    .replace('ü', 'ue')
+    .replaceAll('(', '')
+    .replaceAll(')', '')
+    .replace('.', '_')
+    .replaceAll('__', '_') ?? '';
+
+// storage key map shared between effects
+const STORAGE_KEYS: Record<string, string> = {
+  baby1Id: 'baby1',
+  baby2Id: 'baby2',
+  childId: 'child',
+  adultId: 'adult',
+  perfectId: 'perfect',
+  ultimateId: 'ultimate',
+};
+const PARAM_KEYS: Record<string, string> = {
+  baby1Id: 'baby1',
+  baby2Id: 'baby2',
+  childId: 'child',
+  adultId: 'adult',
+  perfectId: 'perfect',
+  ultimateId: 'ultimate',
 };
 
 const HomePageInner = () => {
+  const router = useRouter();
+  const pathname = usePathname();
   const isMobile = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
 
   const searchParams = useSearchParams();
@@ -97,22 +115,20 @@ const HomePageInner = () => {
     [digimons, ultimateId]
   );
 
-  const selectedLevels = React.useMemo(() => {
-    return [baby1?.level, baby2?.level, child?.level, adult?.level, perfect?.level, ultimate?.level].filter(
-      (d) => d
-    ) as DigimonLevel[];
-  }, [baby1, baby2, child, adult, perfect, ultimate]);
+  const selectedLevels = React.useMemo(
+    () =>
+      [baby1?.level, baby2?.level, child?.level, adult?.level, perfect?.level, ultimate?.level].filter(
+        Boolean
+      ) as DigimonLevel[],
+    [baby1, baby2, child, adult, perfect, ultimate]
+  );
 
   const isDigimonLevelSet = React.useCallback(
-    (levels: DigimonLevel[]): boolean => {
-      return levels.every((a) => selectedLevels.some((b) => a === b));
-    },
+    (levels: DigimonLevel[]) => levels.every((a) => selectedLevels.some((b) => a === b)),
     [selectedLevels]
   );
   const isDigimonLevelNotSet = React.useCallback(
-    (levels: DigimonLevel[]): boolean => {
-      return levels.every((a) => !selectedLevels.some((b) => a === b));
-    },
+    (levels: DigimonLevel[]) => levels.every((a) => !selectedLevels.some((b) => a === b)),
     [selectedLevels]
   );
 
@@ -121,7 +137,6 @@ const HomePageInner = () => {
       if (selectedLevels.length === 0 || freeMode) {
         return true;
       }
-
       /// @TODO: optimize boolean algebra
       switch (level) {
         case 'Baby I':
@@ -202,7 +217,6 @@ const HomePageInner = () => {
             (isDigimonLevelNotSet(['Baby I']) && isDigimonLevelSet(['Baby II', 'Child', 'Adult', 'Perfect']))
           );
       }
-
       return false;
     },
     [freeMode, selectedLevels, isDigimonLevelSet, isDigimonLevelNotSet]
@@ -229,10 +243,7 @@ const HomePageInner = () => {
   );
 
   const clearAllDigimonLevels = React.useCallback(() => {
-    setSelection((prev) => ({
-      currentSelectionLevel: prev.currentSelectionLevel,
-      // all IDs omitted → undefined
-    }));
+    setSelection((prev) => ({ currentSelectionLevel: prev.currentSelectionLevel }));
   }, []);
 
   const selectDigimon = React.useCallback(
@@ -245,19 +256,41 @@ const HomePageInner = () => {
         Perfect: 'perfectId',
         Ultimate: 'ultimateId',
       };
-      const storageKeyMap: Record<DigimonLevel, string> = {
-        'Baby I': 'baby1',
-        'Baby II': 'baby2',
-        Child: 'child',
-        Adult: 'adult',
-        Perfect: 'perfect',
-        Ultimate: 'ultimate',
-      };
-      if (digimonId) localStorage.setItem(storageKeyMap[currentSelectionLevel], digimonId);
       patchSelection({ [keyMap[currentSelectionLevel]]: digimonId });
+      // URL + localStorage are synced by the effect below
     },
     [currentSelectionLevel, patchSelection]
   );
+
+  useEffect(() => {
+    if (!digimons) return;
+
+    const ids: Record<string, string | undefined> = {
+      baby1Id,
+      baby2Id,
+      childId,
+      adultId,
+      perfectId,
+      ultimateId,
+    };
+
+    const params = new URLSearchParams();
+
+    for (const [stateKey, id] of Object.entries(ids)) {
+      const paramKey = PARAM_KEYS[stateKey];
+      const storageKey = STORAGE_KEYS[stateKey];
+      if (id) {
+        params.set(paramKey, id);
+        localStorage.setItem(storageKey, id);
+      } else {
+        localStorage.removeItem(storageKey);
+      }
+    }
+
+    const qs = params.toString();
+    // use pathname from usePathname() — never window.location.pathname
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [digimons, baby1Id, baby2Id, childId, adultId, perfectId, ultimateId, router, pathname]);
 
   const selectableDigimons = React.useMemo<{ id: string; name: string; canon?: boolean }[] | undefined>(() => {
     switch (currentSelectionLevel) {
@@ -274,7 +307,6 @@ const HomePageInner = () => {
       case 'Ultimate':
         return perfect?.evolvesTo ?? db?.lists.ultimate;
     }
-
     return undefined;
   }, [baby1, baby2, child, adult, perfect, ultimate, currentSelectionLevel, db]);
 
@@ -293,7 +325,6 @@ const HomePageInner = () => {
       case 'Ultimate':
         return db?.lists.ultimate;
     }
-
     return undefined;
   }, [currentSelectionLevel, db]);
 
@@ -312,47 +343,20 @@ const HomePageInner = () => {
       case 'Ultimate':
         return ultimate;
     }
-
     return undefined;
   }, [baby1, baby2, child, adult, perfect, ultimate, currentSelectionLevel]);
 
   const goToTop = React.useCallback(() => {
-    if (!baby1 && isSelectable('Baby I')) {
-      scroller.scrollTo('digimonTimelineBabyI', {
-        duration: 500,
-        smooth: true,
-      });
-    } else if (!baby2 && isSelectable('Baby II')) {
-      scroller.scrollTo('digimonTimelineBabyII', {
-        duration: 500,
-        smooth: true,
-      });
-    } else if (!child && isSelectable('Child')) {
-      scroller.scrollTo('digimonTimelineChild', {
-        duration: 500,
-        smooth: true,
-      });
-    } else if (!adult && isSelectable('Adult')) {
-      scroller.scrollTo('digimonTimelineAdult', {
-        duration: 500,
-        smooth: true,
-      });
-    } else if (!perfect && isSelectable('Perfect')) {
-      scroller.scrollTo('digimonTimelinePerfect', {
-        duration: 500,
-        smooth: true,
-      });
-    } else if (!ultimate && isSelectable('Ultimate')) {
-      scroller.scrollTo('digimonTimelineUltimate', {
-        duration: 500,
-        smooth: true,
-      });
-    }
-
-    scroller.scrollTo('digimonTimelineBabyI', {
-      duration: 500,
-      smooth: true,
-    });
+    const targets: [DigimonData | undefined, DigimonLevel, string][] = [
+      [baby1, 'Baby I', 'digimonTimelineBabyI'],
+      [baby2, 'Baby II', 'digimonTimelineBabyII'],
+      [child, 'Child', 'digimonTimelineChild'],
+      [adult, 'Adult', 'digimonTimelineAdult'],
+      [perfect, 'Perfect', 'digimonTimelinePerfect'],
+      [ultimate, 'Ultimate', 'digimonTimelineUltimate'],
+    ];
+    const target = targets.find(([mon, level]) => !mon && isSelectable(level));
+    scroller.scrollTo(target?.[2] ?? 'digimonTimelineBabyI', { duration: 500, smooth: true });
   }, [baby1, baby2, child, adult, perfect, ultimate, isSelectable]);
 
   const copyShareLink = React.useCallback(() => {
@@ -379,43 +383,27 @@ const HomePageInner = () => {
 
       return params.toString();
     })();
-    setOpenCopyPopover(true);
     const link = window.location.origin + window.location.pathname + '?' + newQuery;
 
     navigator.clipboard.writeText(link);
+    // alt:
+    //navigator.clipboard.writeText(window.location.href);
+
+    setOpenCopyPopover(true);
     setTimeout(() => setOpenCopyPopover(false), 2000);
   }, [baby1Id, baby2Id, childId, adultId, perfectId, ultimateId]);
-
-  /*
-  const exportTimelineToImage = React.useCallback(async () => {
-    setPrintMode(true);
-    setTimeout(async () => {
-      //const element = printRef.current;
-      //const canvas = await html2canvas(element);
-      //const dataURL = canvas.toDataURL('image/png');
-      //downloadjs(dataURL, 'digimon-evol-line.png', 'image/png');
-      exportComponentAsPNG(printRef, {
-        fileName: 'digimon-evol-line.png',
-        html2CanvasOptions: { width: 1600, height: 900 },
-      });
-      setPrintMode(false);
-    }, 900);
-  }, [printRef]);
-  */
 
   const randomize = React.useCallback(() => {
     const pick = (lst?: { id: string }[]) => {
       const id = getRandomFromArray(lst)?.id;
       return digimons && id ? digimons[id] : undefined;
     };
-
     const ch = pick(db?.lists.child);
     const b2 = pick(!freeMode ? ch?.evolvesFrom : db?.lists.baby2);
     const b1 = pick(!freeMode ? b2?.evolvesFrom : db?.lists.baby1);
     const ad = pick(!freeMode ? ch?.evolvesTo : db?.lists.adult);
     const pe = pick(!freeMode ? ad?.evolvesTo : db?.lists.perfect);
     const ul = pick(!freeMode ? pe?.evolvesTo : db?.lists.ultimate);
-
     setSelection((prev) => ({
       ...prev,
       baby1Id: b1?.id,
@@ -436,7 +424,6 @@ const HomePageInner = () => {
     import('../db/digimon.db.json').then((data) => {
       const db = data.default as DigimonDB;
       setDB(db);
-
       const digimons: Record<string, DigimonData> = {};
       db.digimons.forEach((d) => {
         digimons[d.id] = d;
@@ -486,7 +473,7 @@ const HomePageInner = () => {
 
   return (
     <div>
-      <Element name="mainPage"></Element>
+      <Element name="mainPage" />
       <div className="mx-auto my-2 px-2">
         <div className="flex items-center w-full">
           <div className="mx-auto place-self-center" id="digimonTimeLine" ref={printRef}>
