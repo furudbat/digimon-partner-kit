@@ -24,7 +24,7 @@
   "engines": {
     "node": ">=18.17.1"
   },
-  "packageManager": "pnpm@8.10.2",
+  "packageManager": "pnpm@11.1.2",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
@@ -35,9 +35,9 @@
     "cheerio": "1.2.0",
     "clsx": "2.1.1",
     "downloadjs": "^1.4.7",
-    "flowbite": "^4.0.1",
+    "flowbite": "^4.0.2",
     "flowbite-react": "^0.12.17",
-    "fs-extra": "^11.3.4",
+    "fs-extra": "^11.3.5",
     "html2canvas": "^1.4.1",
     "next": "15.5.18",
     "nodejs-file-downloader": "^4.13.0",
@@ -62,7 +62,7 @@
     "@types/downloadjs": "^1.4.6",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "30.0.0",
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.8.0",
     "@types/random-useragent": "^0.3.3",
     "@types/react": "18.3.25",
     "@types/react-dom": "18.3.7",
@@ -71,12 +71,12 @@
     "@typescript-eslint/parser": "8.58.1",
     "autoprefixer": "10.4.27",
     "babel-jest": "30.3.0",
-    "baseline-browser-mapping": "^2.10.18",
+    "baseline-browser-mapping": "^2.10.30",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.3",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
-    "globals": "^17.5.0",
+    "globals": "^17.6.0",
     "husky": "9.1.7",
     "identity-obj-proxy": "3.0.0",
     "jest": "30.3.0",
@@ -85,7 +85,7 @@
     "lint-staged": "16.4.0",
     "pinst": "3.0.0",
     "plop": "4.0.5",
-    "postcss": "8.5.9",
+    "postcss": "8.5.14",
     "prettier": "3.8.2",
     "prettier-plugin-tailwindcss": "0.7.2",
     "tailwind-scrollbar": "3.1.0",
@@ -115,7 +115,8 @@
       "js-yaml": "^3.14.2",
       "brace-expansion": "^2.0.3",
       "yaml": "^2.8.3",
-      "ajv": "^6.14.0"
+      "ajv": "^6.14.0",
+      "postcss": "^8.5.14"
     }
   }
 }
