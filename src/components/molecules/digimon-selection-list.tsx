@@ -180,7 +180,7 @@ export function DigimonSelectionList({
         isDigimonLevelSet={isDigimonLevelSet}
       />
 
-      <div className="text-center mt-2 w-full md:w-72">
+      <div className="text-center mt-2 w-full md:w-72 h-8">
         {selectableDigimons && (
           <h3 className="pb-2">
             {levelDisabled ? (
