@@ -3,5 +3,6 @@
 digimon.db.pretty.json
 digimon.db.json
 digimon-*.db.json
+*.bak
 /img
 !/img/.gitkeep

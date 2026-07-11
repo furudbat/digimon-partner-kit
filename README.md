@@ -58,3 +58,4 @@ Digimon and other media relating to the franchise are registered trademarks by [
 - [Digimon-Partner Baukasten](https://www.youtube.com/watch?v=nwgzHrkBZis)
 - https://www.grindosaur.com/
 - https://digimon.fandom.com/wiki/Digimon_Wiki
+- https://humulos.com/digimon/

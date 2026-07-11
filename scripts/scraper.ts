@@ -30,7 +30,6 @@ const TESTING = false;
 const ONLY_BUILD_DB = false;
 const start_position = 0;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function assert(condition: boolean, msg?: string): asserts condition {
   if (!condition) {
     throw new AssertionError({ message: msg ?? '' });
@@ -57,7 +56,7 @@ const config = {
   ],
   perfectLists: [
     'https://wikimon.net/Category:Perfect_Level',
-    'https://wikimon.net/index.php?title=Category:Perfect_Level&pagefrom=Mechanorimon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Perfect_Level&pagefrom=Matadrmon#mw-pages',
   ],
   ultimateLists: [
     'https://wikimon.net/Category:Ultimate_Level',
@@ -468,7 +467,10 @@ interface DigimonData {
   categories: { name: string; img: string; title?: string; href?: string }[];
   evolvesFrom: DigimonDataEvolveElement[];
   evolvesTo: DigimonDataEvolveElement[];
+  // @TODO: add proper properties for each device
+  [key: string]: any; // Allow the flexible addition of `dm`, `dm20`, `evolvesToDm`, etc.
 }
+
 interface DigimonListElement {
   id: string;
   href: string;
@@ -504,6 +506,28 @@ const hrefToId = (href?: string) => {
 
   return id;
 };
+
+interface DigimonVPetData {
+  name: string | string[];
+}
+type VPetDatabaseDevice = 'dm' | 'dm20' | 'dmx' | string;
+type VPetDatabase = Record<VPetDatabaseDevice, DigimonVPetData[]>;
+
+// Load V-Pet mapping into memory immediately
+const VPET_DB_PATH = resolve(__dirname, 'digimon-vpets.db.json');
+
+async function loadVPetData() {
+  if (existsSync(VPET_DB_PATH)) {
+    logInfo(`Loading V-Pet database lookup from ${VPET_DB_PATH}...`);
+    const vpetRawData: VPetDatabase = JSON.parse(await readFileAsync(VPET_DB_PATH, 'utf8'));
+    return vpetRawData ?? {};
+  } else {
+    console.warn(`Warning: V-Pet database file not found at ${VPET_DB_PATH}. Missing dynamic device parameters.`);
+  }
+
+  return {};
+}
+
 type ScrapeDigimonOptions = {
   ignoreCache?: boolean;
   forceCache?: boolean;
@@ -511,12 +535,15 @@ type ScrapeDigimonOptions = {
 class DigimonScraperScraper {
   readonly baseUrl = config.wikimonUrl;
   position = 0;
+  vpetDevices: VPetDatabase | undefined = undefined;
 
   async scrapeDigimon(url: string, options: ScrapeDigimonOptions = {}): Promise<DigimonData | undefined> {
     let { ignoreCache, forceCache } = {
       ...{ ignoreCache: false, forceCache: false },
       ...options,
     };
+
+    this.vpetDevices = !this.vpetDevices ? await loadVPetData() : this.vpetDevices;
 
     /// @TODO: extract to functions, make reuse cached digimon from url
     const hash = crypto.createHash('sha256').update(url).digest('hex');
@@ -651,6 +678,222 @@ class DigimonScraperScraper {
       }
       if (name.split(' ')[1]) {
         altNames.push(name.split(' ')[0] + ' ' + name.split(' ')[1]);
+      }
+      /// @TODO: add alt names from v-pets
+      // missing names or aliases
+      if (name === 'Orgemon') {
+        altNames.push('Ogremon');
+      }
+      if (name === 'Orgemon (X-Antibody)') {
+        altNames.push('Ogremon (X-Antibody)');
+        altNames.push('Ogremon X');
+      }
+      if (name === 'JESmon') {
+        altNames.push('Jesmon');
+      }
+      if (name === 'Tunomon') {
+        altNames.push('Tsunomon');
+      }
+      if (name === 'Monochromon') {
+        altNames.push('Monchromon');
+      }
+      if (name === 'Monzaemon') {
+        altNames.push('Mozaemon');
+      }
+      if (name === 'Pukumon') {
+        altNames.push('Pakumon');
+      }
+      if (name === 'Pukumon') {
+        altNames.push('Bukamon');
+      }
+      if (name === 'Metal Greymon') {
+        altNames.push('Taichi Metal Greymon');
+      }
+      if (name === 'Metal Greymon') {
+        altNames.push('Taichis Metal Greymon');
+      }
+      if (name === 'Agumon') {
+        altNames.push('Taichis Agumon');
+      }
+      if (name === 'Greymon') {
+        altNames.push('Taichis Greymon');
+      }
+      if (name === 'War Greymon') {
+        altNames.push('Taichis War Greymon');
+      }
+      if (name === 'Gabumon') {
+        altNames.push('Yamatos Gabumon');
+      }
+      if (name === 'Garurumon') {
+        altNames.push('Yamatos Garurumon');
+      }
+      if (name === 'Metal Garurumon') {
+        altNames.push('Yamatos Metal Garurumon');
+      }
+      if (name === 'Were Garurumon') {
+        altNames.push('Yamatos Were Garurumon');
+      }
+      if (name === 'Pabumon') {
+        altNames.push('Bubbmon');
+      }
+      if (name === 'Saber Leomon') {
+        altNames.push('Saberleomon');
+      }
+      if (name === 'Metal Etemon') {
+        altNames.push('Metaletemon');
+      }
+      if (name === 'Durandamon') {
+        altNames.push('Durandramon');
+      }
+      if (name === 'Herakle Kabuterimon') {
+        altNames.push('Herkule Kabuterimon');
+      }
+      if (name === 'Waru Monzaemon') {
+        altNames.push('Waru Mozaemon');
+      }
+      if (name === 'Beowolfmon') {
+        altNames.push('Beowulfmon');
+      }
+      if (name === 'Manbomon') {
+        altNames.push('Mambomon');
+      }
+      if (name === 'Yukimi Botamon') {
+        altNames.push('Yukimibotamon');
+      }
+      if (name === 'Cho·Hakkaimon') {
+        altNames.push('Cho Hakkaimon');
+      }
+      if (name === 'Cannonbeemon') {
+        altNames.push('Cannon Beemon');
+      }
+      if (name === 'EBEmon') {
+        altNames.push('Ebemon');
+      }
+      if (name === 'EBEmon (X-Antibody)') {
+        altNames.push('Ebemon (X-Antibody)');
+        altNames.push('Ebemon X');
+      }
+      if (name === 'JESmon GX') {
+        altNames.push('Jesmon GX');
+      }
+      if (name === 'Keemon') {
+        altNames.push('Kiimon');
+      }
+      if (name === 'Yarmon') {
+        altNames.push('Yaamon');
+        altNames.push('Yamon');
+      }
+      if (name === 'Mametyramon') {
+        altNames.push('Mame Tyramon');
+      }
+      if (name === 'Ofanimon') {
+        altNames.push('Ophanimon');
+      }
+      if (name === 'Ofanimon: Falldown Mode') {
+        altNames.push('Ophanimon: Falldown Mode');
+        altNames.push('Ophanimon Falldown Mode');
+      }
+      if (name === 'Ophanimon (X-Antibody)') {
+        altNames.push('Ophanimon (X-Antibody)');
+        altNames.push('Ophanimon X');
+      }
+      if (name === 'Pteranomon') {
+        altNames.push('Pteramon');
+        altNames.push('Petranamon');
+      }
+      if (name === 'Pteranomon (X-Antibody)') {
+        altNames.push('Pteramon (X-Antibody)');
+        altNames.push('Pteramon X');
+        altNames.push('Petranamon (X-Antibody)');
+        altNames.push('Petranamon X');
+      }
+      if (name === 'Ultimate Brachimon') {
+        altNames.push('Ultimate Brachiomon');
+      }
+      if (name === 'Cannonbeemon') {
+        altNames.push('Cannon Beemon');
+      }
+      if (name === 'Omegamon Alter B') {
+        altNames.push('Omegamon Alter B');
+      }
+      if (name === 'Omegamon Alter S') {
+        altNames.push('Omegamon Alter S');
+      }
+      if (name === 'Blucomon') {
+        altNames.push('Bulucomon');
+      }
+      if (name === 'Andiramon') {
+        altNames.push('Andiramon (Virus)');
+      }
+      if (name === 'Andiramon (Deva)') {
+        altNames.push('Andiramon (Data)');
+      }
+      if (name === 'Dark Knightmon') {
+        altNames.push('Axe Knightmon');
+        altNames.push('AxeKnightmon');
+      }
+      if (name === 'Burgamon Adult') {
+        altNames.push('Burgermon Adult');
+        altNames.push('Burgermon (Mama)');
+        altNames.push('Burgermon (Papa)');
+        altNames.push('Burgamon (Mama)');
+        altNames.push('Burgamon (Papa)');
+      }
+      if (name === 'Trailmon Ball') {
+        altNames.push('Diginorimon');
+      }
+      if (name === 'Gottsumon') {
+        altNames.push('Gotsumon');
+      }
+      if (name === 'Karatuki Numemon') {
+        altNames.push('Shell Numemon');
+        altNames.push('Karatsuki Numemon');
+      }
+      if (name === 'Metal Fantomon') {
+        altNames.push('Metal Phantomon');
+      }
+      if (name === 'Fantomon') {
+        altNames.push('Phantomon');
+      }
+      if (name === 'Tyranomon') {
+        altNames.push('Tyrannomon');
+      }
+      if (name === 'Rust Tyranomon') {
+        altNames.push('Rust Tyrannomon');
+      }
+      if (name === 'Metal Tyranomon') {
+        altNames.push('Metal Tyrannomon');
+      }
+      if (name === 'Master Tyranomon') {
+        altNames.push('Master Tyrannomon');
+      }
+      if (name === 'Tyranomon (X-Antibody)') {
+        altNames.push('Tyrannomon (X-Antibody)');
+        altNames.push('Tyrannomon X');
+      }
+      if (name === 'Sorcerimon') {
+        altNames.push('Sorcermon');
+        altNames.push('Sorcerimon');
+        altNames.push('Sorcerymon');
+        altNames.push('Socerimon');
+      }
+      if (name === 'Submarimon') {
+        altNames.push('Submarimon');
+        altNames.push('Submarinemon');
+        altNames.push('Sabmarimon');
+      }
+      if (name === 'Tuchidarumon') {
+        altNames.push('Mud Frigimon');
+        altNames.push('Chuchidarumon');
+        altNames.push('Tsuchidarumon');
+      }
+      if (name === 'Voltobautamon') {
+        altNames.push('Volto Bautamon');
+      }
+
+      const is_x_antibody = name.includes('(X-Antibody)');
+      if (is_x_antibody) {
+        altNames.push(name.replace('(X-Antibody)', '').trim());
       }
 
       const isAltName = (alt: string, altNames: string[]): boolean => {
@@ -1147,6 +1390,22 @@ class DigimonScraperScraper {
 
         logInfo(`Scrapped Digimon: ${name} (${levels}) [${attributes}]`);
 
+        const extraVpetProperties: Record<string, any> = {};
+        if (this.vpetDevices) {
+          for (const [device, vpets] of Object.entries(this.vpetDevices)) {
+            // Generate title-cased key name: e.g., evolvesToDm20
+            const titleDevice = device.charAt(0).toUpperCase() + device.slice(1);
+            extraVpetProperties[`evolvesTo${titleDevice}`] = evolvesTo
+              .map(({ id, name, url }) => ({ id, name, url }))
+              .filter((vet) => {
+                return vpets.find((vpd) => vpd.name === vet.name);
+              });
+
+            // Set device match flag: e.g., "dm": true
+            extraVpetProperties[device] = extraVpetProperties[`evolvesTo${titleDevice}`].length > 0;
+          }
+        }
+
         this.position++;
 
         const ret = {
@@ -1174,6 +1433,7 @@ class DigimonScraperScraper {
           categories: categories,
           evolvesFrom: evolvesFrom.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game|Category:)/)),
           evolvesTo: evolvesTo.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game|Category:)/)),
+          ...extraVpetProperties,
         } as DigimonData;
 
         const resultFileAlt = resolve(cacheResultDir, `${id.replace('/', '')}.json`);
