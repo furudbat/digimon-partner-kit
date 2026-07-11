@@ -516,30 +516,6 @@ const HomePageInner = () => {
                   freeMode={freeMode}
                 />
               </div>
-              <div className="w-full flex mx-2 mt-2 items-center">
-                {selectedLevels.length > 0 && (
-                  <Button color="red" onClick={() => clearAllDigimonLevels()} className="items-center mx-1">
-                    Reset All
-                  </Button>
-                )}
-                {selectedLevels.length > 0 && (
-                  <Popover
-                    aria-labelledby="copy-share-link-popover"
-                    open={openCopyPopover}
-                    content={<div className="flex w-32 flex-col gap-2 p-1 px-2 text-center text-sm">Link Copied!</div>}
-                  >
-                    <Button color="info" onClick={() => copyShareLink()} className="items-center mx-1">
-                      <FontAwesomeIcon icon={faCopy} className="mx-1 items-center align-center" />
-                      Copy Share Link
-                    </Button>
-                  </Popover>
-                )}
-              </div>
-              <div className="w-full flex mx-2 mt-2 items-center">
-                <Button color="purple" onClick={() => randomize()} className="items-center mx-1">
-                  Randomize
-                </Button>
-              </div>
               <div className="w-full flex mx-2 mt-6 gap-4 items-center">
                 <Tooltip content="Select any Digimon" placement="bottom">
                   <label className="inline-flex items-center cursor-pointer">
@@ -560,6 +536,34 @@ const HomePageInner = () => {
                     <span className="ms-3 text-sm font-medium text-gray-700 dark:text-gray-400">Print mode</span>
                   </label>
                 </Tooltip>
+              </div>
+              <div className="w-full flex mx-2 mt-6 gap-4 items-center min-h-2">
+                {selectedLevels.length > 0 && (
+                  <Popover
+                    aria-labelledby="copy-share-link-popover"
+                    open={openCopyPopover}
+                    content={<div className="flex w-32 flex-col gap-2 p-1 px-2 text-center text-sm">Link Copied!</div>}
+                  >
+                    <Button color="info" onClick={() => copyShareLink()} className="items-center mx-1">
+                      <FontAwesomeIcon icon={faCopy} className="mx-1 items-center align-center" />
+                      Copy Share Link
+                    </Button>
+                  </Popover>
+                )}
+              </div>
+              <div className="w-full flex mx-2 mt-6 gap-4 items-center">
+                <div className="w-full flex mt-2 items-center">
+                  {selectedLevels.length > 0 && (
+                    <Button color="red" onClick={() => clearAllDigimonLevels()} className="items-center mx-1">
+                      Reset All
+                    </Button>
+                  )}
+                </div>
+                <div className="w-full flex mx-2 mt-2 items-center">
+                  <Button color="purple" onClick={() => randomize()} className="items-center mx-1">
+                    Randomize
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

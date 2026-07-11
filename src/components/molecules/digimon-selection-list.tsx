@@ -180,7 +180,7 @@ export function DigimonSelectionList({
         isDigimonLevelSet={isDigimonLevelSet}
       />
 
-      <div className="text-center mt-2 w-full md:w-72 h-8">
+      <div className="text-center w-full md:w-72 mt-2 h-12 mb-2">
         {selectableDigimons && (
           <h3 className="pb-2">
             {levelDisabled ? (
@@ -192,29 +192,29 @@ export function DigimonSelectionList({
         )}
       </div>
 
-      {selectableDigimons && !levelDisabled && (
-        <form className="flex items-center max-w-sm mx-auto mb-2">
-          <label htmlFor="digimon-list-search" className="sr-only">
-            Search
-          </label>
-          <div className="relative w-full md:max-w-72">
-            <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-              <FontAwesomeIcon icon={faMagnifyingGlass} />
+      <div className="flex items-center w-full max-w-sm mx-auto mt-2 h-12 mb-2">
+        {selectableDigimons && !levelDisabled && (
+          <form className="flex items-center w-full mx-auto">
+            <label htmlFor="digimon-list-search" className="sr-only">
+              Search
+            </label>
+            <div className="relative w-full md:max-w-72">
+              <TextInput
+                type="search"
+                id="digimon-list-search"
+                className="block w-full ps-12 p-3"
+                placeholder="Search"
+                onChange={(e) => debouncedDigimonSearch(e.target.value)}
+                disabled={levelDisabled || digimonList.length === 0}
+              />
             </div>
-            <TextInput
-              type="search"
-              id="digimon-list-search"
-              className="block w-full ps-10 p-2.5"
-              placeholder="Search"
-              onChange={(e) => debouncedDigimonSearch(e.target.value)}
-            />
-          </div>
-        </form>
-      )}
+          </form>
+        )}
+      </div>
 
-      {digimonList.length === 0 && <p>No Digimon to select</p>}
+      {digimonList.length === 0 && <p className="px-5 text-lg w-full md:max-w-72 h-72 md:h-96">No Digimon to select</p>}
       {digimonList.length > 0 && (
-        <ul className="text-sm w-full md:max-w-72 max-h-72 md:max-h-96 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-600 divide-y divide-gray-200 dark:divide-gray-600">
+        <ul className="text-sm w-full md:max-w-72 h-72 md:h-96 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-600 divide-y divide-gray-200 dark:divide-gray-600">
           {filteredSelectableDigimons.map((digimon) => {
             const canon = isEvolCanon(digimon.id);
             const isActive = digimon.id === currentDigimon?.id;
