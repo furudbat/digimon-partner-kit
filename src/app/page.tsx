@@ -10,11 +10,11 @@ import { useEffect } from 'react';
 import { useMediaQuery } from 'react-responsive';
 import { scroller } from 'react-scroll';
 import { Element } from 'react-scroll';
-import { DigimonDB, DigimonData, DigimonLevel } from 'src/models/digimon';
+import { DigimonDB, DigimonData, DigimonLevel, DigimonListElement, DigimonDataEvolveElement } from 'src/models/digimon';
 
 import { MediaQueryMobileBreakpoint } from '@/components/constants';
 import { DigimonInfoBox } from '@/components/molecules/digimon-info-box';
-import { DigimonSelectionList } from '@/components/molecules/digimon-selection-list';
+import { DigimonSelectionList, SelectableDigimon } from '@/components/molecules/digimon-selection-list';
 import { DigimonTimeline } from '@/components/organisms/digimon-timeline';
 
 import { getRandomFromArray } from '@/lib/utils';
@@ -292,7 +292,7 @@ const HomePageInner = () => {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [digimons, baby1Id, baby2Id, childId, adultId, perfectId, ultimateId, router, pathname]);
 
-  const selectableDigimons = React.useMemo<{ id: string; name: string; canon?: boolean }[] | undefined>(() => {
+  const selectableDigimons = React.useMemo<SelectableDigimon[] | undefined>(() => {
     switch (currentSelectionLevel) {
       case 'Baby I':
         return baby2?.evolvesFrom ?? db?.lists.baby1;
@@ -310,7 +310,7 @@ const HomePageInner = () => {
     return undefined;
   }, [baby1, baby2, child, adult, perfect, ultimate, currentSelectionLevel, db]);
 
-  const allSelectableDigimons = React.useMemo<{ id: string; name: string; canon?: boolean }[] | undefined>(() => {
+  const allSelectableDigimons = React.useMemo<DigimonListElement[] | undefined>(() => {
     switch (currentSelectionLevel) {
       case 'Baby I':
         return db?.lists.baby1;
@@ -492,7 +492,7 @@ const HomePageInner = () => {
             />
           </div>
         </div>
-        <div className="container mx-auto max-w-screen-lg mt-4 md:mt-6" style={{ minHeight: '28rem' }}>
+        <div className="container mx-auto max-w-screen-xl mt-4 md:mt-6" style={{ minHeight: '20rem' }}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-2">
               {!currentSelectionLevel && !currentDigimon && (
@@ -507,6 +507,7 @@ const HomePageInner = () => {
                 <DigimonSelectionList
                   selectableDigimons={selectableDigimons}
                   allSelectableDigimons={allSelectableDigimons}
+                  digimons={digimons}
                   isSelectable={isSelectable}
                   currentSelectionLevel={currentSelectionLevel}
                   selectDigimon={selectDigimon}
@@ -516,7 +517,7 @@ const HomePageInner = () => {
                   freeMode={freeMode}
                 />
               </div>
-              <div className="w-full flex mx-2 mt-6 gap-4 items-center">
+              <div className="w-full flex mx-2 mt-4 gap-4 items-center">
                 <Tooltip content="Select any Digimon" placement="bottom">
                   <label className="inline-flex items-center cursor-pointer">
                     <input type="checkbox" onChange={(e) => setFreeMode(e.target.checked)} className="sr-only peer" />
@@ -537,7 +538,7 @@ const HomePageInner = () => {
                   </label>
                 </Tooltip>
               </div>
-              <div className="w-full flex mx-2 mt-6 gap-4 items-center min-h-2">
+              <div className="w-full flex mx-2 mt-4 gap-4 items-center min-h-2">
                 {selectedLevels.length > 0 && (
                   <Popover
                     aria-labelledby="copy-share-link-popover"
@@ -551,7 +552,7 @@ const HomePageInner = () => {
                   </Popover>
                 )}
               </div>
-              <div className="w-full flex mx-2 mt-6 gap-4 items-center">
+              <div className="w-full flex mx-2 mt-4 gap-4 items-center">
                 <div className="w-full flex mt-2 items-center">
                   {selectedLevels.length > 0 && (
                     <Button color="red" onClick={() => clearAllDigimonLevels()} className="items-center mx-1">

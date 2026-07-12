@@ -18,7 +18,7 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
       style={{ minHeight: !isMobile ? (height ?? '32rem') : undefined }}
     >
       <div className="grid grid-flow-row-dense md:grid-cols-2 md:grid-rows-1 px-2">
-        <div className="items-center mt-11">
+        <div className="items-center mt-10">
           <Image
             className="self-center h-max-auto w-auto max-w-full rounded-md"
             width={320}
@@ -28,7 +28,7 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
             loading="eager"
           />
         </div>
-        <div className="px-2 md:items-start ml-4 overflow-y-auto" style={{ height: !isMobile ? '26rem' : undefined }}>
+        <div className="px-2 md:items-start ml-4 overflow-y-auto" style={{ height: !isMobile ? '24rem' : undefined }}>
           <h5 className="text-2xl pb-2 font-bold tracking-tight">
             <Link href={data.href} title={data.name} target="_blank" rel="noreferrer">
               {data.name}
@@ -74,7 +74,7 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
             </div>
           )}
         </div>
-        <div className="px-4 mt-1 md:row-start-2 max-h-12">
+        <div className="px-4 my-1 md:row-start-2 h-10">
           <div className="grid grid-flow-col auto-cols-max items-center">
             {data.categories?.length > 0 &&
               data.categories.map((category) => (

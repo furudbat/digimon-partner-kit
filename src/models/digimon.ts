@@ -1,17 +1,23 @@
-export interface DigimonListElement {
+export type DigimonLevel = 'Baby I' | 'Baby II' | 'Child' | 'Adult' | 'Perfect' | 'Ultimate';
+
+interface DigimonBase {
   id: string;
-  href: string;
   name: string;
 }
 
-export type DigimonLevel = 'Baby I' | 'Baby II' | 'Child' | 'Adult' | 'Perfect' | 'Ultimate';
+export interface DigimonListElement extends DigimonBase {
+  href: string;
+}
 
-export interface DigimonDataEvolveElement {
-  id: string;
-  name: string;
+export interface DigimonDataEvolveElement extends DigimonBase {
   url: string;
   canon?: boolean;
   line?: string;
+
+  cites?: { cite: number; text: string }[];
+  animes?: string[];
+  // @TODO: add proper properties for each device
+  [key: string]: any; // Allow the flexible addition of `dm`, `dm20`, etc.
 }
 
 export interface DigimonData {
@@ -32,6 +38,9 @@ export interface DigimonData {
   categories: { name: string; img: string; title?: string; href?: string }[];
   evolvesFrom: DigimonDataEvolveElement[];
   evolvesTo: DigimonDataEvolveElement[];
+
+  // @TODO: add proper properties for each device
+  [key: string]: any; // Allow the flexible addition of `dm`, `dm20`, `evolvesToDm`, etc.
 }
 
 export interface DigimonDB {

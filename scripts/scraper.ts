@@ -446,6 +446,11 @@ interface DigimonDataEvolveElement {
   url: string;
   canon?: boolean;
   line?: string;
+
+  cites?: { cite: number; text: string }[];
+  animes?: string[];
+  // @TODO: add proper properties for each device
+  [key: string]: any; // Allow the flexible addition of `dm`, `dm20`, etc.
 }
 interface DigimonData {
   href: string;
@@ -467,6 +472,8 @@ interface DigimonData {
   categories: { name: string; img: string; title?: string; href?: string }[];
   evolvesFrom: DigimonDataEvolveElement[];
   evolvesTo: DigimonDataEvolveElement[];
+  xAntibody?: boolean;
+
   // @TODO: add proper properties for each device
   [key: string]: any; // Allow the flexible addition of `dm`, `dm20`, `evolvesToDm`, etc.
 }
@@ -1036,6 +1043,13 @@ class DigimonScraperScraper {
         });
       }
 
+      const references = $('ol.references > li[id^="cite_note"]')
+        .map((i, li) => ({
+          cite: i + 1,
+          text: $(li).find('.reference-text').text().trim(),
+        }))
+        .get();
+
       const ignoreEvolvesRegex = /^Any .*(Baby|Child|Adult|Perfect|Ultimate|Super).*Digimon/;
       const evolvesFromLi = $('#Evolves_From').closest('h2').next('ul').children('li');
       const evolvesFrom: DigimonDataEvolveElement[] = [];
@@ -1072,6 +1086,16 @@ class DigimonScraperScraper {
             return;
           }
 
+          const citeNumbers = line
+            .replaceAll('\n', '')
+            .matchAll(/\[(\d+)\]/g)
+            .map((m) => Number(m[1]))
+            .toArray();
+
+          const cites = citeNumbers
+            .map((n) => references.find((r) => r.cite === n))
+            .filter((r): r is { cite: number; text: string } => r !== undefined);
+
           evolvesFrom.push({
             id: eid,
             name: ename,
@@ -1079,6 +1103,7 @@ class DigimonScraperScraper {
             canon: canon,
             note: note,
             line: line,
+            cites: cites,
           } as DigimonDataEvolveElement);
         }
       });
@@ -1119,16 +1144,23 @@ class DigimonScraperScraper {
             return;
           }
 
+          const citeNumbers = line
+            .matchAll(/\[(\d+)\]/g)
+            .map((m) => Number(m[1]))
+            .toArray();
+
+          const cites = citeNumbers
+            .map((n) => references.find((r) => r.cite === n))
+            .filter((r): r is { cite: number; text: string } => r !== undefined);
+
           evolvesTo.push({
             id: eid,
             name: ename,
             url: this.baseUrl + $(e).find('a').attr('href'),
             canon: canon,
             note: note,
-            line: $(e)
-              .text()
-              .trim()
-              .replaceAll(/\\[[0-9]+\\]/g, ''),
+            line: line,
+            cites: cites,
           } as DigimonDataEvolveElement);
         }
       });
@@ -1406,7 +1438,43 @@ class DigimonScraperScraper {
           }
         }
 
-        this.position++;
+        const evolvesExtend = (evolves: DigimonDataEvolveElement[]): DigimonDataEvolveElement[] => {
+          const animeRegex =
+            /^(Digimon Adventure|Digimon Adventure 02|Digimon Adventure tri\.|Digimon Tamers|Digimon Frontier|Digimon Data Squad|Digimon Fusion|Digimon Ghost Game|Digimon Beatbreak):/;
+
+          return evolves.map((evol) => {
+            const is_x_antibody = evol.name.includes('(X-Antibody)');
+            const norm_name = evol.name.replace('(X-Antibody)', 'X');
+            const norm_id = evol.id.replace('X_Antibody', 'X');
+
+            return {
+              ...evol,
+              animes: Array.from(
+                new Set(
+                  evol.cites
+                    ?.map((cit) => cit.text.match(animeRegex)?.[1])
+                    .filter((anime): anime is string => !!anime) ?? []
+                )
+              ),
+
+              dm: !!extraVpetProperties?.evolvesToDm?.find((e: { id: string; name: string }) => e.id === evol.id),
+              dm20: !!extraVpetProperties?.evolvesToDm20?.find((e: { id: string; name: string }) => e.id === evol.id),
+              dmx: !!extraVpetProperties?.evolvesToDmx?.find(
+                (e: { id: string; name: string }) => e.id === evol.id || norm_name === e.name || norm_id === e.id
+              ),
+              dmc: !!extraVpetProperties?.evolvesToDmc?.find((e: { id: string; name: string }) => e.id === evol.id),
+              pen: !!extraVpetProperties?.evolvesToPen?.find((e: { id: string; name: string }) => e.id === evol.id),
+              pen20: !!extraVpetProperties?.evolvesToPen20?.find((e: { id: string; name: string }) => e.id === evol.id),
+            };
+          });
+        };
+
+        const evolvesFromExt = evolvesExtend(
+          evolvesFrom.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game|Category:)/))
+        );
+        const evolvesToExt = evolvesExtend(
+          evolvesTo.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game|Category:)/))
+        );
 
         const ret = {
           href: url,
@@ -1431,8 +1499,9 @@ class DigimonScraperScraper {
           minWeights: minWeights,
           minWeight: minWeights.length ? Math.min(...minWeights) : undefined,
           categories: categories,
-          evolvesFrom: evolvesFrom.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game|Category:)/)),
-          evolvesTo: evolvesTo.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game|Category:)/)),
+          evolvesFrom: evolvesFromExt,
+          evolvesTo: evolvesToExt,
+          xAntibody: is_x_antibody,
           ...extraVpetProperties,
         } as DigimonData;
 
@@ -1441,6 +1510,7 @@ class DigimonScraperScraper {
         await writeFileAsync(resultFileAlt, JSON.stringify(ret, null, 2));
         logInfo(`  Save Digimon: ${name} -- [${resultFile}] (${resultFileAlt})`);
 
+        this.position++;
         return ret;
       }
     }
