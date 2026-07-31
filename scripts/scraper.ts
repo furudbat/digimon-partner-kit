@@ -446,6 +446,7 @@ interface DigimonDataEvolveElement {
   url: string;
   canon?: boolean;
   line?: string;
+  note?: string;
 
   cites?: { cite: number; text: string }[];
   animes?: string[];
@@ -473,6 +474,7 @@ interface DigimonData {
   evolvesFrom: DigimonDataEvolveElement[];
   evolvesTo: DigimonDataEvolveElement[];
   xAntibody?: boolean;
+  skills?: { name: string; description: string; cites?: { cite: number; text: string }[] }[];
 
   // @TODO: add proper properties for each device
   [key: string]: any; // Allow the flexible addition of `dm`, `dm20`, `evolvesToDm`, etc.
@@ -1050,13 +1052,12 @@ class DigimonScraperScraper {
         }))
         .get();
 
-      const ignoreEvolvesRegex = /^Any .*(Baby|Child|Adult|Perfect|Ultimate|Super).*Digimon/;
-      const evolvesFromLi = $('#Evolves_From').closest('h2').next('ul').children('li');
-      const evolvesFrom: DigimonDataEvolveElement[] = [];
-      evolvesFromLi.each((i, e) => {
+      /// @FIXME: use Element instead of any
+      const getEvolvesFromLi = (i: number, e: any) => {
         const eid = hrefToId($(e).find('a').attr('href'));
         const etitle = $(e).find('a').attr('title');
         const canon = $(e).find('b').length > 0;
+
         if (eid && etitle) {
           const ename = etitle.trim();
           const line = $(e)
@@ -1064,16 +1065,15 @@ class DigimonScraperScraper {
             .trim()
             .replaceAll('\n', '')
             .replaceAll(/\s+/gm, ' ')
-            .replaceAll(/\\[[0-9]+\\]/gm, '');
+            .replaceAll(/\[\d+\]/g, '')
+            .trim();
 
-          const note = (() => {
-            const matches = line.match(/\\((.*)\\)/);
-            if (matches) {
-              return matches[0].replace(etitle?.trim(), '').replaceAll(/\\[[0-9]+\\]/g, '');
-            }
-
-            return undefined;
-          })();
+          const line_note_match = line.match(/\(([^()]*(?:\([^()]*\)[^()]*)*)\)\s*$/);
+          let note = line_note_match?.[1].replace(/\[\d+\]/g, '');
+          if (note === 'X-Antibody') {
+            // Ignore, part of name
+            note = undefined;
+          }
 
           // skip Card Games
           if (ename.includes('Card Battle Colors and Level') || ename.includes('Card Game Colors and Level')) {
@@ -1086,7 +1086,9 @@ class DigimonScraperScraper {
             return;
           }
 
-          const citeNumbers = line
+          const citeNumbers = $(e)
+            .text()
+            .trim()
             .replaceAll('\n', '')
             .matchAll(/\[(\d+)\]/g)
             .map((m) => Number(m[1]))
@@ -1096,7 +1098,7 @@ class DigimonScraperScraper {
             .map((n) => references.find((r) => r.cite === n))
             .filter((r): r is { cite: number; text: string } => r !== undefined);
 
-          evolvesFrom.push({
+          return {
             id: eid,
             name: ename,
             url: this.baseUrl + $(e).find('a').attr('href'),
@@ -1104,7 +1106,19 @@ class DigimonScraperScraper {
             note: note,
             line: line,
             cites: cites,
-          } as DigimonDataEvolveElement);
+          } as DigimonDataEvolveElement;
+        }
+
+        return undefined;
+      };
+
+      const ignoreEvolvesRegex = /^Any .*(Baby|Child|Adult|Perfect|Ultimate|Super).*Digimon/;
+      const evolvesFromLi = $('#Evolves_From').closest('h2').next('ul').children('li');
+      const evolvesFrom: DigimonDataEvolveElement[] = [];
+      evolvesFromLi.each((i, e) => {
+        const ef = getEvolvesFromLi(i, e);
+        if (ef) {
+          evolvesFrom.push(ef);
         }
       });
       console.debug(`    evolvesFrom found: ${evolvesFrom.length}`);
@@ -1112,56 +1126,9 @@ class DigimonScraperScraper {
       const evolvesToLi = $('#Evolves_To').closest('h2').next('ul').children('li');
       const evolvesTo: DigimonDataEvolveElement[] = [];
       evolvesToLi.each((i, e) => {
-        const eid = hrefToId($(e).find('a').attr('href'));
-        const etitle = $(e).find('a').attr('title');
-        const canon = $(e).find('b').length > 0;
-        if (eid && etitle) {
-          const ename = etitle.trim();
-          const line = $(e)
-            .text()
-            .trim()
-            .replaceAll('\n', '')
-            .replaceAll(/\s+/gm, ' ')
-            .replaceAll(/\\[[0-9]+\\]/gm, '');
-
-          const note = (() => {
-            const matches = line.match(/\\(.*\\)/);
-            if (matches) {
-              return matches[0].replace(etitle?.trim(), '').replaceAll(/\\[[A-Z\s]?[0-9]+\\]/g, '');
-            }
-
-            return undefined;
-          })();
-
-          // skip Card Games
-          if (ename.includes('Card Battle Colors and Level') || ename.includes('Card Game Colors and Level')) {
-            return;
-          }
-          if (ignoreEvolvesRegex.test(ename)) {
-            return;
-          }
-          if ($(e).find('a').attr('href')?.includes('/index.php') || ename.includes('(page does not exist')) {
-            return;
-          }
-
-          const citeNumbers = line
-            .matchAll(/\[(\d+)\]/g)
-            .map((m) => Number(m[1]))
-            .toArray();
-
-          const cites = citeNumbers
-            .map((n) => references.find((r) => r.cite === n))
-            .filter((r): r is { cite: number; text: string } => r !== undefined);
-
-          evolvesTo.push({
-            id: eid,
-            name: ename,
-            url: this.baseUrl + $(e).find('a').attr('href'),
-            canon: canon,
-            note: note,
-            line: line,
-            cites: cites,
-          } as DigimonDataEvolveElement);
+        const et = getEvolvesFromLi(i, e);
+        if (et) {
+          evolvesTo.push(et);
         }
       });
       console.debug(`    evolvesTo found: ${evolvesTo.length}`);
@@ -1476,6 +1443,54 @@ class DigimonScraperScraper {
           evolvesTo.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game|Category:)/))
         );
 
+        const skill_table = $('table')
+          .filter((_, table) => {
+            const headers = $(table)
+              .find('tr')
+              .first()
+              .find('th')
+              .map((_, th) => $(th).text().trim())
+              .get();
+
+            return headers[0] === 'Name' && headers.at(-1) === 'Description';
+          })
+          .first();
+        const skills = skill_table
+          .find('tbody > tr')
+          .slice(1)
+          .map((_, tr) => {
+            const tds = $(tr).find('td');
+
+            const citeNumbers = tds
+              .last()
+              .text()
+              .trim()
+              .replaceAll('\n', '')
+              .matchAll(/\[(\d+)\]/g)
+              .map((m) => Number(m[1]))
+              .toArray();
+
+            const cites = citeNumbers
+              .map((n) => references.find((r) => r.cite === n))
+              .filter((r): r is { cite: number; text: string } => r !== undefined);
+
+            return {
+              name: tds
+                .eq(0)
+                .text()
+                .replace(/\[\d+\]/g, '')
+                .trim(),
+              description: tds
+                .last()
+                .text()
+                .replace(/\[\d+\]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim(),
+              cites: cites,
+            };
+          })
+          .get();
+
         const ret = {
           href: url,
           id: id,
@@ -1502,6 +1517,7 @@ class DigimonScraperScraper {
           evolvesFrom: evolvesFromExt,
           evolvesTo: evolvesToExt,
           xAntibody: is_x_antibody,
+          skills: skills,
           ...extraVpetProperties,
         } as DigimonData;
 
