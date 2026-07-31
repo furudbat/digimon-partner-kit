@@ -1,7 +1,7 @@
 'use client';
 
 import { Timeline, TimelineContent, TimelineItem } from 'flowbite-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMediaQuery } from 'react-responsive';
 import { scroller } from 'react-scroll';
 import { Element } from 'react-scroll';
@@ -35,7 +35,8 @@ export function DigimonTimeline({
   currentSelectionLevel: DigimonLevel;
   printMode?: boolean;
 }) {
-  const isMobile = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
+  const [isMobile, setIsMobile] = useState(false);
+  const isMobileQuery = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
 
   const onSelectCard = React.useCallback(
     (level: DigimonLevel) => {
@@ -54,6 +55,10 @@ export function DigimonTimeline({
     },
     [isMobile, selectDigimonLevel]
   );
+
+  useEffect(() => {
+    setIsMobile(isMobileQuery);
+  }, [isMobileQuery]);
 
   return (
     <Timeline horizontal>

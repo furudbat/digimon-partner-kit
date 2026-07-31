@@ -7,16 +7,26 @@ import { useMediaQuery } from 'react-responsive';
 import { DigimonData } from 'src/models/digimon';
 
 import { MediaQueryMobileBreakpoint, NOT_FOUND_IMAGE } from '../constants';
+import { cn } from '@/lib/utils';
+import { useEffect, useMemo, useState } from 'react';
 
-export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: string | number }) {
-  const isMobile = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
+export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: string }) {
+  const [isMobile, setIsMobile] = useState(false);
+  const isMobileQuery = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
   //const pathname = usePathname();
 
+  const minHeight = useMemo(() => height ?? '32rem', [height]);
+  const minHeightCssClass = useMemo(() => (!isMobile ? `min-h-[${minHeight}]` : undefined), [isMobile, minHeight]);
+
+  const heightInner = useMemo(() => height ?? '24rem', [height]);
+  const heightInnerCssClass = useMemo(() => (!isMobile ? `h-[${heightInner}]` : undefined), [isMobile, heightInner]);
+
+  useEffect(() => {
+    setIsMobile(isMobileQuery);
+  }, [isMobileQuery]);
+
   return (
-    <div
-      className="max-w-full border rounded-lg shadow p-4"
-      style={{ minHeight: !isMobile ? (height ?? '32rem') : undefined }}
-    >
+    <div className={cn(['max-w-full', 'border', 'rounded-lg', 'shadow p-4', minHeightCssClass])}>
       <div className="grid grid-flow-row-dense md:grid-cols-2 md:grid-rows-1 px-2">
         <div className="items-center mt-10">
           <Image
@@ -28,7 +38,7 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
             loading="eager"
           />
         </div>
-        <div className="px-2 md:items-start ml-4 overflow-y-auto" style={{ height: !isMobile ? '24rem' : undefined }}>
+        <div className={cn(['px-2', 'md:items-start', 'ml-4', 'overflow-y-auto', heightInnerCssClass])}>
           <h5 className="text-2xl pb-2 font-bold tracking-tight">
             <Link href={data.href} title={data.name} target="_blank" rel="noreferrer">
               {data.name}

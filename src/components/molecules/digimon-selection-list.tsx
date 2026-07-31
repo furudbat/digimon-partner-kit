@@ -3,14 +3,36 @@
 import { faArrowLeft, faArrowRight, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Badge, Button, TextInput, Tooltip } from 'flowbite-react';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Element } from 'react-scroll';
 import { DigimonData, DigimonDataEvolveElement, DigimonLevel, DigimonListElement } from 'src/models/digimon';
 import { useDebouncedCallback } from 'use-debounce';
 import { cn } from '@/lib/utils';
+import { ListGroup, ListGroupItem } from 'flowbite-react';
+import { DigimonListMaxHeight, DigimonListMaxHeightMd } from '@/components/constants';
+
+const listGroupTheme = {
+  base: 'list-none rounded-lg border border-gray-200 text-sm font-medium text-gray-900 dark:border-gray-600 dark:text-white',
+};
+
+const listGroupItemTheme = {
+  base: 'items-center border-b border-gray-200 dark:border-gray-600',
+  link: {
+    base: 'flex w-full items-center',
+    /*
+    active: {
+      off: 'bg-white text-gray-900 hover:bg-gray-100 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-600',
+      on: 'bg-gray-100 text-gray-900 dark:bg-gray-600 dark:text-white',
+    },
+    */
+    disabled: {
+      off: '',
+      on: 'cursor-not-allowed bg-gray-100 text-gray-900 opacity-50 dark:bg-gray-600 dark:text-gray-400',
+    },
+  },
+};
 
 const LIST_WIDTH = 86;
-const LIST_HEIGHT = 96;
 
 function LevelSelectionButtonGroup({
   prevDigimonLevel,
@@ -106,6 +128,7 @@ export function DigimonSelectionList({
   gotoDigimonLevel,
   selectDigimon,
   currentDigimon,
+  prevDigimon,
   isDigimonLevelSet,
   freeMode,
   digimons,
@@ -117,6 +140,7 @@ export function DigimonSelectionList({
   gotoDigimonLevel: (level: DigimonLevel) => void;
   selectDigimon: (digimonId: string) => void;
   currentDigimon?: DigimonData;
+  prevDigimon?: DigimonData;
   isDigimonLevelSet: (levels: DigimonLevel[]) => boolean;
   freeMode?: boolean;
   digimons?: Record<string, DigimonData>;
@@ -183,8 +207,21 @@ export function DigimonSelectionList({
 
   const levelDisabled = !isSelectable(currentSelectionLevel);
 
+  const selectionText1 = React.useMemo(() => {
+    return `Select ${currentSelectionLevel} Level`;
+  }, [currentSelectionLevel, prevDigimon]);
+
+  const selectionText2 = React.useMemo(() => {
+    return prevDigimon ? `Digivolved from ${prevDigimon.name}` : '';
+  }, [currentSelectionLevel, prevDigimon]);
+
+  const heightClasses = useMemo(
+    () => `max-h-[${DigimonListMaxHeight}] md:max-h-[${DigimonListMaxHeightMd}]`,
+    [DigimonListMaxHeight, DigimonListMaxHeightMd]
+  );
+
   return (
-    <div className="snap-start md:snap-none pt-4" id="digimonSelectionList">
+    <div id="digimonSelectionList">
       <Element name="digimonSelectionList" />
       <LevelSelectionButtonGroup
         nextDigimonLevel={nextDigimonLevel}
@@ -194,29 +231,40 @@ export function DigimonSelectionList({
         isDigimonLevelSet={isDigimonLevelSet}
       />
 
-      <div className={`text-center w-full md:w-${LIST_WIDTH} mt-2 h-8 mb-2`}>
+      <div className={cn(['text-center', 'w-full', `md:w-${LIST_WIDTH}`, 'mt-2', 'h-8', 'mb-1'])}>
         {selectableDigimons && (
-          <h3 className="pb-2">
+          <h3>
             {levelDisabled ? (
-              <span className="underline">Can not select Digivolution in the middle of the line</span>
+              <span className="underline"> Can not select Digivolution in the middle of the line</span>
             ) : (
-              <>Select {currentSelectionLevel} Level</>
+              <>{selectionText1}</>
+            )}
+          </h3>
+        )}
+      </div>
+      <div className={`text-center w-full md:w-${LIST_WIDTH} mt-1 h-8 mb-1`}>
+        {selectableDigimons && (
+          <h3>
+            {levelDisabled ? (
+              <em className="text-sm text-gray-600">{selectionText2}</em>
+            ) : (
+              <em className="text-sm text-gray-500">{selectionText2}</em>
             )}
           </h3>
         )}
       </div>
 
-      <div className="flex items-center w-full max-w-sm mx-auto mt-2 h-12 mb-2">
-        {selectableDigimons && !levelDisabled && (
+      <div className="items-center w-full max-w-sm mx-auto mt-1 mb-2">
+        {selectableDigimons && (
           <form className="flex items-center w-full mx-auto">
             <label htmlFor="digimon-list-search" className="sr-only">
               Search
             </label>
-            <div className={`relative w-full md:max-w-${LIST_WIDTH}`}>
+            <div className={cn('relative', 'w-full', `md:max-w-${LIST_WIDTH}`)}>
               <TextInput
                 type="search"
                 id="digimon-list-search"
-                className="block w-full ps-12 p-3"
+                className="block w-full ps-10 p-1 text-sm"
                 placeholder="Search"
                 onChange={(e) => debouncedDigimonSearch(e.target.value)}
                 disabled={levelDisabled || digimonList.length === 0}
@@ -226,16 +274,9 @@ export function DigimonSelectionList({
         )}
       </div>
 
-      {digimonList.length === 0 && (
-        <p className={`px-5 text-lg w-full md:max-w-${LIST_WIDTH} h-${LIST_HEIGHT - 24} md:h-${LIST_HEIGHT}`}>
-          No Digimon to select
-        </p>
-      )}
-      {digimonList.length > 0 && (
-        <ul
-          className={`text-sm w-full md:${LIST_WIDTH} h-${LIST_HEIGHT - 24} md:h-${LIST_HEIGHT} overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-600 divide-y divide-gray-200 dark:divide-gray-600`}
-          style={{ height: '19rem' }}
-        >
+      <div className={cn(`overflow-y-auto`)}>
+        <ListGroup theme={listGroupTheme} className="text-sm w-full border-0 rounded-none">
+          {digimonList.length === 0 && <ListGroupItem theme={listGroupItemTheme}>No Digimon to select</ListGroupItem>}
           {filteredSelectableDigimons.map((digimon) => {
             const canon = isEvolCanon(digimon.id);
             const isActive = digimon.id === currentDigimon?.id;
@@ -259,67 +300,57 @@ export function DigimonSelectionList({
               'animes' in digimon && digimon.animes ? Array.from(new Set(digimon.animes)).join(', ') : undefined;
 
             return (
-              <li key={digimon.id} className="first:rounded-t-lg last:rounded-b-lg overflow-hidden">
-                <button
-                  type="button"
-                  disabled={levelDisabled}
-                  onClick={() => selectDigimon(digimon.id)}
-                  className={cn(
-                    'flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors',
-                    isActive
-                      ? 'bg-gray-100 text-gray-900 dark:bg-gray-600 dark:text-white'
-                      : 'text-gray-900 dark:text-white bg-white dark:bg-gray-800',
-                    !isActive &&
-                      !levelDisabled &&
-                      'hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white',
-                    levelDisabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
-                    canon ? 'font-extrabold' : 'font-normal'
+              <ListGroupItem
+                theme={listGroupItemTheme}
+                className={cn('flex items-center gap-2', canon ? 'font-extrabold' : undefined)}
+                key={digimon.id}
+                onClick={() => selectDigimon(digimon.id)}
+                active={digimon.id === currentDigimon?.id}
+                disabled={!isSelectable(currentSelectionLevel)}
+              >
+                <span className="truncate flex-1 text-left">
+                  {canon ? (
+                    <strong className={cn(!freeMode || isInEvolveLine ? 'not-italic' : 'italic')}>
+                      {digimon.name}
+                    </strong>
+                  ) : (
+                    <span className={cn(!freeMode || isInEvolveLine ? 'not-italic' : 'italic')}>{digimon.name}</span>
                   )}
-                >
-                  <span className="min-w-0 flex-1 truncate">
-                    {canon ? (
-                      <strong className={cn(!freeMode || isInEvolveLine ? 'not-italic' : 'italic')}>
-                        {digimon.name}
-                      </strong>
-                    ) : (
-                      <span className={cn(!freeMode || isInEvolveLine ? 'not-italic' : 'italic')}>{digimon.name}</span>
-                    )}
-                  </span>
+                </span>
 
-                  <span className="ml-auto inline-flex items-center gap-1">
-                    {visibleBadges.map((badge) => {
-                      const isAnimeBadge = badge === 'anime' && animeList;
-                      const badgeElement = (
-                        <Badge key={badge} size="xs" color={isAnimeBadge ? 'red' : 'gray'}>
-                          {badge}
-                        </Badge>
+                <span className="flex shrink-0 items-center gap-1">
+                  {visibleBadges.map((badge) => {
+                    const isAnimeBadge = badge === 'anime' && animeList;
+                    const badgeElement = (
+                      <Badge key={badge} size="xs" color={isAnimeBadge ? 'red' : 'gray'}>
+                        {badge}
+                      </Badge>
+                    );
+
+                    if (isAnimeBadge) {
+                      return (
+                        <Tooltip key={badge} content={animeList} placement="top" style="dark">
+                          {badgeElement}
+                        </Tooltip>
                       );
+                    }
 
-                      if (isAnimeBadge) {
-                        return (
-                          <Tooltip key={badge} content={animeList} placement="top" style="dark">
-                            {badgeElement}
-                          </Tooltip>
-                        );
-                      }
+                    return badgeElement;
+                  })}
 
-                      return badgeElement;
-                    })}
-
-                    {hiddenBadges.length > 0 && (
-                      <Tooltip content={hiddenBadges.join(', ')} placement="top" style="dark">
-                        <Badge size="xs" color="gray">
-                          ...
-                        </Badge>
-                      </Tooltip>
-                    )}
-                  </span>
-                </button>
-              </li>
+                  {hiddenBadges.length > 0 && (
+                    <Tooltip content={hiddenBadges.join(', ')} placement="top" style="dark">
+                      <Badge size="xs" color="gray">
+                        ...
+                      </Badge>
+                    </Tooltip>
+                  )}
+                </span>
+              </ListGroupItem>
             );
           })}
-        </ul>
-      )}
+        </ListGroup>
+      </div>
     </div>
   );
 }

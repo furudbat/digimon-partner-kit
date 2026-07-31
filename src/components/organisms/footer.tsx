@@ -7,14 +7,22 @@ import Link from 'next/link';
 import { useMediaQuery } from 'react-responsive';
 
 import { MediaQueryMobileBreakpoint } from '../constants';
+import { useEffect, useMemo, useState } from 'react';
 
 export function MainFooter() {
-  const isMobile = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
+  const [isMobile, setIsMobile] = useState(false); // SSR-safe default
+  const isMobileQuery = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
+
+  const iconSize = useMemo(() => (isMobile ? '2x' : '1x'), [isMobile]);
+
+  useEffect(() => {
+    setIsMobile(isMobileQuery);
+  }, [isMobileQuery]);
 
   return (
-    <Footer container className="rounded-none shadow-none h-14 mt-4 md:mt-6 lg:mt-8">
-      <div className="m-2 md:mx-6 w-full">
-        <div className="md:flex items-center sm:justify-between w-full h-14 p-1">
+    <Footer container className="rounded-none shadow-none shrink-0 mt-5">
+      <div className="m-1 md:mx-6 w-full">
+        <div className="md:flex items-center sm:justify-between w-full min-h-14 p-1">
           <span className="text-sm text-gray-500 dark:text-gray-400">
             © 2026{' '}
             <Link href="https://github.com/furudbat" target="_blank" rel="noreferrer" className="hover:underline">
@@ -61,7 +69,7 @@ export function MainFooter() {
               rel="noreferrer"
               href="https://twitter.com/furudbat"
             >
-              <FontAwesomeIcon icon={faTwitter} size={isMobile ? '2x' : '1x'} />
+              <FontAwesomeIcon icon={faTwitter} size={iconSize} />
             </Link>
             <Link
               className="text-gray-500 dark:text-gray-400 font-medium md:font-small p-2"
@@ -69,7 +77,7 @@ export function MainFooter() {
               rel="noreferrer"
               href="https://github.com/furudbat/digimon-partner-kit"
             >
-              <FontAwesomeIcon icon={faGithub} size={isMobile ? '2x' : '1x'} />
+              <FontAwesomeIcon icon={faGithub} size={iconSize} />
             </Link>
           </div>
         </div>
