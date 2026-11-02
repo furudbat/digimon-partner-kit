@@ -9,7 +9,7 @@ const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testRegex: '(/__tests__/.*|(\\.|/)(test))\\.[jt]sx?$',
   transformIgnorePatterns: [
-    '/node_modules/(?!(.pnpm|debounce|flowbite-react|@fortawesome|flowbite)/)',
+    '/node_modules/(?!(.pnpm|debounce|@fortawesome)/)',
     '^.+\\.module\\.(css|sass|scss)$',
   ],
   moduleNameMapper: {
@@ -27,7 +27,7 @@ module.exports = async () => {
   const config = await createJestConfig(customJestConfig)();
   // Forcefully override the ignore pattern if nextJest stripped it
   config.transformIgnorePatterns = [
-    '/node_modules/(?!(.pnpm|debounce|flowbite-react|@fortawesome|flowbite)/)',
+    '/node_modules/(?!(.pnpm|debounce|@fortawesome)/)',
     ...config.transformIgnorePatterns.filter(pattern => pattern !== '/node_modules/'),
   ];
   return config;

@@ -1,74 +1,30 @@
-import js from '@eslint/js';
+import { defineConfig, globalIgnores } from 'eslint/config';
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTs from 'eslint-config-next/typescript';
+import prettier from 'eslint-config-prettier/flat';
 import globals from 'globals';
-import tsParser from '@typescript-eslint/parser';
-import prettierPlugin from 'eslint-plugin-prettier';
-import { FlatCompat } from '@eslint/eslintrc';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-export default [
-  js.configs.recommended,
-
-  ...compat.extends('next/core-web-vitals'),
+export default defineConfig([
+  // Next.js rules (includes react, react-hooks, import, jsx-a11y and typescript-eslint)
+  ...nextVitals,
+  ...nextTs,
+  // turn off rules that conflict with Prettier (formatting is done by `pnpm prettier:format`)
+  prettier,
 
   {
-    files: ['**/*.{js,jsx,ts,tsx,mjs}'],
-
     languageOptions: {
-      parser: tsParser,
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
-
       globals: {
         ...globals.browser,
         ...globals.node,
         ...globals.jest,
       },
     },
-
-    plugins: {
-      prettier: prettierPlugin,
-    },
-
-    settings: {
-      react: {
-        version: 'detect',
-      },
-    },
-
     rules: {
-      'prettier/prettier': 'warn',
       'no-console': ['error', { allow: ['warn', 'error'] }],
-      'no-unused-vars': [
-        'warn',
-        {
-          argsIgnorePattern: '^_',
-        },
-      ],
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'warn',
     },
   },
 
-  {
-    ignores: [
-      'node_modules/',
-      '.next/',
-      'out/',
-      'dist/',
-      'build/',
-      'coverage/',
-    ],
-  },
-];
+  globalIgnores(['node_modules/**', '.next/**', 'out/**', 'build/**', 'dist/**', 'coverage/**', 'public/**', 'next-env.d.ts']),
+]);

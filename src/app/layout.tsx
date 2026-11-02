@@ -10,8 +10,6 @@ import { ReactNode, Suspense } from 'react';
 import { MainProvider } from '@/components/providers/MainProvider';
 import { MainLayout } from '@/components/templates/MainLayout';
 
-import { cn } from '@/lib/utils';
-
 // CSS is imported above; stop Font Awesome from injecting it at runtime
 config.autoAddCss = false;
 
@@ -29,7 +27,7 @@ interface RootLayoutProps {
 const RootLayout = ({ children }: RootLayoutProps) => {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn(inter.variable, 'font-primary')} suppressHydrationWarning>
+      <body className={inter.variable} suppressHydrationWarning>
         <MainProvider>
           <MainLayout>
             <Suspense>{children}</Suspense>

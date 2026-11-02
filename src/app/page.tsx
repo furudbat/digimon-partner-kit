@@ -2,24 +2,19 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
-import React, { Suspense, useState } from 'react';
+import React, { Suspense } from 'react';
 import { useEffect } from 'react';
-import { useMediaQuery } from 'react-responsive';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import { scroller } from 'react-scroll';
 import { Element } from 'react-scroll';
-import { DigimonDB, DigimonData, DigimonLevel, DigimonListElement, DigimonDataEvolveElement } from 'src/models/digimon';
+import { DigimonDB, DigimonData, DigimonLevel, DigimonListElement } from 'src/models/digimon';
 
-import {
-  MediaQueryMobileBreakpoint,
-  PageLeftColInfoBoxHeight,
-  PageRightColContainerDigimonListMinHeight,
-  PageRightColContainerMinHeight,
-} from '@/components/constants';
+import { PageLeftColInfoBoxHeight } from '@/components/constants';
 import { DigimonInfoBox } from '@/components/molecules/digimon-info-box';
 import { DigimonSelectionList, SelectableDigimon } from '@/components/molecules/digimon-selection-list';
 import { DigimonTimeline } from '@/components/organisms/digimon-timeline';
 
-import { cn, getRandomFromArray } from '@/lib/utils';
+import { getRandomFromArray } from '@/lib/utils';
 import ClientOnly from '@/components/atoms/client-only';
 import { ArrowUpIcon, CopyIcon } from '@/components/atoms/icons';
 import styles from './page.module.css';
@@ -73,8 +68,7 @@ const HomePageInner = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [isMobile, setIsMobile] = useState(false);
-  const isMobileQuery = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
+  const isMobile = useIsMobile();
 
   const searchParams = useSearchParams();
   const [openCopyPopover, setOpenCopyPopover] = React.useState(false);
@@ -268,9 +262,6 @@ const HomePageInner = () => {
     [currentSelectionLevel, patchSelection]
   );
 
-  useEffect(() => {
-    setIsMobile(isMobileQuery);
-  }, [isMobileQuery]);
   useEffect(() => {
     if (!digimons) return;
 

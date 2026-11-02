@@ -1,22 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { useMediaQuery } from 'react-responsive';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 
-import { MediaQueryMobileBreakpoint } from '../constants';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { GitHubIcon, XIcon } from '../atoms/icons';
 import styles from './footer.module.css';
 
 export function MainFooter() {
-  const [isMobile, setIsMobile] = useState(false); // SSR-safe default
-  const isMobileQuery = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
+  const isMobile = useIsMobile();
 
   const iconSize = useMemo(() => (isMobile ? '2x' : '1x'), [isMobile]);
-
-  useEffect(() => {
-    setIsMobile(isMobileQuery);
-  }, [isMobileQuery]);
 
   const iconPx = iconSize === '2x' ? 32 : 16;
 
@@ -43,8 +37,8 @@ export function MainFooter() {
           </Link>
           <br />
           <em>
-            This Project is a free fan site and not affiliated with Bandai Namco. Digimon and other media relating to the
-            franchise are registered trademarks by{' '}
+            This Project is a free fan site and not affiliated with Bandai Namco. Digimon and other media relating to
+            the franchise are registered trademarks by{' '}
             <Link href="https://www.bandai.com/" title="Bandai Namco" target="_blank" rel="noreferrer">
               Bandai Namco
             </Link>

@@ -3,7 +3,7 @@
 ## Run
 
 ```bash
-NODE_OPTIONS="--max-old-space-size=8192" npx ts-node ./scripts/scraper.ts
+NODE_OPTIONS="--max-old-space-size=8192" npx tsx ./scripts/scraper.ts
 cp ./scripts/digimon.db.json src/db/digimon.db.json
 
 #mogrify -path public/img/ -thumbnail '320x320>' -background white -gravity center -extent 320x320 ./scripts/img/*.png

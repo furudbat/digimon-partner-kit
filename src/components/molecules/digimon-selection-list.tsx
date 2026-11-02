@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Element } from 'react-scroll';
 import { DigimonData, DigimonDataEvolveElement, DigimonLevel, DigimonListElement } from 'src/models/digimon';
 import { useDebouncedCallback } from 'use-debounce';
@@ -182,16 +182,11 @@ export function DigimonSelectionList({
 
   const selectionText1 = React.useMemo(() => {
     return `Select ${currentSelectionLevel} Level`;
-  }, [currentSelectionLevel, prevDigimon]);
+  }, [currentSelectionLevel]);
 
   const selectionText2 = React.useMemo(() => {
     return prevDigimon ? `Digivolved from ${prevDigimon.name}` : '';
-  }, [currentSelectionLevel, prevDigimon]);
-
-  const heightClasses = useMemo(
-    () => `max-h-[${DigimonListMaxHeight}] md:max-h-[${DigimonListMaxHeightMd}]`,
-    [DigimonListMaxHeight, DigimonListMaxHeightMd]
-  );
+  }, [prevDigimon]);
 
   return (
     <div id="digimonSelectionList" className={styles.root}>

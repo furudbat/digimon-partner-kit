@@ -2,28 +2,20 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMediaQuery } from 'react-responsive';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import { DigimonData } from 'src/models/digimon';
 
-import { MediaQueryMobileBreakpoint, NOT_FOUND_IMAGE } from '../constants';
-import { cn } from '@/lib/utils';
-import { useEffect, useMemo, useState } from 'react';
+import { NOT_FOUND_IMAGE } from '../constants';
+import { useMemo } from 'react';
 import styles from './digimon-info-box.module.css';
 
 export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: string }) {
-  const [isMobile, setIsMobile] = useState(false);
-  const isMobileQuery = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
+  const isMobile = useIsMobile();
   //const pathname = usePathname();
 
   const minHeight = useMemo(() => height ?? '32rem', [height]);
-  const minHeightCssClass = useMemo(() => (!isMobile ? `min-h-[${minHeight}]` : undefined), [isMobile, minHeight]);
 
   const heightInner = useMemo(() => height ?? '24rem', [height]);
-  const heightInnerCssClass = useMemo(() => (!isMobile ? `h-[${heightInner}]` : undefined), [isMobile, heightInner]);
-
-  useEffect(() => {
-    setIsMobile(isMobileQuery);
-  }, [isMobileQuery]);
 
   return (
     <section className={styles.box} style={!isMobile ? { minHeight } : undefined}>

@@ -17,6 +17,7 @@ export interface DigimonDataEvolveElement extends DigimonBase {
   cites?: { cite: number; text: string }[];
   animes?: string[];
   // @TODO: add proper properties for each device
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // Allow the flexible addition of `dm`, `dm20`, etc.
 }
 
@@ -40,6 +41,7 @@ export interface DigimonData {
   evolvesTo: DigimonDataEvolveElement[];
 
   // @TODO: add proper properties for each device
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // Allow the flexible addition of `dm`, `dm20`, `evolvesToDm`, etc.
 }
 

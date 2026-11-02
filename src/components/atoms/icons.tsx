@@ -8,9 +8,7 @@ type IconProps = { size?: number; className?: string };
 // Font Awesome Free icons; `size` is the icon height in px (FA icons are 1em tall).
 const icon = (definition: IconDefinition) =>
   function Icon({ size, className }: IconProps) {
-    return (
-      <FontAwesomeIcon icon={definition} className={className} style={size ? { fontSize: size } : undefined} />
-    );
+    return <FontAwesomeIcon icon={definition} className={className} style={size ? { fontSize: size } : undefined} />;
   };
 
 export const ArrowLeftIcon = icon(faArrowLeft);

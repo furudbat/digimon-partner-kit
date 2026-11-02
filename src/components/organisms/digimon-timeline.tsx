@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useMediaQuery } from 'react-responsive';
+import React from 'react';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import { scroller } from 'react-scroll';
 import { Element } from 'react-scroll';
 import { DigimonLevel, DigimonData } from 'src/models/digimon';
 
-import { MediaQueryMobileBreakpoint } from '../constants';
 import { DigimonTimelineCard } from '../molecules/digimon-timeline-card';
 import styles from './digimon-timeline.module.css';
 
@@ -35,8 +34,7 @@ export function DigimonTimeline({
   currentSelectionLevel: DigimonLevel;
   printMode?: boolean;
 }) {
-  const [isMobile, setIsMobile] = useState(false);
-  const isMobileQuery = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
+  const isMobile = useIsMobile();
 
   const onSelectCard = React.useCallback(
     (level: DigimonLevel) => {
@@ -55,10 +53,6 @@ export function DigimonTimeline({
     },
     [isMobile, selectDigimonLevel]
   );
-
-  useEffect(() => {
-    setIsMobile(isMobileQuery);
-  }, [isMobileQuery]);
 
   const items: { level: DigimonLevel; id: string; marker: string; data?: DigimonData }[] = [
     { level: 'Baby I', id: 'digimonTimelineBabyI', marker: 'I', data: baby1 },
