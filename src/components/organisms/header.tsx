@@ -1,3 +1,5 @@
+import { ThemeToggle } from '@/components/atoms/theme-toggle';
+
 import styles from './header.module.css';
 
 export function MainHeader() {
@@ -5,7 +7,7 @@ export function MainHeader() {
     <header className={styles.header}>
       <h1 className={styles.title}>Digimon Partner Kit</h1>
       <p className={styles.intro}>
-        Build your own Digimon-Partner Digivolution line.
+        Build your own Digimon-Partner Digivolution line. <ThemeToggle />
         <br />
         <em>Select your first Digimon and then select the next/previous Levels.</em>
         <br />

@@ -41,5 +41,5 @@
 }
 
 .socialLink:hover {
-  color: #111827;
+  color: var(--fg);
 }

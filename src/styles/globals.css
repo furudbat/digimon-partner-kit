@@ -1,9 +1,31 @@
 :root {
-  --border: #d1d5db;
-  --muted: #6b7280;
-  --accent: #7c3aed;
-  --link: #1e40af;
-  --bg-soft: #f3f4f6;
+  /* follows the OS setting by default; [data-theme] (set by the theme toggle) overrides it */
+  color-scheme: light dark;
+
+  /* light-dark(<light value>, <dark value>) */
+  --bg: light-dark(#ffffff, #111827);
+  --fg: light-dark(#111827, #f3f4f6);
+  --fg-soft: light-dark(#374151, #d1d5db);
+  --surface: light-dark(#ffffff, #1f2937);
+  --border: light-dark(#d1d5db, #374151);
+  --muted: light-dark(#6b7280, #9ca3af);
+  --accent: light-dark(#7c3aed, #8b5cf6);
+  --link: light-dark(#1e40af, #93c5fd);
+  --bg-soft: light-dark(#f3f4f6, #374151);
+  --active-bg: light-dark(#ede9fe, #4c1d95);
+  --badge-bg: light-dark(#f3f4f6, #374151);
+  --badge-fg: light-dark(#374151, #e5e7eb);
+  --badge-anime-bg: light-dark(#fee2e2, #7f1d1d);
+  --badge-anime-fg: light-dark(#991b1b, #fecaca);
+  --switch-off: light-dark(#d1d5db, #4b5563);
+  --knob-border: light-dark(#9ca3af, #6b7280);
+  --shadow: light-dark(rgb(0 0 0 / 0.1), rgb(0 0 0 / 0.4));
+}
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
 }
 *,
 *::before,
@@ -17,8 +39,8 @@ body {
 }
 body {
   font-family: var(--font-primary), system-ui, sans-serif;
-  color: #111827;
-  background: #fff;
+  color: var(--fg);
+  background: var(--bg);
   line-height: 1.5;
 }
 h1,
@@ -89,7 +111,7 @@ img {
 .btn-small {
   padding: 0.125rem 0.5rem;
   font-size: 0.75rem;
-  color: #111827;
-  background: #fff;
+  color: var(--fg);
+  background: var(--surface);
   border-color: var(--border);
 }

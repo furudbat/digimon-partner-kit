@@ -1,6 +1,6 @@
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faGithub, faTwitter } from '@fortawesome/free-brands-svg-icons';
-import { faArrowLeft, faArrowRight, faArrowUp, faCopy } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faArrowUp, faCopy, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 type IconProps = { size?: number; className?: string };
@@ -17,3 +17,5 @@ export const ArrowUpIcon = icon(faArrowUp);
 export const CopyIcon = icon(faCopy);
 export const GitHubIcon = icon(faGithub);
 export const XIcon = icon(faTwitter);
+export const SunIcon = icon(faSun);
+export const MoonIcon = icon(faMoon);

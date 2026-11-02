@@ -9,6 +9,7 @@ import { ReactNode, Suspense } from 'react';
 
 import { MainProvider } from '@/components/providers/MainProvider';
 import { MainLayout } from '@/components/templates/MainLayout';
+import { themeInitScript } from '@/lib/theme';
 
 // CSS is imported above; stop Font Awesome from injecting it at runtime
 config.autoAddCss = false;
@@ -27,6 +28,10 @@ interface RootLayoutProps {
 const RootLayout = ({ children }: RootLayoutProps) => {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* apply the saved theme before first paint (no flash) */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className={inter.variable} suppressHydrationWarning>
         <MainProvider>
           <MainLayout>
