@@ -7,3 +7,6 @@ coverage
 *.hbs
 src/db/*.json
 scripts/*.json
+next-env.d.ts
+out
+scripts/.cache

@@ -1,6 +1,5 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import React, { Suspense } from 'react';
 import { useEffect } from 'react';
@@ -65,8 +64,6 @@ const PARAM_KEYS: Record<string, string> = {
 };
 
 const HomePageInner = () => {
-  const router = useRouter();
-  const pathname = usePathname();
 
   const isMobile = useIsMobile();
 
@@ -288,9 +285,12 @@ const HomePageInner = () => {
     }
 
     const qs = params.toString();
-    // use pathname from usePathname() — never window.location.pathname
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }, [digimons, baby1Id, baby2Id, childId, adultId, perfectId, ultimateId, router, pathname]);
+    // Only update the address bar, no Next.js navigation
+    const url = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+    if (url !== window.location.pathname + window.location.search) {
+      window.history.replaceState(null, '', url);
+    }
+  }, [digimons, baby1Id, baby2Id, childId, adultId, perfectId, ultimateId]);
 
   const selectableDigimons = React.useMemo<SelectableDigimon[] | undefined>(() => {
     switch (currentSelectionLevel) {

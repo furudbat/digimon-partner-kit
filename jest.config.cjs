@@ -6,6 +6,8 @@ const createJestConfig = nextJest({
 
 const customJestConfig = {
   testEnvironment: 'jest-environment-jsdom',
+  // don't fail while the project has no tests yet
+  passWithNoTests: true,
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testRegex: '(/__tests__/.*|(\\.|/)(test))\\.[jt]sx?$',
   transformIgnorePatterns: [
