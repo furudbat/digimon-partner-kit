@@ -1,0 +1,89 @@
+.box {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .categories {
+    grid-column: 1;
+  }
+}
+
+.imageCol {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 1rem;
+}
+
+.image {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+}
+
+.details {
+  padding: 0 0.5rem;
+  overflow-y: auto;
+}
+
+.name {
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.name a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.name a:hover {
+  text-decoration: underline;
+}
+
+.values {
+  margin: 0 0 0.5rem;
+  padding-left: 0.75rem;
+  list-style: none;
+}
+
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.categoryIcon {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+}
+
+.description {
+  margin-top: 0.5rem;
+  padding: 0 0.5rem;
+}
+
+.descriptionText {
+  display: -webkit-box;
+  overflow: hidden;
+  white-space: pre-line;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}

@@ -1,0 +1,41 @@
+.timeline {
+  display: flex;
+  width: max-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 0 0.5rem;
+  list-style: none;
+  overflow-x: auto;
+}
+
+.item {
+  flex: 0 0 auto;
+  padding: 0 0.5rem;
+}
+
+.markerRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.marker {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.line {
+  flex: 1;
+  height: 2px;
+  margin-right: -1rem;
+  background: var(--border);
+}

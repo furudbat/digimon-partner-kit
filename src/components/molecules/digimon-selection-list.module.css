@@ -1,0 +1,169 @@
+.root {
+  width: 100%;
+  max-width: 22rem;
+  margin: 0 auto;
+}
+
+/* prev / next level buttons */
+.levelNav {
+  display: flex;
+  width: 100%;
+}
+
+.levelButton {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.levelButton:first-child {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+
+.levelButton:last-child {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+.levelButton:only-child {
+  border-radius: 0.375rem;
+}
+
+.levelButton + .levelButton {
+  border-left: 0;
+}
+
+.levelButton:hover:not(:disabled) {
+  background: var(--bg-soft);
+}
+
+/* headings */
+.heading,
+.subheading {
+  min-height: 2rem;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.heading h3 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.subheading h3 {
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* search */
+.search {
+  /* reserve space even when the search box is hidden */
+  min-height: 2.25rem;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+/* list */
+.listScroll {
+  /* fixed height so the layout doesn't jump when the list changes */
+  height: var(--list-max-h);
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .listScroll {
+    height: var(--list-max-h-md);
+  }
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+.list > li + li {
+  border-top: 1px solid var(--border);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.item:hover:not(:disabled) {
+  background: var(--bg-soft);
+}
+
+.active {
+  background: #ede9fe;
+}
+
+.canon {
+  font-weight: 800;
+}
+
+.itemName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.empty {
+  padding: 0.5rem 0.75rem;
+  color: var(--muted);
+}
+
+/* badges */
+.badges {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.25rem;
+}
+
+.badge {
+  padding: 0.0625rem 0.375rem;
+  border-radius: 0.25rem;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+.badgeAnime {
+  background: #fee2e2;
+  color: #991b1b;
+}

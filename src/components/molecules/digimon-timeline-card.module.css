@@ -1,0 +1,87 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  width: 15rem;
+  padding: 1rem 0.5rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+}
+
+.highlight {
+  border-width: 2px;
+}
+
+.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.print {
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+}
+
+.media {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.notAllowed {
+  cursor: not-allowed;
+}
+
+.image {
+  width: auto;
+  max-width: 100%;
+  max-height: 12rem;
+  border-radius: 0.5rem;
+}
+
+.placeholder {
+  padding: 1rem 0.5rem;
+  font-size: 1.125rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+.body {
+  min-height: 2rem;
+  padding: 0.5rem 0.5rem 0;
+}
+
+.name {
+  display: block;
+  overflow: hidden;
+  font-size: 1.25rem;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-decoration: none;
+}
+
+.name:hover {
+  text-decoration: underline;
+}
+
+.namePrint {
+  height: 3.5rem;
+  overflow: hidden;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0.5rem 0;
+  font-size: 0.875rem;
+}

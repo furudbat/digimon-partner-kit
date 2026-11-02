@@ -1,12 +1,12 @@
 'use client';
 
-import { Button, Card } from 'flowbite-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { DigimonData } from 'src/models/digimon';
 import useFitText from 'use-fit-text';
 
 import { cn } from '@/lib/utils';
+import styles from './digimon-timeline-card.module.css';
 
 export function DigimonTimelineCard({
   title,
@@ -33,97 +33,62 @@ export function DigimonTimelineCard({
   const imgSize = 240;
 
   return (
-    <Card
-      className={cn('w-60 py-4 px-1 items-center', highlight ? 'border-2' : 'border', printMode ? 'shadow-sm' : '')}
+    <article
+      className={cn(
+        styles.card,
+        highlight && styles.highlight,
+        printMode && styles.print,
+        selected && !printMode && styles.selected
+      )}
       style={{ height: imgSize + 78 }}
-      renderImage={() => {
-        return (
-          <div
-            className={cn('flex items-center', data || !disabled ? 'cursor-pointer' : 'cursor-not-allowed')}
-            onClick={() => {
-              if ((data || !disabled) && onClick) {
-                onClick();
-              }
-            }}
-          >
-            {data && (
-              <Image
-                className="rounded-lg w-auto max-w-full max-h-48"
-                src={window.location.pathname + '/' + data.img}
-                width={imgSize}
-                height={imgSize}
-                alt={data.name}
-                loading="eager"
-              />
-            )}
-            {!data && !printMode && !disabled && !selected && (
-              <p className={`py-4 text-lg font-normal self-center`} style={{ height: imgSize - 48 }}>
-                Click Me to Select
-              </p>
-            )}
-            {!data && !printMode && !disabled && selected && (
-              <p className={`py-4 px-2 text-lg font-normal self-center`} style={{ height: imgSize - 48 }}>
-                Select Digimon in the list below
-              </p>
-            )}
-            {!data && !printMode && disabled && (
-              <p className={`py-4 text-lg self-center`} style={{ height: imgSize - 48 }}>
-                (Select previous Level)
-              </p>
-            )}
-            {!data && printMode && (
-              <p className={`py-4 text-lg self-center`} style={{ height: imgSize - 48 }}>
-                No Data
-              </p>
-            )}
-          </div>
-        );
-      }}
     >
-      {/*Can not customize gap in Card Body, use negative margin */}
-      <div className="w-56 px-2 mb-2" style={{ marginTop: -10 }}>
+      <div
+        className={cn(styles.media, data || !disabled ? styles.clickable : styles.notAllowed)}
+        onClick={() => {
+          if ((data || !disabled) && onClick) {
+            onClick();
+          }
+        }}
+      >
+        {data && (
+          <Image
+            className={styles.image}
+            src={window.location.pathname + '/' + data.img}
+            width={imgSize}
+            height={imgSize}
+            alt={data.name}
+            loading="eager"
+          />
+        )}
+        {!data && !printMode && !disabled && !selected && <p className={styles.placeholder}>Click Me to Select</p>}
+        {!data && !printMode && !disabled && selected && (
+          <p className={styles.placeholder}>Select Digimon in the list below</p>
+        )}
+        {!data && !printMode && disabled && <p className={styles.placeholder}>(Select previous Level)</p>}
+        {!data && printMode && <p className={styles.placeholder}>No Data</p>}
+      </div>
+
+      <div className={styles.body}>
         {data && !printMode && (
-          <Link
-            href={data.href}
-            target="_blank"
-            className="items-center text-center text-blue-800 dark:text-blue-400 hover:underline"
-            rel="noreferrer"
-          >
-            <div className={cn('text-xl font-medium', !printMode ? 'truncate' : 'h-14 text-wrap overflow-hidden')}>
-              {data.name}
-            </div>
+          <Link href={data.href} target="_blank" rel="noreferrer" className={styles.name}>
+            {data.name}
           </Link>
         )}
         {data && printMode && (
-          <h5 className={cn('text-xl font-medium', !printMode ? 'truncate' : 'h-14 text-wrap overflow-hidden')}>
-            <div ref={ref} style={{ fontSize }} className="h-14">
-              {data.name}
-            </div>
-          </h5>
-        )}
-      </div>
-      <div
-        className="grid grid-flow-row-dense grid-cols-3 grid-rows-1 items-center px-2 gap-1"
-        style={{ marginTop: printMode ? -18 : -14 }}
-      >
-        <div className="col-span-2">
-          <p className="text-sm">{data?.level || title}</p>
-        </div>
-        {!printMode && (
-          <div>
-            {data && disabled && (
-              <Button color="gray" size="xs" disabled={disabled} onClick={() => onReset && onReset()}>
-                Reset
-              </Button>
-            )}
-            {data && !disabled && (
-              <Button color="" size="xs" disabled={disabled} onClick={() => onReset && onReset()}>
-                Reset
-              </Button>
-            )}
+          <div ref={ref} style={{ fontSize }} className={styles.namePrint}>
+            {data.name}
           </div>
         )}
       </div>
-    </Card>
+
+      <div className={styles.footer}>
+        <span>{data?.level || title}</span>
+        {!printMode && data && (
+          <button type="button" className="btn btn-small" disabled={disabled} onClick={() => onReset && onReset()}>
+            Reset
+          </button>
+        )}
+      </div>
+    </article>
   );
 }

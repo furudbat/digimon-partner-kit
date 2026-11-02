@@ -1,8 +1,5 @@
 'use client';
 
-import { faArrowUp, faCopy } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button, Popover, Tooltip } from 'flowbite-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import React, { Suspense, useState } from 'react';
@@ -24,6 +21,8 @@ import { DigimonTimeline } from '@/components/organisms/digimon-timeline';
 
 import { cn, getRandomFromArray } from '@/lib/utils';
 import ClientOnly from '@/components/atoms/client-only';
+import { ArrowUpIcon, CopyIcon } from '@/components/atoms/icons';
+import styles from './page.module.css';
 
 type DigimonSelection = {
   baby1Id?: string;
@@ -498,122 +497,97 @@ const HomePageInner = () => {
   }, []);
 
   return (
-    <div>
+    <div className={styles.page}>
       <Element name="mainPage" />
 
-      <div className="mx-auto my-2 px-2">
-        <div className="items-center w-full">
-          <div className="mx-auto place-self-center" id="digimonTimeLine" ref={printRef}>
-            <DigimonTimeline
-              selectDigimonLevel={selectDigimonLevel}
-              clearDigimonLevel={clearDigimonLevel}
-              isSelectable={isSelectable}
-              baby1={baby1}
-              baby2={baby2}
-              child={child}
-              adult={adult}
-              perfect={perfect}
-              ultimate={ultimate}
-              currentSelectionLevel={currentSelectionLevel}
-              printMode={printMode}
-            />
-          </div>
+      <div id="digimonTimeLine" ref={printRef}>
+        <DigimonTimeline
+          selectDigimonLevel={selectDigimonLevel}
+          clearDigimonLevel={clearDigimonLevel}
+          isSelectable={isSelectable}
+          baby1={baby1}
+          baby2={baby2}
+          child={child}
+          adult={adult}
+          perfect={perfect}
+          ultimate={ultimate}
+          currentSelectionLevel={currentSelectionLevel}
+          printMode={printMode}
+        />
+      </div>
+
+      <div className={styles.content}>
+        <div>
+          {!currentSelectionLevel && !currentDigimon && <h2>Select the Level, then the Digimon</h2>}
+          {currentDigimon && <DigimonInfoBox data={currentDigimon} height={PageLeftColInfoBoxHeight} />}
         </div>
 
-        <div className={cn(['container mx-auto max-w-screen-xl mt-4 md:mt-6'])}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
-              {!currentSelectionLevel && !currentDigimon && (
-                <h2 className="pb-2">Select the Level, then the Digimon</h2>
-              )}
-              <div className="px-2 md:px-1">
-                {currentDigimon && <DigimonInfoBox data={currentDigimon} height={PageLeftColInfoBoxHeight} />}
-              </div>
-            </div>
-            <div className="order-first md:order-last px-4 md:px-2">
-              <div
-                className={cn(['mx-2 items-center mb-2' /*, `min-h-[${PageRightColContainerDigimonListMinHeight}]`*/])}
-              >
-                <DigimonSelectionList
-                  selectableDigimons={selectableDigimons}
-                  allSelectableDigimons={allSelectableDigimons}
-                  digimons={digimons}
-                  isSelectable={isSelectable}
-                  currentSelectionLevel={currentSelectionLevel}
-                  selectDigimon={selectDigimon}
-                  currentDigimon={currentDigimon}
-                  prevDigimon={prevDigimon}
-                  gotoDigimonLevel={(level) => selectDigimonLevel(level)}
-                  isDigimonLevelSet={isDigimonLevelSet}
-                  freeMode={freeMode}
-                />
-              </div>
-              <div className="w-full flex mx-2 mt-2 items-center">
-                <Tooltip content="Select any Digimon" placement="bottom">
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input type="checkbox" onChange={(e) => setFreeMode(e.target.checked)} className="sr-only peer" />
-                    <div className="relative w-11 h-6 rounded-full bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 dark:peer-focus:ring-purple-800 peer-checked:bg-purple-600 dark:peer-checked:bg-purple-500 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:border-gray-400 dark:after:border-gray-600 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full" />
-                    <span className="ms-3 text-sm font-medium text-gray-700 dark:text-gray-400">Free mode</span>
-                  </label>
-                </Tooltip>
-                <Tooltip content="Make Timeline Screenshot friendly" placement="bottom">
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      onChange={(e) => setPrintMode(e.target.checked)}
-                      className="sr-only peer"
-                      checked={printMode}
-                    />
-                    <div className="relative w-11 h-6 rounded-full bg-gray-300 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-500 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:border-gray-400 dark:after:border-gray-600 after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full" />
-                    <span className="ms-3 text-sm font-medium text-gray-700 dark:text-gray-400">Print mode</span>
-                  </label>
-                </Tooltip>
-              </div>
-              <div className="w-full flex mx-2 mt-4 gap-4 items-center">
-                {selectedLevels.length > 0 && (
-                  <Popover
-                    aria-labelledby="copy-share-link-popover"
-                    open={openCopyPopover}
-                    content={<div className="flex w-32 flex-col gap-2 p-1 px-2 text-center text-sm">Link Copied!</div>}
-                  >
-                    <Button color="info" onClick={() => copyShareLink()} className="items-center mx-1">
-                      <FontAwesomeIcon icon={faCopy} className="mx-1 items-center align-center" />
-                      Copy Share Link
-                    </Button>
-                  </Popover>
-                )}
-              </div>
-              <div className="flex w-full mx-2 mt-4 gap-4 items-center">
-                <div className="w-full mt-2 items-center">
-                  {selectedLevels.length > 0 && (
-                    <Button color="red" onClick={() => clearAllDigimonLevels()} className="items-center mx-1">
-                      Reset All
-                    </Button>
-                  )}
-                </div>
-                <div className="w-full mx-2 mt-2 items-center">
-                  <Button color="purple" onClick={() => randomize()} className="items-center mx-1">
-                    Randomize
-                  </Button>
-                </div>
-              </div>
-            </div>
+        <aside className={styles.side}>
+          <DigimonSelectionList
+            selectableDigimons={selectableDigimons}
+            allSelectableDigimons={allSelectableDigimons}
+            digimons={digimons}
+            isSelectable={isSelectable}
+            currentSelectionLevel={currentSelectionLevel}
+            selectDigimon={selectDigimon}
+            currentDigimon={currentDigimon}
+            prevDigimon={prevDigimon}
+            gotoDigimonLevel={(level) => selectDigimonLevel(level)}
+            isDigimonLevelSet={isDigimonLevelSet}
+            freeMode={freeMode}
+          />
+
+          <div className={styles.toggles}>
+            <label className={styles.switch} title="Select any Digimon">
+              <input type="checkbox" onChange={(e) => setFreeMode(e.target.checked)} />
+              <span className={styles.track} aria-hidden="true" />
+              Free mode
+            </label>
+            <label className={styles.switch} title="Make Timeline Screenshot friendly">
+              <input type="checkbox" onChange={(e) => setPrintMode(e.target.checked)} checked={printMode} />
+              <span className={styles.track} aria-hidden="true" />
+              Print mode
+            </label>
           </div>
-        </div>
+
+          {selectedLevels.length > 0 && (
+            <div className={styles.copy}>
+              <button type="button" className="btn btn-primary" onClick={() => copyShareLink()}>
+                <CopyIcon /> Copy Share Link
+              </button>
+              {openCopyPopover && (
+                <span role="status" className={styles.toast}>
+                  Link Copied!
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className={styles.actions}>
+            {selectedLevels.length > 0 && (
+              <button type="button" className="btn btn-danger" onClick={() => clearAllDigimonLevels()}>
+                Reset All
+              </button>
+            )}
+            <button type="button" className="btn btn-accent" onClick={() => randomize()}>
+              Randomize
+            </button>
+          </div>
+        </aside>
       </div>
 
       <ClientOnly>
         {isMobile && (
-          <div className="fixed h-32 w-32 z-90 bottom-0 right-0 p-12 m-2 items-center">
-            <Button
-              id="to-top-button"
-              onClick={() => goToTop()}
-              title="Go To Top"
-              className="visible md:invisible items-center rounded-full w-16 h-16"
-            >
-              <FontAwesomeIcon icon={faArrowUp} size="2x" />
-            </Button>
-          </div>
+          <button
+            type="button"
+            id="to-top-button"
+            className={styles.toTop}
+            onClick={() => goToTop()}
+            title="Go To Top"
+            aria-label="Go To Top"
+          >
+            <ArrowUpIcon size={28} />
+          </button>
         )}
       </ClientOnly>
     </div>

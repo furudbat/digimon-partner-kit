@@ -9,7 +9,13 @@ const nextConfig = {
   images: {
     unoptimized: true,
     minimumCacheTTL: 3600,
-    domains: ['wikimon.net'],
+    remotePatterns: [
+      {
+          protocol:"https",
+          hostname:"wikimon.net",
+          pathname:"/**"
+      }
+    ],
   },
 };
 

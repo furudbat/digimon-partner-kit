@@ -1,3 +1,27 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+
+:root {
+  --border: #d1d5db;
+  --muted: #6b7280;
+  --accent: #7c3aed;
+  --link: #1e40af;
+  --bg-soft: #f3f4f6;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-family: var(--font-primary), system-ui, sans-serif; color: #111827; background: #fff; line-height: 1.5; }
+h1, h2, h3, h5, p { margin: 0; }
+a { color: var(--link); }
+button, input { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: 0.5; }
+img { max-width: 100%; height: auto; }
+
+.underline { text-decoration: underline; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+.btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border: 1px solid transparent; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #fff; background: #374151; }
+.btn:hover:not(:disabled) { filter: brightness(1.1); }
+.btn-primary { background: #0e7490; }
+.btn-danger { background: #dc2626; }
+.btn-accent { background: var(--accent); }
+.btn-small { padding: 0.125rem 0.5rem; font-size: 0.75rem; color: #111827; background: #fff; border-color: var(--border); }
