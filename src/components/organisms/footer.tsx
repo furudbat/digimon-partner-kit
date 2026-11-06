@@ -24,7 +24,7 @@ export function MainFooter() {
           </Link>
           <span> - </span>
           <Link href={'https://github.com/furudbat/digimon-partner-kit'} title="License" target="_blank" rel="noopener">
-            digimon-partner-kit v1.2.5
+            digimon-partner-kit v2.0.0
           </Link>
           <span> - </span>
           <Link
