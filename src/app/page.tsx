@@ -64,7 +64,6 @@ const PARAM_KEYS: Record<string, string> = {
 };
 
 const HomePageInner = () => {
-
   const isMobile = useIsMobile();
 
   const searchParams = useSearchParams();

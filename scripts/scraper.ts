@@ -25,7 +25,7 @@ const CAT_ALWAYS_USE_CACHED = true;
 const SKIP_LIST = false;
 const REDOWNLOAD_LIST = false;
 const REDOWNLOAD_DIGIMON = false;
-const FORCE_DOWNLOAD_IMAGES = false;   // try to re-download images or update final image from cache (ALWAYS_USE_CACHED)
+const FORCE_DOWNLOAD_IMAGES = false; // try to re-download images or update final image from cache (ALWAYS_USE_CACHED)
 // Crawl-delay: 60
 const MIN_POLITE_TIME_MS = 60 * 1000;
 const WAIT_TIME_MIN_VARIANT_MS = 1000;
@@ -179,8 +179,10 @@ async function safeRequest(
 
       // Rate limited (429) or Server Error (500+)
       if (retries > 0 && (status === 429 || status >= 500)) {
-        const wait = polite ? MIN_POLITE_TIME_MS : getRandomValue(2*WAIT_TIME_MIN_VARIANT_MS, 2*WAIT_TIME_MAX_VARIANT_MS);
-        
+        const wait = polite
+          ? MIN_POLITE_TIME_MS
+          : getRandomValue(2 * WAIT_TIME_MIN_VARIANT_MS, 2 * WAIT_TIME_MAX_VARIANT_MS);
+
         console.warn(`-----Status ${status}, retrying after ${wait}ms...`);
         await asyncRandomSleep(wait, wait + MINIMAL_WAIT_TIME);
 
@@ -215,7 +217,10 @@ async function safeRequest(
     // If it's a network error and we have retries left, you could add retry logic here too
     if (retries > 0) {
       console.warn('-----Network error encountered, retrying...');
-      await asyncRandomSleep(2*WAIT_TIME_MIN_VARIANT_MS + MINIMAL_WAIT_TIME, 2*WAIT_TIME_MAX_VARIANT_MS + MINIMAL_WAIT_TIME);
+      await asyncRandomSleep(
+        2 * WAIT_TIME_MIN_VARIANT_MS + MINIMAL_WAIT_TIME,
+        2 * WAIT_TIME_MAX_VARIANT_MS + MINIMAL_WAIT_TIME
+      );
 
       return safeRequest(url, fn, options, retries - 1);
     }
@@ -300,7 +305,10 @@ async function fetchFromWebOrCache(
           response = await safeRequest(url, () => fetch(url, { headers: newHeaders }));
 
           if (POLITE) {
-            const wait = getRandomValue(MIN_POLITE_TIME_MS/12 + WAIT_TIME_MIN_VARIANT_MS, MIN_POLITE_TIME_MS/12 + WAIT_TIME_MAX_VARIANT_MS);
+            const wait = getRandomValue(
+              MIN_POLITE_TIME_MS / 12 + WAIT_TIME_MIN_VARIANT_MS,
+              MIN_POLITE_TIME_MS / 12 + WAIT_TIME_MAX_VARIANT_MS
+            );
             logInfo(`---Polite wait ${wait}ms...`);
 
             await asyncRandomSleep(wait, wait + MINIMAL_WAIT_TIME);
@@ -336,8 +344,11 @@ async function fetchFromWebOrCache(
         logInfo(`--Cached saved: [${hash}] (${url}) -- ${response.headers.get('last-modified')}`);
 
         if (POLITE) {
-          const wait = getRandomValue(MIN_POLITE_TIME_MS + WAIT_TIME_MIN_VARIANT_MS, MIN_POLITE_TIME_MS + WAIT_TIME_MAX_VARIANT_MS);
-          
+          const wait = getRandomValue(
+            MIN_POLITE_TIME_MS + WAIT_TIME_MIN_VARIANT_MS,
+            MIN_POLITE_TIME_MS + WAIT_TIME_MAX_VARIANT_MS
+          );
+
           logInfo(`---Polite wait ${wait}ms...`);
           await asyncRandomSleep(wait, wait + MINIMAL_WAIT_TIME);
         }
@@ -373,11 +384,7 @@ async function downloadImage(
   cached: boolean;
   status: number | undefined;
 }> {
-  const {
-    ignoreCache = false,
-    forceCache = false,
-    polite = POLITE,
-  } = options;
+  const { ignoreCache = false, forceCache = false, polite = POLITE } = options;
 
   const pathname = new URL(url).pathname;
   const ext = extname(pathname) || '.png';
@@ -400,16 +407,9 @@ async function downloadImage(
   // 2. Fetch
   if (ignoreCache || !hasCache || !forceCache) {
     try {
-      const headers = ignoreCache
-        ? {}
-        : await getHeaders(metaFile);
+      const headers = ignoreCache ? {} : await getHeaders(metaFile);
 
-      let response = await safeRequest(
-        url,
-        () => fetch(url, { headers }),
-        { polite },
-        5
-      );
+      let response = await safeRequest(url, () => fetch(url, { headers }), { polite }, 5);
 
       if (!response) {
         throw new Error('No response received');
@@ -423,15 +423,13 @@ async function downloadImage(
         }
 
         // Retry without conditional headers
-        response = await safeRequest(
-          url,
-          () => fetch(url, { headers: {} }),
-          { polite },
-          2
-        );
+        response = await safeRequest(url, () => fetch(url, { headers: {} }), { polite }, 2);
 
         if (POLITE) {
-          const wait = getRandomValue(MIN_POLITE_TIME_MS/12 + WAIT_TIME_MIN_VARIANT_MS, MIN_POLITE_TIME_MS/12 + WAIT_TIME_MAX_VARIANT_MS);
+          const wait = getRandomValue(
+            MIN_POLITE_TIME_MS / 12 + WAIT_TIME_MIN_VARIANT_MS,
+            MIN_POLITE_TIME_MS / 12 + WAIT_TIME_MAX_VARIANT_MS
+          );
           logInfo(`---Polite wait ${wait}ms...`);
 
           await asyncRandomSleep(wait, wait + MINIMAL_WAIT_TIME);
@@ -451,21 +449,22 @@ async function downloadImage(
       if (response.status === 200 && response.body) {
         logInfo(`--Image 200 OK, saving: ${imgFile}`);
 
-        await pipeline(
-          Readable.fromWeb(response.body as any),
-          createWriteStream(imgFile)
-        );
+        await pipeline(Readable.fromWeb(response.body as any), createWriteStream(imgFile));
 
         await writeFileAsync(
           metaFile,
-          JSON.stringify({
-            etag: response.headers.get('etag'),
-            lastModified: response.headers.get('last-modified'),
-          }, null, 2)
+          JSON.stringify(
+            {
+              etag: response.headers.get('etag'),
+              lastModified: response.headers.get('last-modified'),
+            },
+            null,
+            2
+          )
         );
 
         if (polite) {
-          const ptime_ms = options.was_already_polite ? MIN_POLITE_TIME_MS/6 : MIN_POLITE_TIME_MS;
+          const ptime_ms = options.was_already_polite ? MIN_POLITE_TIME_MS / 6 : MIN_POLITE_TIME_MS;
           const wait = getRandomValue(ptime_ms + WAIT_TIME_MIN_VARIANT_MS, ptime_ms + WAIT_TIME_MAX_VARIANT_MS);
 
           logInfo(`---Polite wait ${wait}ms...`);
@@ -476,7 +475,6 @@ async function downloadImage(
       }
 
       throw new Error(`Unexpected response status: ${response.status}`);
-
     } catch (err) {
       console.warn(`Error fetching ${url}, checking for fallback...`, err);
     }
@@ -979,21 +977,29 @@ class DigimonScraperScraper {
       const infoBox = $('#StatsBoxMorphContent1 table');
       //const nameTable = $('#S2NameEtyMorphContent1 table:first table:first');
       let img = $('.mw-halign-center > a:nth-child(1) > img:nth-child(1)');
-      console.debug('     .mw-halign-center > a:nth-child(1) > img:nth-child(1)', {img_src: $(img).attr('src')});
+      console.debug('     .mw-halign-center > a:nth-child(1) > img:nth-child(1)', { img_src: $(img).attr('src') });
       if (!img.length) {
         // fallback query for image
-        img = $('#mw-content-text .mw-parser-output table').first().find('.tab-pane a.mw-file-description img.mw-file-element').first();
-        console.debug('   fallback query for image: #mw-content-text .mw-parser-output table > .tab-pane a.mw-file-description img.mw-file-element', {img_src: $(img).attr('src')});
+        img = $('#mw-content-text .mw-parser-output table')
+          .first()
+          .find('.tab-pane a.mw-file-description img.mw-file-element')
+          .first();
+        console.debug(
+          '   fallback query for image: #mw-content-text .mw-parser-output table > .tab-pane a.mw-file-description img.mw-file-element',
+          { img_src: $(img).attr('src') }
+        );
       }
       if (!img.length) {
         // fallback query for image
         img = infoBox.find('a.mw-file-description img.mw-file-element');
-        console.debug('   fallback query for image: a.mw-file-description img.mw-file-element', {img_src: $(img).attr('src')});
+        console.debug('   fallback query for image: a.mw-file-description img.mw-file-element', {
+          img_src: $(img).attr('src'),
+        });
       }
       if (!img.length) {
         // fallback query for image
         img = infoBox.find('a.image img');
-        console.debug('  fallback query for image: a.image img', {img_src: $(img).attr('src')});
+        console.debug('  fallback query for image: a.image img', { img_src: $(img).attr('src') });
       }
 
       console.debug(`    infoBox found: ${infoBox.length}`);
@@ -1075,13 +1081,12 @@ class DigimonScraperScraper {
             ignoreCache,
             forceCache: CAT_ALWAYS_USE_CACHED,
             polite: POLITE || CAT_ALWAYS_USE_CACHED,
-            was_already_polite: i >= 1 && (POLITE || CAT_ALWAYS_USE_CACHED) && !cached
+            was_already_polite: i >= 1 && (POLITE || CAT_ALWAYS_USE_CACHED) && !cached,
           });
 
           const toPngPath = (p: string) => p.replace(/\.[^./\\]+$/, '') + '.png';
           if ((imgResult?.status === 200 || imgResult?.cached) && imgResult?.imgFile) {
             const downloadFilename = imgResult.imgFile;
-
 
             if (cat.img) {
               const pngRelPath = toPngPath(cat.img);
@@ -1107,7 +1112,6 @@ class DigimonScraperScraper {
               }
             }
           }
-
         } else {
           console.warn('no download image url for ' + cat.name);
           if (TESTING) {
@@ -1759,13 +1763,15 @@ class DigimonScraperScraper {
 }
 
 const filterOutUnwantedMonNames = (d: DigimonListElement) => {
-  return !d.name.match(/^Baby I$/) && 
-    !d.name.match(/^Baby II$/) && 
+  return (
+    !d.name.match(/^Baby I$/) &&
+    !d.name.match(/^Baby II$/) &&
     !d.name.match(/^Child$/) &&
-    !d.name.match(/^Adult$/) && 
-    !d.name.match(/^Perfect$/) && 
+    !d.name.match(/^Adult$/) &&
+    !d.name.match(/^Perfect$/) &&
     !d.name.match(/^Ultimate$/) &&
-    !d.name.match(/^Super Ultimate$/);
+    !d.name.match(/^Super Ultimate$/)
+  );
 };
 
 async function getBaby1DigimonList() {
@@ -1940,23 +1946,38 @@ export async function main() {
   const baby1List = await getBaby1DigimonList();
   logInfo(`Get Baby I Digimon List: ${baby1List.length}`);
 
-  await asyncRandomSleep(MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS, MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS);
+  await asyncRandomSleep(
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS,
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS
+  );
   const baby2List = await getBaby2DigimonList();
   logInfo(`Get Baby II Digimon List: ${baby2List.length}`);
 
-  await asyncRandomSleep(MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS, MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS);
+  await asyncRandomSleep(
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS,
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS
+  );
   const childList = await getChildDigimonList();
   logInfo(`Get Child Digimon List: ${childList.length}`);
 
-  await asyncRandomSleep(MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS, MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS);
+  await asyncRandomSleep(
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS,
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS
+  );
   const adultList = await getAdultDigimonList();
   logInfo(`Get Adult Digimon List: ${adultList.length}`);
 
-  await asyncRandomSleep(MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS, MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS);
+  await asyncRandomSleep(
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS,
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS
+  );
   const perfectList = await getPerfectDigimonList();
   logInfo(`Get Perfect Digimon List: ${perfectList.length}`);
 
-  await asyncRandomSleep(MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS, MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS);
+  await asyncRandomSleep(
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS,
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS
+  );
   const ultimateList = await getUltimateDigimonList();
   logInfo(`Get Ultimate Digimon List: ${ultimateList.length}`);
 
@@ -1983,7 +2004,10 @@ export async function main() {
     const slice = allDigimonUrls.slice(start, end);
     if (slice.length) {
       const results = await executePromisesWithLimit<DigimonData | undefined>(
-        slice.map((d) => async () => scraper.scrapeDigimon(d, { ignoreCache: REDOWNLOAD_DIGIMON, forceCache: ALWAYS_USE_CACHED })),
+        slice.map(
+          (d) => async () =>
+            scraper.scrapeDigimon(d, { ignoreCache: REDOWNLOAD_DIGIMON, forceCache: ALWAYS_USE_CACHED })
+        ),
         POLITE && !ALWAYS_USE_CACHED ? 1 : 5 // concurrency
       );
       db.digimons.push(...(results.filter(Boolean) as DigimonData[]));
