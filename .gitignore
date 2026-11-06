@@ -1,3 +1,6 @@
+out/
+dist/
+
 # Created by https://www.toptal.com/developers/gitignore/api/webstorm
 # Edit at https://www.toptal.com/developers/gitignore?templates=webstorm
 
@@ -157,3 +160,10 @@ yarn-error.log*
 
 # storybook
 storybook-static
+
+# Next.js
+next-env.d.ts
+
+# JetBrains IDEs (WebStorm, IntelliJ, ...): ignore project settings entirely
+.idea/
+*.iml

@@ -1,5 +1,3 @@
-import './src/lib/env/env.mjs';
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
@@ -9,7 +7,13 @@ const nextConfig = {
   images: {
     unoptimized: true,
     minimumCacheTTL: 3600,
-    domains: ['wikimon.net'],
+    remotePatterns: [
+      {
+          protocol:"https",
+          hostname:"wikimon.net",
+          pathname:"/**"
+      }
+    ],
   },
 };
 

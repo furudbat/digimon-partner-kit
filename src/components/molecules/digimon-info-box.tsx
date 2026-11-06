@@ -1,26 +1,28 @@
 'use client';
 
-import { List, ListItem } from 'flowbite-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useMediaQuery } from 'react-responsive';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import { DigimonData } from 'src/models/digimon';
 
-import { MediaQueryMobileBreakpoint, NOT_FOUND_IMAGE } from '../constants';
+import { NOT_FOUND_IMAGE } from '../constants';
+import { useMemo } from 'react';
+import styles from './digimon-info-box.module.css';
 
-export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: string | number }) {
-  const isMobile = useMediaQuery({ maxWidth: MediaQueryMobileBreakpoint });
+export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: string }) {
+  const isMobile = useIsMobile();
   //const pathname = usePathname();
 
+  const minHeight = useMemo(() => height ?? '32rem', [height]);
+
+  const heightInner = useMemo(() => height ?? '24rem', [height]);
+
   return (
-    <div
-      className="max-w-full border rounded-lg shadow p-4"
-      style={{ minHeight: !isMobile ? (height ?? '32rem') : undefined }}
-    >
-      <div className="grid grid-flow-row-dense md:grid-cols-2 md:grid-rows-1 px-2">
-        <div className="items-center mt-11">
+    <section className={styles.box} style={!isMobile ? { minHeight } : undefined}>
+      <div className={styles.grid}>
+        <div className={styles.imageCol}>
           <Image
-            className="self-center h-max-auto w-auto max-w-full rounded-md"
+            className={styles.image}
             width={320}
             height={320}
             src={window.location.pathname + '/' + (data.img || NOT_FOUND_IMAGE)}
@@ -28,91 +30,74 @@ export function DigimonInfoBox({ data, height }: { data: DigimonData; height?: s
             loading="eager"
           />
         </div>
-        <div className="px-2 md:items-start ml-4 overflow-y-auto" style={{ height: !isMobile ? '26rem' : undefined }}>
-          <h5 className="text-2xl pb-2 font-bold tracking-tight">
+        <div className={styles.details} style={!isMobile ? { height: heightInner } : undefined}>
+          <h2 className={styles.name}>
             <Link href={data.href} title={data.name} target="_blank" rel="noreferrer">
               {data.name}
             </Link>
-          </h5>
-          <p className="font-normal">
+          </h2>
+          <p>
             <strong>Level:</strong> {data.level}
           </p>
           {data.types?.length > 0 && (
-            <div className="font-normal">
-              <strong>Type:</strong>{' '}
-              <List unstyled>
+            <div>
+              <strong>Type:</strong>
+              <ul className={styles.values}>
                 {data.types.map((type) => (
-                  <ListItem key={type} className="ml-3">
-                    {type}
-                  </ListItem>
+                  <li key={type}>{type}</li>
                 ))}
-              </List>
+              </ul>
             </div>
           )}
           {data.attributes?.length > 0 && (
-            <div className="font-normal">
-              <strong>Attributes:</strong>{' '}
-              <List unstyled>
+            <div>
+              <strong>Attributes:</strong>
+              <ul className={styles.values}>
                 {data.attributes.map((attribute) => (
-                  <ListItem key={attribute} className="ml-2">
-                    {attribute}
-                  </ListItem>
+                  <li key={attribute}>{attribute}</li>
                 ))}
-              </List>
+              </ul>
             </div>
           )}
           {data.fields?.length > 0 && (
-            <div className="font-normal">
-              <strong>Field:</strong>{' '}
-              <List unstyled>
+            <div>
+              <strong>Field:</strong>
+              <ul className={styles.values}>
                 {data.fields.map((field) => (
-                  <ListItem key={field} className="ml-2">
-                    {field}
-                  </ListItem>
+                  <li key={field}>{field}</li>
                 ))}
-              </List>
+              </ul>
             </div>
           )}
         </div>
-        <div className="px-4 mt-1 md:row-start-2 max-h-12">
-          <div className="grid grid-flow-col auto-cols-max items-center">
-            {data.categories?.length > 0 &&
-              data.categories.map((category) => (
-                <Link
-                  key={category.title}
-                  href={category.href ?? '#'}
-                  title={category.title}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <Image
-                    className="flex flex-inline mx-1 h-max-auto max-w-full"
-                    src={window.location.pathname + '/' + category.img}
-                    alt={category.name}
-                    width={50}
-                    height={50}
-                    loading="eager"
-                  />
-                </Link>
-              ))}
-          </div>
+        <div className={styles.categories}>
+          {data.categories?.length > 0 &&
+            data.categories.map((category) => (
+              <Link
+                key={category.title}
+                href={category.href ?? '#'}
+                title={category.title}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Image
+                  className={styles.categoryIcon}
+                  src={window.location.pathname + '/' + category.img}
+                  alt={category.name}
+                  width={50}
+                  height={50}
+                  loading="eager"
+                />
+              </Link>
+            ))}
         </div>
       </div>
-      <div className="p-1 px-2 my-2 ml-6">
-        <div className="overflow-hidden h-12 w-full" style={{ maxLines: 2 }}>
-          <p className="text-ellipsis" style={{ lineClamp: 2, whiteSpace: 'pre-line' }}>
-            {data.description}
-          </p>
-        </div>
-        <Link
-          href={data.href}
-          target="_blank"
-          className="items-center text-center text-blue-800 dark:text-blue-400 hover:underline"
-          rel="noreferrer"
-        >
+      <div className={styles.description}>
+        <p className={styles.descriptionText}>{data.description}</p>
+        <Link href={data.href} target="_blank" rel="noreferrer">
           more
         </Link>
       </div>
-    </div>
+    </section>
   );
 }

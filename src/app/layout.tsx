@@ -1,14 +1,18 @@
+import '@fortawesome/fontawesome-svg-core/styles.css';
 import '@/styles/globals.css';
 
-import { ThemeModeScript } from 'flowbite-react';
+import { config } from '@fortawesome/fontawesome-svg-core';
+
 import { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ReactNode, Suspense } from 'react';
 
 import { MainProvider } from '@/components/providers/MainProvider';
 import { MainLayout } from '@/components/templates/MainLayout';
+import { themeInitScript } from '@/lib/theme';
 
-import { cn } from '@/lib/utils';
+// CSS is imported above; stop Font Awesome from injecting it at runtime
+config.autoAddCss = false;
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-primary' });
 
@@ -25,14 +29,13 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <ThemeModeScript mode="light" />
+        {/* apply the saved theme before first paint (no flash) */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className={cn(inter.variable, 'font-primary', 'h-screen')}>
+      <body className={inter.variable} suppressHydrationWarning>
         <MainProvider>
           <MainLayout>
-            <Suspense>
-              <main>{children}</main>
-            </Suspense>
+            <Suspense>{children}</Suspense>
           </MainLayout>
         </MainProvider>
       </body>

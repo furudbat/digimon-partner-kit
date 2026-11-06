@@ -10,9 +10,10 @@ import { getRandom } from 'random-useragent';
 import sharp from 'sharp';
 import { fileURLToPath } from 'url';
 import { promisify } from 'util';
-import { finished } from 'node:stream/promises'; // Use the promises subpath
 import { Readable } from 'node:stream';
 import fs, { createWriteStream, existsSync, mkdirSync } from 'node:fs';
+import { extname } from 'node:path';
+import { pipeline } from 'node:stream/promises';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -21,16 +22,22 @@ const POLITE = true;
 // don't check for 304, just assume cached is always right
 const ALWAYS_USE_CACHED = false;
 const CAT_ALWAYS_USE_CACHED = true;
-const FORCE_DOWNLOAD_IMAGES = false; // try to re-download images or update final image from cache (ALWAYS_USE_CACHED)
+const SKIP_LIST = false;
 const REDOWNLOAD_LIST = false;
+const REDOWNLOAD_DIGIMON = false;
+const FORCE_DOWNLOAD_IMAGES = false; // try to re-download images or update final image from cache (ALWAYS_USE_CACHED)
 // Crawl-delay: 60
+const MIN_POLITE_TIME_MS = 60 * 1000;
+const WAIT_TIME_MIN_VARIANT_MS = 1000;
+const WAIT_TIME_MAX_VARIANT_MS = 1234;
+const MINIMAL_WAIT_TIME = 1000;
+const MINIMAL_WAIT_TIME_LIST = 5000;
 
 // for testing
 const TESTING = false;
 const ONLY_BUILD_DB = false;
 const start_position = 0;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function assert(condition: boolean, msg?: string): asserts condition {
   if (!condition) {
     throw new AssertionError({ message: msg ?? '' });
@@ -48,21 +55,21 @@ const config = {
   baby2Lists: ['https://wikimon.net/Category:Baby_II_Level'],
   childLists: [
     'https://wikimon.net/Category:Child_Level',
-    'https://wikimon.net/index.php?title=Category:Child_Level&pagefrom=Snow+Goburimon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Child_Level&pagefrom=Skull+Knightmon#mw-pages',
   ],
   adultLists: [
     'https://wikimon.net/index.php?title=Category:Adult_Level',
-    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Lianpumon#mw-pages',
-    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Witchmon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Leomon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Adult_Level&pagefrom=Vitium+Adult#mw-pages',
   ],
   perfectLists: [
     'https://wikimon.net/Category:Perfect_Level',
-    'https://wikimon.net/index.php?title=Category:Perfect_Level&pagefrom=Mechanorimon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Perfect_Level&pagefrom=Master+Blimpmon#mw-pages',
   ],
   ultimateLists: [
     'https://wikimon.net/Category:Ultimate_Level',
-    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Hi+Andromon#mw-pages',
-    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Skull+Mammon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Herakle+Kabuterimon#mw-pages',
+    'https://wikimon.net/index.php?title=Category:Ultimate_Level&pagefrom=Shoutmon+X5S#mw-pages',
   ],
 };
 
@@ -172,10 +179,12 @@ async function safeRequest(
 
       // Rate limited (429) or Server Error (500+)
       if (retries > 0 && (status === 429 || status >= 500)) {
-        const wait = polite ? 60 * 1000 : getRandomValue(3000, 7000);
-        console.warn(`-----Status ${status}, retrying after ${wait}ms...`);
+        const wait = polite
+          ? MIN_POLITE_TIME_MS
+          : getRandomValue(2 * WAIT_TIME_MIN_VARIANT_MS, 2 * WAIT_TIME_MAX_VARIANT_MS);
 
-        await asyncRandomSleep(wait, wait + 2000);
+        console.warn(`-----Status ${status}, retrying after ${wait}ms...`);
+        await asyncRandomSleep(wait, wait + MINIMAL_WAIT_TIME);
 
         return safeRequest(url, fn, options, retries - 1);
       }
@@ -183,12 +192,16 @@ async function safeRequest(
       // Not Found (404)
       if (status === 404) {
         console.warn(`-----Not Found: ${url}`);
-        const wait = getRandomValue(3000, 7000);
-        console.warn(`-----waiting ${wait}ms before returning null...`);
+        const wait = getRandomValue(WAIT_TIME_MIN_VARIANT_MS, WAIT_TIME_MAX_VARIANT_MS);
 
-        await asyncRandomSleep(wait, wait + 2000);
+        console.warn(`-----waiting ${wait}ms before returning null...`);
+        await asyncRandomSleep(wait, wait + MINIMAL_WAIT_TIME);
 
         return null;
+      }
+
+      if (status === 304) {
+        return response;
       }
 
       // Throw for other non-ok statuses to hit the catch block
@@ -204,7 +217,10 @@ async function safeRequest(
     // If it's a network error and we have retries left, you could add retry logic here too
     if (retries > 0) {
       console.warn('-----Network error encountered, retrying...');
-      await asyncRandomSleep(3000, 5000);
+      await asyncRandomSleep(
+        2 * WAIT_TIME_MIN_VARIANT_MS + MINIMAL_WAIT_TIME,
+        2 * WAIT_TIME_MAX_VARIANT_MS + MINIMAL_WAIT_TIME
+      );
 
       return safeRequest(url, fn, options, retries - 1);
     }
@@ -247,6 +263,7 @@ async function fetchFromWebOrCache(
   url: string,
   options: FetchFromWebOrCacheOptions = {}
 ): Promise<{ content: string | null; cached: boolean; status: number | undefined } | undefined> {
+  // eslint-disable-next-line prefer-const
   let { prefix, ignoreCache, forceCache } = {
     prefix: undefined,
     ignoreCache: false,
@@ -288,10 +305,13 @@ async function fetchFromWebOrCache(
           response = await safeRequest(url, () => fetch(url, { headers: newHeaders }));
 
           if (POLITE) {
-            const wait = getRandomValue(5 * 1000, 7 * 1234);
+            const wait = getRandomValue(
+              MIN_POLITE_TIME_MS / 12 + WAIT_TIME_MIN_VARIANT_MS,
+              MIN_POLITE_TIME_MS / 12 + WAIT_TIME_MAX_VARIANT_MS
+            );
             logInfo(`---Polite wait ${wait}ms...`);
 
-            await asyncRandomSleep(wait, wait + 1000);
+            await asyncRandomSleep(wait, wait + MINIMAL_WAIT_TIME);
           }
         } else {
           const savedMeta = await getMetaData(metaFile);
@@ -324,10 +344,13 @@ async function fetchFromWebOrCache(
         logInfo(`--Cached saved: [${hash}] (${url}) -- ${response.headers.get('last-modified')}`);
 
         if (POLITE) {
-          const wait = getRandomValue(60 * 1000, 60 * 1234);
-          logInfo(`---Polite wait ${wait}ms...`);
+          const wait = getRandomValue(
+            MIN_POLITE_TIME_MS + WAIT_TIME_MIN_VARIANT_MS,
+            MIN_POLITE_TIME_MS + WAIT_TIME_MAX_VARIANT_MS
+          );
 
-          await asyncRandomSleep(wait, wait + 2000);
+          logInfo(`---Polite wait ${wait}ms...`);
+          await asyncRandomSleep(wait, wait + MINIMAL_WAIT_TIME);
         }
 
         return { content: text, cached: false, status: response?.status };
@@ -351,56 +374,82 @@ type DownloadImageOptions = {
   ignoreCache?: boolean;
   forceCache?: boolean;
   polite?: boolean;
+  was_already_polite?: boolean;
 };
 async function downloadImage(
   url: string,
   options: DownloadImageOptions = {}
-): Promise<{ imgFile: string | null; cached: boolean; status: number | undefined } | undefined> {
-  let { ignoreCache, forceCache, polite } = {
-    ignoreCache: false,
-    forceCache: false,
-    polite: POLITE,
-    ...options,
-  };
+): Promise<{
+  imgFile: string | null;
+  cached: boolean;
+  status: number | undefined;
+}> {
+  const { ignoreCache = false, forceCache = false, polite = POLITE } = options;
+
+  const pathname = new URL(url).pathname;
+  const ext = extname(pathname) || '.png';
 
   const hash = crypto.createHash('sha256').update(url).digest('hex');
+
   const cacheDir = resolve(__dirname, '.cache');
-  if (!existsSync(cacheDir)) mkdirSync(cacheDir);
+  mkdirSync(cacheDir, { recursive: true });
 
   const metaFile = resolve(cacheDir, `i_${hash}.meta.json`);
-  const imgFile = resolve(cacheDir, `i_${hash}.png`);
-  const headers = await getHeaders(metaFile);
+  const imgFile = resolve(cacheDir, `i_${hash}${ext}`);
 
-  // 1. Force Cache Logic
-  if (forceCache && existsSync(imgFile)) {
+  const hasCache = existsSync(imgFile);
+
+  // 1. Force cache
+  if (forceCache && hasCache) {
     return { imgFile, cached: true, status: undefined };
   }
 
-  // 2. Fetch Logic
-  if (ignoreCache || !existsSync(imgFile)) {
+  // 2. Fetch
+  if (ignoreCache || !hasCache || !forceCache) {
     try {
-      const response = await safeRequest(url, () => fetch(url, { headers }), { polite }, 5);
+      const headers = ignoreCache ? {} : await getHeaders(metaFile);
 
-      if (!response) throw new Error('No response received');
+      let response = await safeRequest(url, () => fetch(url, { headers }), { polite }, 5);
 
-      // Handle 304 Not Modified
-      if (response.status === 304 && existsSync(imgFile)) {
-        logInfo(`--304 Not Modified, using cache: ${url}`);
-
-        return { imgFile, cached: true, status: 304 };
+      if (!response) {
+        throw new Error('No response received');
       }
 
-      // Handle 200 OK and Stream to Disk
+      // 304: use existing cached image
+      if (response.status === 304) {
+        if (hasCache) {
+          logInfo(`--304 Not Modified, using cache: ${url}`);
+          return { imgFile, cached: true, status: 304 };
+        }
+
+        // Retry without conditional headers
+        response = await safeRequest(url, () => fetch(url, { headers: {} }), { polite }, 2);
+
+        if (POLITE) {
+          const wait = getRandomValue(
+            MIN_POLITE_TIME_MS / 12 + WAIT_TIME_MIN_VARIANT_MS,
+            MIN_POLITE_TIME_MS / 12 + WAIT_TIME_MAX_VARIANT_MS
+          );
+          logInfo(`---Polite wait ${wait}ms...`);
+
+          await asyncRandomSleep(wait, wait + MINIMAL_WAIT_TIME);
+        }
+
+        if (!response) {
+          throw new Error('No response received after unconditional retry');
+        }
+      }
+
+      // 404
+      if (response.status === 404) {
+        return { imgFile: null, cached: false, status: 404 };
+      }
+
+      // 200 OK
       if (response.status === 200 && response.body) {
         logInfo(`--Image 200 OK, saving: ${imgFile}`);
-        const writer = createWriteStream(imgFile);
 
-        // Convert Web Stream to Node Stream and pipe it
-        const nodeStream = Readable.fromWeb(response.body as any);
-        nodeStream.pipe(writer);
-
-        // Await the promise version of finished to ensure it's fully written to disk
-        await finished(writer);
+        await pipeline(Readable.fromWeb(response.body as any), createWriteStream(imgFile));
 
         await writeFileAsync(
           metaFile,
@@ -414,25 +463,24 @@ async function downloadImage(
           )
         );
 
-        if (POLITE) {
-          const wait = getRandomValue(60 * 1000, 60 * 1234);
-          logInfo(`---Polite wait ${wait}ms...`);
+        if (polite) {
+          const ptime_ms = options.was_already_polite ? MIN_POLITE_TIME_MS / 6 : MIN_POLITE_TIME_MS;
+          const wait = getRandomValue(ptime_ms + WAIT_TIME_MIN_VARIANT_MS, ptime_ms + WAIT_TIME_MAX_VARIANT_MS);
 
-          await asyncRandomSleep(wait, wait + 2000);
+          logInfo(`---Polite wait ${wait}ms...`);
+          await asyncRandomSleep(wait, wait + MINIMAL_WAIT_TIME);
         }
 
         return { imgFile, cached: false, status: 200 };
       }
 
-      if (response.status === 404) {
-        return { imgFile: null, cached: false, status: 404 };
-      }
+      throw new Error(`Unexpected response status: ${response.status}`);
     } catch (err) {
       console.warn(`Error fetching ${url}, checking for fallback...`, err);
     }
   }
 
-  // 3. Fallback to existing file if fetch failed or wasn't needed
+  // 3. Fallback
   if (existsSync(imgFile)) {
     return { imgFile, cached: true, status: undefined };
   }
@@ -447,6 +495,12 @@ interface DigimonDataEvolveElement {
   url: string;
   canon?: boolean;
   line?: string;
+  note?: string;
+
+  cites?: { cite: number; text: string }[];
+  animes?: string[];
+  // @TODO: add proper properties for each device
+  [key: string]: any; // Allow the flexible addition of `dm`, `dm20`, etc.
 }
 interface DigimonData {
   href: string;
@@ -468,7 +522,13 @@ interface DigimonData {
   categories: { name: string; img: string; title?: string; href?: string }[];
   evolvesFrom: DigimonDataEvolveElement[];
   evolvesTo: DigimonDataEvolveElement[];
+  xAntibody?: boolean;
+  skills?: { name: string; description: string; cites?: { cite: number; text: string }[] }[];
+
+  // @TODO: add proper properties for each device
+  [key: string]: any; // Allow the flexible addition of `dm`, `dm20`, `evolvesToDm`, etc.
 }
+
 interface DigimonListElement {
   id: string;
   href: string;
@@ -504,6 +564,28 @@ const hrefToId = (href?: string) => {
 
   return id;
 };
+
+interface DigimonVPetData {
+  name: string | string[];
+}
+type VPetDatabaseDevice = 'dm' | 'dm20' | 'dmx' | string;
+type VPetDatabase = Record<VPetDatabaseDevice, DigimonVPetData[]>;
+
+// Load V-Pet mapping into memory immediately
+const VPET_DB_PATH = resolve(__dirname, 'digimon-vpets.db.json');
+
+async function loadVPetData() {
+  if (existsSync(VPET_DB_PATH)) {
+    logInfo(`Loading V-Pet database lookup from ${VPET_DB_PATH}...`);
+    const vpetRawData: VPetDatabase = JSON.parse(await readFileAsync(VPET_DB_PATH, 'utf8'));
+    return vpetRawData ?? {};
+  } else {
+    console.warn(`Warning: V-Pet database file not found at ${VPET_DB_PATH}. Missing dynamic device parameters.`);
+  }
+
+  return {};
+}
+
 type ScrapeDigimonOptions = {
   ignoreCache?: boolean;
   forceCache?: boolean;
@@ -511,12 +593,15 @@ type ScrapeDigimonOptions = {
 class DigimonScraperScraper {
   readonly baseUrl = config.wikimonUrl;
   position = 0;
+  vpetDevices: VPetDatabase | undefined = undefined;
 
   async scrapeDigimon(url: string, options: ScrapeDigimonOptions = {}): Promise<DigimonData | undefined> {
-    let { ignoreCache, forceCache } = {
+    const { ignoreCache, forceCache } = {
       ...{ ignoreCache: false, forceCache: false },
       ...options,
     };
+
+    this.vpetDevices = !this.vpetDevices ? await loadVPetData() : this.vpetDevices;
 
     /// @TODO: extract to functions, make reuse cached digimon from url
     const hash = crypto.createHash('sha256').update(url).digest('hex');
@@ -652,6 +737,222 @@ class DigimonScraperScraper {
       if (name.split(' ')[1]) {
         altNames.push(name.split(' ')[0] + ' ' + name.split(' ')[1]);
       }
+      /// @TODO: add alt names from v-pets
+      // missing names or aliases
+      if (name === 'Orgemon') {
+        altNames.push('Ogremon');
+      }
+      if (name === 'Orgemon (X-Antibody)') {
+        altNames.push('Ogremon (X-Antibody)');
+        altNames.push('Ogremon X');
+      }
+      if (name === 'JESmon') {
+        altNames.push('Jesmon');
+      }
+      if (name === 'Tunomon') {
+        altNames.push('Tsunomon');
+      }
+      if (name === 'Monochromon') {
+        altNames.push('Monchromon');
+      }
+      if (name === 'Monzaemon') {
+        altNames.push('Mozaemon');
+      }
+      if (name === 'Pukumon') {
+        altNames.push('Pakumon');
+      }
+      if (name === 'Pukumon') {
+        altNames.push('Bukamon');
+      }
+      if (name === 'Metal Greymon') {
+        altNames.push('Taichi Metal Greymon');
+      }
+      if (name === 'Metal Greymon') {
+        altNames.push('Taichis Metal Greymon');
+      }
+      if (name === 'Agumon') {
+        altNames.push('Taichis Agumon');
+      }
+      if (name === 'Greymon') {
+        altNames.push('Taichis Greymon');
+      }
+      if (name === 'War Greymon') {
+        altNames.push('Taichis War Greymon');
+      }
+      if (name === 'Gabumon') {
+        altNames.push('Yamatos Gabumon');
+      }
+      if (name === 'Garurumon') {
+        altNames.push('Yamatos Garurumon');
+      }
+      if (name === 'Metal Garurumon') {
+        altNames.push('Yamatos Metal Garurumon');
+      }
+      if (name === 'Were Garurumon') {
+        altNames.push('Yamatos Were Garurumon');
+      }
+      if (name === 'Pabumon') {
+        altNames.push('Bubbmon');
+      }
+      if (name === 'Saber Leomon') {
+        altNames.push('Saberleomon');
+      }
+      if (name === 'Metal Etemon') {
+        altNames.push('Metaletemon');
+      }
+      if (name === 'Durandamon') {
+        altNames.push('Durandramon');
+      }
+      if (name === 'Herakle Kabuterimon') {
+        altNames.push('Herkule Kabuterimon');
+      }
+      if (name === 'Waru Monzaemon') {
+        altNames.push('Waru Mozaemon');
+      }
+      if (name === 'Beowolfmon') {
+        altNames.push('Beowulfmon');
+      }
+      if (name === 'Manbomon') {
+        altNames.push('Mambomon');
+      }
+      if (name === 'Yukimi Botamon') {
+        altNames.push('Yukimibotamon');
+      }
+      if (name === 'Cho·Hakkaimon') {
+        altNames.push('Cho Hakkaimon');
+      }
+      if (name === 'Cannonbeemon') {
+        altNames.push('Cannon Beemon');
+      }
+      if (name === 'EBEmon') {
+        altNames.push('Ebemon');
+      }
+      if (name === 'EBEmon (X-Antibody)') {
+        altNames.push('Ebemon (X-Antibody)');
+        altNames.push('Ebemon X');
+      }
+      if (name === 'JESmon GX') {
+        altNames.push('Jesmon GX');
+      }
+      if (name === 'Keemon') {
+        altNames.push('Kiimon');
+      }
+      if (name === 'Yarmon') {
+        altNames.push('Yaamon');
+        altNames.push('Yamon');
+      }
+      if (name === 'Mametyramon') {
+        altNames.push('Mame Tyramon');
+      }
+      if (name === 'Ofanimon') {
+        altNames.push('Ophanimon');
+      }
+      if (name === 'Ofanimon: Falldown Mode') {
+        altNames.push('Ophanimon: Falldown Mode');
+        altNames.push('Ophanimon Falldown Mode');
+      }
+      if (name === 'Ophanimon (X-Antibody)') {
+        altNames.push('Ophanimon (X-Antibody)');
+        altNames.push('Ophanimon X');
+      }
+      if (name === 'Pteranomon') {
+        altNames.push('Pteramon');
+        altNames.push('Petranamon');
+      }
+      if (name === 'Pteranomon (X-Antibody)') {
+        altNames.push('Pteramon (X-Antibody)');
+        altNames.push('Pteramon X');
+        altNames.push('Petranamon (X-Antibody)');
+        altNames.push('Petranamon X');
+      }
+      if (name === 'Ultimate Brachimon') {
+        altNames.push('Ultimate Brachiomon');
+      }
+      if (name === 'Cannonbeemon') {
+        altNames.push('Cannon Beemon');
+      }
+      if (name === 'Omegamon Alter B') {
+        altNames.push('Omegamon Alter B');
+      }
+      if (name === 'Omegamon Alter S') {
+        altNames.push('Omegamon Alter S');
+      }
+      if (name === 'Blucomon') {
+        altNames.push('Bulucomon');
+      }
+      if (name === 'Andiramon') {
+        altNames.push('Andiramon (Virus)');
+      }
+      if (name === 'Andiramon (Deva)') {
+        altNames.push('Andiramon (Data)');
+      }
+      if (name === 'Dark Knightmon') {
+        altNames.push('Axe Knightmon');
+        altNames.push('AxeKnightmon');
+      }
+      if (name === 'Burgamon Adult') {
+        altNames.push('Burgermon Adult');
+        altNames.push('Burgermon (Mama)');
+        altNames.push('Burgermon (Papa)');
+        altNames.push('Burgamon (Mama)');
+        altNames.push('Burgamon (Papa)');
+      }
+      if (name === 'Trailmon Ball') {
+        altNames.push('Diginorimon');
+      }
+      if (name === 'Gottsumon') {
+        altNames.push('Gotsumon');
+      }
+      if (name === 'Karatuki Numemon') {
+        altNames.push('Shell Numemon');
+        altNames.push('Karatsuki Numemon');
+      }
+      if (name === 'Metal Fantomon') {
+        altNames.push('Metal Phantomon');
+      }
+      if (name === 'Fantomon') {
+        altNames.push('Phantomon');
+      }
+      if (name === 'Tyranomon') {
+        altNames.push('Tyrannomon');
+      }
+      if (name === 'Rust Tyranomon') {
+        altNames.push('Rust Tyrannomon');
+      }
+      if (name === 'Metal Tyranomon') {
+        altNames.push('Metal Tyrannomon');
+      }
+      if (name === 'Master Tyranomon') {
+        altNames.push('Master Tyrannomon');
+      }
+      if (name === 'Tyranomon (X-Antibody)') {
+        altNames.push('Tyrannomon (X-Antibody)');
+        altNames.push('Tyrannomon X');
+      }
+      if (name === 'Sorcerimon') {
+        altNames.push('Sorcermon');
+        altNames.push('Sorcerimon');
+        altNames.push('Sorcerymon');
+        altNames.push('Socerimon');
+      }
+      if (name === 'Submarimon') {
+        altNames.push('Submarimon');
+        altNames.push('Submarinemon');
+        altNames.push('Sabmarimon');
+      }
+      if (name === 'Tuchidarumon') {
+        altNames.push('Mud Frigimon');
+        altNames.push('Chuchidarumon');
+        altNames.push('Tsuchidarumon');
+      }
+      if (name === 'Voltobautamon') {
+        altNames.push('Volto Bautamon');
+      }
+
+      const is_x_antibody = name.includes('(X-Antibody)');
+      if (is_x_antibody) {
+        altNames.push(name.replace('(X-Antibody)', '').trim());
+      }
 
       const isAltName = (alt: string, altNames: string[]): boolean => {
         return altNames.some((altName) => alt.toLowerCase().includes(altName.toLowerCase()));
@@ -675,10 +976,30 @@ class DigimonScraperScraper {
       })();
       const infoBox = $('#StatsBoxMorphContent1 table');
       //const nameTable = $('#S2NameEtyMorphContent1 table:first table:first');
-      let img = $('#mw-content-text .mw-parser-output table').first().find('.tab-pane a.image img').first();
+      let img = $('.mw-halign-center > a:nth-child(1) > img:nth-child(1)');
+      console.debug('     .mw-halign-center > a:nth-child(1) > img:nth-child(1)', { img_src: $(img).attr('src') });
+      if (!img.length) {
+        // fallback query for image
+        img = $('#mw-content-text .mw-parser-output table')
+          .first()
+          .find('.tab-pane a.mw-file-description img.mw-file-element')
+          .first();
+        console.debug(
+          '   fallback query for image: #mw-content-text .mw-parser-output table > .tab-pane a.mw-file-description img.mw-file-element',
+          { img_src: $(img).attr('src') }
+        );
+      }
+      if (!img.length) {
+        // fallback query for image
+        img = infoBox.find('a.mw-file-description img.mw-file-element');
+        console.debug('   fallback query for image: a.mw-file-description img.mw-file-element', {
+          img_src: $(img).attr('src'),
+        });
+      }
       if (!img.length) {
         // fallback query for image
         img = infoBox.find('a.image img');
+        console.debug('  fallback query for image: a.image img', { img_src: $(img).attr('src') });
       }
 
       console.debug(`    infoBox found: ${infoBox.length}`);
@@ -760,21 +1081,35 @@ class DigimonScraperScraper {
             ignoreCache,
             forceCache: CAT_ALWAYS_USE_CACHED,
             polite: POLITE || CAT_ALWAYS_USE_CACHED,
+            was_already_polite: i >= 1 && (POLITE || CAT_ALWAYS_USE_CACHED) && !cached,
           });
-          if ((imgResult?.status === 200 || imgResult?.cached) && imgResult?.imgFile && cat.img) {
-            const downloadFilename = imgResult?.imgFile;
-            const filename = resolve(__dirname, cat.img);
-            if (!fs.existsSync(filename) || !(await isPng(filename))) {
-              await sharp(downloadFilename).png().toFile(filename);
-              console.debug(`    Saved PNG: ${filename}`);
-            }
-          }
-          if ((imgResult?.status === 200 || imgResult?.cached) && imgResult?.imgFile && cat.img2) {
-            const downloadFilename = imgResult?.imgFile;
-            const filename = resolve(__dirname, cat.img2);
-            if (!fs.existsSync(filename) || !(await isPng(filename))) {
-              await sharp(downloadFilename).png().toFile(filename);
-              console.debug(`    Saved PNG: ${filename}`);
+
+          const toPngPath = (p: string) => p.replace(/\.[^./\\]+$/, '') + '.png';
+          if ((imgResult?.status === 200 || imgResult?.cached) && imgResult?.imgFile) {
+            const downloadFilename = imgResult.imgFile;
+
+            if (cat.img) {
+              const pngRelPath = toPngPath(cat.img);
+              const pngAbsPath = resolve(__dirname, pngRelPath);
+
+              if (!fs.existsSync(pngAbsPath) || !(await isPng(pngAbsPath))) {
+                if (!fs.existsSync(downloadFilename)) continue;
+                // Convert via buffer so it also works if source and target are the same file
+                const buf = await sharp(downloadFilename).png().toBuffer();
+                fs.writeFileSync(pngAbsPath, buf);
+                console.debug(`    Saved PNG: ${pngAbsPath}`);
+              }
+            } else if (cat.img2) {
+              const pngRelPath = toPngPath(cat.img2);
+              const pngAbsPath = resolve(__dirname, pngRelPath);
+
+              if (!fs.existsSync(pngAbsPath) || !(await isPng(pngAbsPath))) {
+                if (!fs.existsSync(downloadFilename)) continue;
+                // Convert via buffer so it also works if source and target are the same file
+                const buf = await sharp(downloadFilename).png().toBuffer();
+                fs.writeFileSync(pngAbsPath, buf);
+                console.debug(`    Saved PNG: ${pngAbsPath}`);
+              }
             }
           }
         } else {
@@ -793,13 +1128,19 @@ class DigimonScraperScraper {
         });
       }
 
-      const ignoreEvolvesRegex = /^Any .*(Baby|Child|Adult|Perfect|Ultimate|Super).*Digimon/;
-      const evolvesFromLi = $('#Evolves_From').closest('h2').next('ul').children('li');
-      const evolvesFrom: DigimonDataEvolveElement[] = [];
-      evolvesFromLi.each((i, e) => {
+      const references = $('ol.references > li[id^="cite_note"]')
+        .map((i, li) => ({
+          cite: i + 1,
+          text: $(li).find('.reference-text').text().trim(),
+        }))
+        .get();
+
+      /// @FIXME: use Element instead of any
+      const getEvolvesFromLi = (i: number, e: any) => {
         const eid = hrefToId($(e).find('a').attr('href'));
         const etitle = $(e).find('a').attr('title');
         const canon = $(e).find('b').length > 0;
+
         if (eid && etitle) {
           const ename = etitle.trim();
           const line = $(e)
@@ -807,16 +1148,15 @@ class DigimonScraperScraper {
             .trim()
             .replaceAll('\n', '')
             .replaceAll(/\s+/gm, ' ')
-            .replaceAll(/\\[[0-9]+\\]/gm, '');
+            .replaceAll(/\[\d+\]/g, '')
+            .trim();
 
-          const note = (() => {
-            const matches = line.match(/\\((.*)\\)/);
-            if (matches) {
-              return matches[0].replace(etitle?.trim(), '').replaceAll(/\\[[0-9]+\\]/g, '');
-            }
-
-            return undefined;
-          })();
+          const line_note_match = line.match(/\(([^()]*(?:\([^()]*\)[^()]*)*)\)\s*$/);
+          let note = line_note_match?.[1].replace(/\[\d+\]/g, '');
+          if (note === 'X-Antibody') {
+            // Ignore, part of name
+            note = undefined;
+          }
 
           // skip Card Games
           if (ename.includes('Card Battle Colors and Level') || ename.includes('Card Game Colors and Level')) {
@@ -829,14 +1169,39 @@ class DigimonScraperScraper {
             return;
           }
 
-          evolvesFrom.push({
+          const citeNumbers = $(e)
+            .text()
+            .trim()
+            .replaceAll('\n', '')
+            .matchAll(/\[(\d+)\]/g)
+            .map((m) => Number(m[1]))
+            .toArray();
+
+          const cites = citeNumbers
+            .map((n) => references.find((r) => r.cite === n))
+            .filter((r): r is { cite: number; text: string } => r !== undefined);
+
+          return {
             id: eid,
             name: ename,
             url: this.baseUrl + $(e).find('a').attr('href'),
             canon: canon,
             note: note,
             line: line,
-          } as DigimonDataEvolveElement);
+            cites: cites,
+          } as DigimonDataEvolveElement;
+        }
+
+        return undefined;
+      };
+
+      const ignoreEvolvesRegex = /^Any .*(Baby|Child|Adult|Perfect|Ultimate|Super).*Digimon/;
+      const evolvesFromLi = $('#Evolves_From').closest('h2').next('ul').children('li');
+      const evolvesFrom: DigimonDataEvolveElement[] = [];
+      evolvesFromLi.each((i, e) => {
+        const ef = getEvolvesFromLi(i, e);
+        if (ef) {
+          evolvesFrom.push(ef);
         }
       });
       console.debug(`    evolvesFrom found: ${evolvesFrom.length}`);
@@ -844,49 +1209,9 @@ class DigimonScraperScraper {
       const evolvesToLi = $('#Evolves_To').closest('h2').next('ul').children('li');
       const evolvesTo: DigimonDataEvolveElement[] = [];
       evolvesToLi.each((i, e) => {
-        const eid = hrefToId($(e).find('a').attr('href'));
-        const etitle = $(e).find('a').attr('title');
-        const canon = $(e).find('b').length > 0;
-        if (eid && etitle) {
-          const ename = etitle.trim();
-          const line = $(e)
-            .text()
-            .trim()
-            .replaceAll('\n', '')
-            .replaceAll(/\s+/gm, ' ')
-            .replaceAll(/\\[[0-9]+\\]/gm, '');
-
-          const note = (() => {
-            const matches = line.match(/\\(.*\\)/);
-            if (matches) {
-              return matches[0].replace(etitle?.trim(), '').replaceAll(/\\[[A-Z\s]?[0-9]+\\]/g, '');
-            }
-
-            return undefined;
-          })();
-
-          // skip Card Games
-          if (ename.includes('Card Battle Colors and Level') || ename.includes('Card Game Colors and Level')) {
-            return;
-          }
-          if (ignoreEvolvesRegex.test(ename)) {
-            return;
-          }
-          if ($(e).find('a').attr('href')?.includes('/index.php') || ename.includes('(page does not exist')) {
-            return;
-          }
-
-          evolvesTo.push({
-            id: eid,
-            name: ename,
-            url: this.baseUrl + $(e).find('a').attr('href'),
-            canon: canon,
-            note: note,
-            line: $(e)
-              .text()
-              .trim()
-              .replaceAll(/\\[[0-9]+\\]/g, ''),
-          } as DigimonDataEvolveElement);
+        const et = getEvolvesFromLi(i, e);
+        if (et) {
+          evolvesTo.push(et);
         }
       });
       console.debug(`    evolvesTo found: ${evolvesTo.length}`);
@@ -919,6 +1244,7 @@ class DigimonScraperScraper {
                 ignoreCache: !FORCE_DOWNLOAD_IMAGES && ignoreCache,
                 forceCache: !FORCE_DOWNLOAD_IMAGES && ALWAYS_USE_CACHED,
                 polite: POLITE,
+                was_already_polite: !cached && POLITE,
               });
 
               if (TESTING) {
@@ -983,6 +1309,7 @@ class DigimonScraperScraper {
                     ignoreCache: !FORCE_DOWNLOAD_IMAGES && ignoreCache,
                     forceCache: !FORCE_DOWNLOAD_IMAGES && ALWAYS_USE_CACHED,
                     polite: POLITE,
+                    was_already_polite: !cached && POLITE,
                   });
 
                   if (TESTING) {
@@ -1048,6 +1375,7 @@ class DigimonScraperScraper {
                     ignoreCache: !FORCE_DOWNLOAD_IMAGES && ignoreCache,
                     forceCache: !FORCE_DOWNLOAD_IMAGES && ALWAYS_USE_CACHED,
                     polite: POLITE,
+                    was_already_polite: !cached && POLITE,
                   });
 
                   if (TESTING) {
@@ -1065,6 +1393,7 @@ class DigimonScraperScraper {
                         console.debug(`    Saved PNG: ${filename}`);
                       }
                     }
+
                     if (downloadFilename) {
                       const filename = resolve(__dirname, `img/${id.replace('/', '')}.png`);
                       if (fs.existsSync(filename)) {
@@ -1085,9 +1414,97 @@ class DigimonScraperScraper {
             }
           }
         }
+        if (!image_found) {
+          console.debug(`    STILL NO image - img found (${image_found}): ${img.length}`);
+          console.debug(`        downloadImageUrl: ${downloadImageUrl}`);
+          img = $('.mw-halign-center > a.mw-file-description > img').first();
+          for (let i = 0; i < img.length; i++) {
+            const e = img[i];
+            const src = $(e).attr('src');
+            const alt = $(e).attr('alt') ?? '---';
+            if (src) {
+              console.debug(`        src: ${src} (${alt})`);
+            }
+
+            if (TESTING) {
+              console.debug({ downloadImageUrl, alt, altNames, is: isAltName(alt, altNames) });
+            }
+
+            if (!image_found) {
+              if (src) {
+                console.debug(`   get artwork for '${name}'`);
+                const newDownloadImageUrl =
+                  this.baseUrl + src.replace(/^\/images\/thumb(.*?)([^/]+)\/[^/]+$/, '/images$1$2');
+                console.debug(`   '${name}' -- ${url} download image: ${newDownloadImageUrl}`);
+                const imgResult = await downloadImage(newDownloadImageUrl, {
+                  ignoreCache: !FORCE_DOWNLOAD_IMAGES && ignoreCache,
+                  forceCache: !FORCE_DOWNLOAD_IMAGES && ALWAYS_USE_CACHED,
+                  polite: POLITE,
+                  was_already_polite: !cached && POLITE,
+                });
+
+                if (TESTING) {
+                  console.debug({ imgResult });
+                }
+
+                let downloadFilename: string | null = null;
+
+                if ((imgResult?.status === 200 || imgResult?.cached) && imgResult?.imgFile) {
+                  imgFilename = `img/${id.replace('/', '')}.png`;
+                  downloadFilename = imgResult?.imgFile ?? null;
+                  if (downloadFilename && fs.existsSync(downloadFilename)) {
+                    const filename = resolve(__dirname, imgFilename);
+                    if (FORCE_DOWNLOAD_IMAGES || !fs.existsSync(filename) || !(await isPng(filename))) {
+                      await sharp(downloadFilename).png().toFile(filename);
+                      console.debug(`    Saved PNG: ${filename}`);
+                    }
+                  }
+
+                  if (downloadFilename) {
+                    const filename = resolve(__dirname, `img/${id.replace('/', '')}.png`);
+                    if (fs.existsSync(filename)) {
+                      imgFilename = `img/${id.replace('/', '')}.png`;
+                    }
+                    downloadImageUrl = newDownloadImageUrl;
+                    image_found = true;
+                    console.debug(`    Image found for ${name}: ${imgFilename} (${downloadImageUrl}) -- 3. try`);
+                  }
+                }
+
+                if ((imgResult?.status === 200 || imgResult?.cached) && imgResult?.imgFile) {
+                  const baseName = id.replaceAll('/', '');
+                  const pngRelPath = `img/${baseName}.png`;
+                  const pngAbsPath = resolve(__dirname, pngRelPath);
+                  downloadFilename = imgResult.imgFile;
+
+                  if (fs.existsSync(downloadFilename)) {
+                    if (FORCE_DOWNLOAD_IMAGES || !fs.existsSync(pngAbsPath) || !(await isPng(pngAbsPath))) {
+                      await sharp(downloadFilename).png().toFile(pngAbsPath);
+                      console.debug(`    Saved PNG: ${pngAbsPath}`);
+                    }
+                  }
+
+                  // Only use the PNG name once the converted file actually exists
+                  if (fs.existsSync(pngAbsPath)) {
+                    imgFilename = pngRelPath;
+                    downloadImageUrl = newDownloadImageUrl;
+                    image_found = true;
+                    console.debug(`    Image found for ${name}: ${imgFilename} (${downloadImageUrl}) -- 3. try`);
+                  }
+                }
+
+                if (imgResult?.status === 404 || (!imgResult?.imgFile && !imgResult?.cached)) {
+                  downloadFilename = null;
+                  downloadImageUrl = null;
+                  image_found = false;
+                }
+              }
+            }
+          }
+        }
 
         if (!image_found && fallbackDownloadImageUrl) {
-          console.debug(`    STILL NO image - img found (${image_found})`);
+          console.debug(`    STILL NO IMAGE - img found (${image_found})`);
           console.debug(`        downloadImageUrl: ${downloadImageUrl}`);
           console.debug(`   get artwork for '${name}' -- ${fallbackDownloadImageUrl}`);
           console.debug(`   '${name}' -- ${url} download image: ${fallbackDownloadImageUrl}`);
@@ -1096,6 +1513,7 @@ class DigimonScraperScraper {
             ignoreCache: !FORCE_DOWNLOAD_IMAGES && ignoreCache,
             forceCache: !FORCE_DOWNLOAD_IMAGES && (!cached || ALWAYS_USE_CACHED),
             polite: POLITE || cached,
+            was_already_polite: !cached && POLITE,
           });
 
           if (TESTING) {
@@ -1103,6 +1521,7 @@ class DigimonScraperScraper {
           }
 
           let downloadFilename: string | null = null;
+
           if ((imgResult?.status === 200 || imgResult?.cached) && imgResult?.imgFile) {
             imgFilename = `img/${id.replace('/', '')}.png`;
             downloadFilename = imgResult?.imgFile ?? null;
@@ -1114,6 +1533,7 @@ class DigimonScraperScraper {
               }
             }
           }
+
           if (imgResult?.status === 404 || (!imgResult?.imgFile && !imgResult?.cached)) {
             downloadFilename = null;
             downloadImageUrl = null;
@@ -1147,7 +1567,107 @@ class DigimonScraperScraper {
 
         logInfo(`Scrapped Digimon: ${name} (${levels}) [${attributes}]`);
 
-        this.position++;
+        const extraVpetProperties: Record<string, any> = {};
+        if (this.vpetDevices) {
+          for (const [device, vpets] of Object.entries(this.vpetDevices)) {
+            // Generate title-cased key name: e.g., evolvesToDm20
+            const titleDevice = device.charAt(0).toUpperCase() + device.slice(1);
+            extraVpetProperties[`evolvesTo${titleDevice}`] = evolvesTo
+              .map(({ id, name, url }) => ({ id, name, url }))
+              .filter((vet) => {
+                return vpets.find((vpd) => vpd.name === vet.name);
+              });
+
+            // Set device match flag: e.g., "dm": true
+            extraVpetProperties[device] = extraVpetProperties[`evolvesTo${titleDevice}`].length > 0;
+          }
+        }
+
+        const evolvesExtend = (evolves: DigimonDataEvolveElement[]): DigimonDataEvolveElement[] => {
+          const animeRegex =
+            /^(Digimon Adventure|Digimon Adventure 02|Digimon Adventure tri\.|Digimon Tamers|Digimon Frontier|Digimon Data Squad|Digimon Fusion|Digimon Ghost Game|Digimon Beatbreak):/;
+
+          return evolves.map((evol) => {
+            const is_x_antibody = evol.name.includes('(X-Antibody)');
+            const norm_name = evol.name.replace('(X-Antibody)', 'X');
+            const norm_id = evol.id.replace('X_Antibody', 'X');
+
+            return {
+              ...evol,
+              animes: Array.from(
+                new Set(
+                  evol.cites
+                    ?.map((cit) => cit.text.match(animeRegex)?.[1])
+                    .filter((anime): anime is string => !!anime) ?? []
+                )
+              ),
+
+              dm: !!extraVpetProperties?.evolvesToDm?.find((e: { id: string; name: string }) => e.id === evol.id),
+              dm20: !!extraVpetProperties?.evolvesToDm20?.find((e: { id: string; name: string }) => e.id === evol.id),
+              dmx: !!extraVpetProperties?.evolvesToDmx?.find(
+                (e: { id: string; name: string }) => e.id === evol.id || norm_name === e.name || norm_id === e.id
+              ),
+              dmc: !!extraVpetProperties?.evolvesToDmc?.find((e: { id: string; name: string }) => e.id === evol.id),
+              pen: !!extraVpetProperties?.evolvesToPen?.find((e: { id: string; name: string }) => e.id === evol.id),
+              pen20: !!extraVpetProperties?.evolvesToPen20?.find((e: { id: string; name: string }) => e.id === evol.id),
+            };
+          });
+        };
+
+        const evolvesFromExt = evolvesExtend(
+          evolvesFrom.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game|Category:)/))
+        );
+        const evolvesToExt = evolvesExtend(
+          evolvesTo.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game|Category:)/))
+        );
+
+        const skill_table = $('table')
+          .filter((_, table) => {
+            const headers = $(table)
+              .find('tr')
+              .first()
+              .find('th')
+              .map((_, th) => $(th).text().trim())
+              .get();
+
+            return headers[0] === 'Name' && headers.at(-1) === 'Description';
+          })
+          .first();
+        const skills = skill_table
+          .find('tbody > tr')
+          .slice(1)
+          .map((_, tr) => {
+            const tds = $(tr).find('td');
+
+            const citeNumbers = tds
+              .last()
+              .text()
+              .trim()
+              .replaceAll('\n', '')
+              .matchAll(/\[(\d+)\]/g)
+              .map((m) => Number(m[1]))
+              .toArray();
+
+            const cites = citeNumbers
+              .map((n) => references.find((r) => r.cite === n))
+              .filter((r): r is { cite: number; text: string } => r !== undefined);
+
+            return {
+              name: tds
+                .eq(0)
+                .text()
+                .replace(/\[\d+\]/g, '')
+                .trim(),
+              description: tds
+                .last()
+                .text()
+                .replace(/\[\d+\]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim(),
+              cites: cites,
+            };
+          })
+          .get();
 
         const ret = {
           href: url,
@@ -1172,8 +1692,11 @@ class DigimonScraperScraper {
           minWeights: minWeights,
           minWeight: minWeights.length ? Math.min(...minWeights) : undefined,
           categories: categories,
-          evolvesFrom: evolvesFrom.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game|Category:)/)),
-          evolvesTo: evolvesTo.filter((evo) => !evo.name.match(/^(Any .*Digimon|Digimon Card Game|Category:)/)),
+          evolvesFrom: evolvesFromExt,
+          evolvesTo: evolvesToExt,
+          xAntibody: is_x_antibody,
+          skills: skills,
+          ...extraVpetProperties,
         } as DigimonData;
 
         const resultFileAlt = resolve(cacheResultDir, `${id.replace('/', '')}.json`);
@@ -1181,6 +1704,7 @@ class DigimonScraperScraper {
         await writeFileAsync(resultFileAlt, JSON.stringify(ret, null, 2));
         logInfo(`  Save Digimon: ${name} -- [${resultFile}] (${resultFileAlt})`);
 
+        this.position++;
         return ret;
       }
     }
@@ -1210,7 +1734,7 @@ class DigimonScraperScraper {
     const result = await fetchFromWebOrCache(url, {
       prefix: 'l_',
       ignoreCache: REDOWNLOAD_LIST,
-      forceCache: !REDOWNLOAD_LIST && ALWAYS_USE_CACHED,
+      forceCache: (!REDOWNLOAD_LIST && ALWAYS_USE_CACHED) || SKIP_LIST,
     });
     const html = result?.content;
     //const cached = result?.cached ?? false;
@@ -1238,6 +1762,18 @@ class DigimonScraperScraper {
   }
 }
 
+const filterOutUnwantedMonNames = (d: DigimonListElement) => {
+  return (
+    !d.name.match(/^Baby I$/) &&
+    !d.name.match(/^Baby II$/) &&
+    !d.name.match(/^Child$/) &&
+    !d.name.match(/^Adult$/) &&
+    !d.name.match(/^Perfect$/) &&
+    !d.name.match(/^Ultimate$/) &&
+    !d.name.match(/^Super Ultimate$/)
+  );
+};
+
 async function getBaby1DigimonList() {
   const scraper = new DigimonScraperScraper();
 
@@ -1246,7 +1782,7 @@ async function getBaby1DigimonList() {
 
   const baby1List = flatten(results);
 
-  return baby1List.filter((d) => !d.name.match(/^Baby I$/));
+  return baby1List.filter(filterOutUnwantedMonNames);
 }
 
 async function getBaby2DigimonList() {
@@ -1257,7 +1793,7 @@ async function getBaby2DigimonList() {
 
   const baby2List = flatten(results);
 
-  return baby2List.filter((d) => !d.name.match(/^Baby II$/));
+  return baby2List.filter(filterOutUnwantedMonNames);
 }
 
 async function getChildDigimonList() {
@@ -1268,7 +1804,7 @@ async function getChildDigimonList() {
 
   const childList = flatten(results);
 
-  return childList.filter((d) => !d.name.match(/^Child$/));
+  return childList.filter(filterOutUnwantedMonNames);
 }
 
 async function getAdultDigimonList() {
@@ -1279,7 +1815,7 @@ async function getAdultDigimonList() {
 
   const adultList = flatten(results);
 
-  return adultList.filter((d) => !d.name.match(/^Adult$/));
+  return adultList.filter(filterOutUnwantedMonNames);
 }
 
 async function getPerfectDigimonList() {
@@ -1290,7 +1826,7 @@ async function getPerfectDigimonList() {
 
   const perfectList = flatten(results);
 
-  return perfectList.filter((d) => !d.name.match(/^Perfect$/));
+  return perfectList.filter(filterOutUnwantedMonNames);
 }
 
 async function getUltimateDigimonList() {
@@ -1301,7 +1837,7 @@ async function getUltimateDigimonList() {
 
   const ultimateList = flatten(results);
 
-  return ultimateList.filter((d) => !d.name.match(/^Ultimate$/));
+  return ultimateList.filter(filterOutUnwantedMonNames);
 }
 
 function saveData(filename: string, data: object) {
@@ -1397,9 +1933,12 @@ export async function main() {
     /*
     console.debug(await scraper.scrapeDigimon('https://wikimon.net/Angemon'));
     await asyncRandomSleep(3241, 4582);
+    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Agumon'));
     */
 
-    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Agumon'));
+    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Rootmon'));
+    await asyncRandomSleep(1556, 1345);
+    console.debug(await scraper.scrapeDigimon('https://wikimon.net/Artiomon'));
 
     return;
   }
@@ -1407,23 +1946,38 @@ export async function main() {
   const baby1List = await getBaby1DigimonList();
   logInfo(`Get Baby I Digimon List: ${baby1List.length}`);
 
-  await asyncRandomSleep(1234, 4567);
+  await asyncRandomSleep(
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS,
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS
+  );
   const baby2List = await getBaby2DigimonList();
   logInfo(`Get Baby II Digimon List: ${baby2List.length}`);
 
-  await asyncRandomSleep(1100, 4861);
+  await asyncRandomSleep(
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS,
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS
+  );
   const childList = await getChildDigimonList();
   logInfo(`Get Child Digimon List: ${childList.length}`);
 
-  await asyncRandomSleep(2356, 8745);
+  await asyncRandomSleep(
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS,
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS
+  );
   const adultList = await getAdultDigimonList();
   logInfo(`Get Adult Digimon List: ${adultList.length}`);
 
-  await asyncRandomSleep(3254, 3652);
+  await asyncRandomSleep(
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS,
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS
+  );
   const perfectList = await getPerfectDigimonList();
   logInfo(`Get Perfect Digimon List: ${perfectList.length}`);
 
-  await asyncRandomSleep(5684, 6543);
+  await asyncRandomSleep(
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MIN_VARIANT_MS,
+    MINIMAL_WAIT_TIME_LIST + WAIT_TIME_MAX_VARIANT_MS
+  );
   const ultimateList = await getUltimateDigimonList();
   logInfo(`Get Ultimate Digimon List: ${ultimateList.length}`);
 
@@ -1450,7 +2004,10 @@ export async function main() {
     const slice = allDigimonUrls.slice(start, end);
     if (slice.length) {
       const results = await executePromisesWithLimit<DigimonData | undefined>(
-        slice.map((d) => async () => scraper.scrapeDigimon(d, { ignoreCache: false, forceCache: ALWAYS_USE_CACHED })),
+        slice.map(
+          (d) => async () =>
+            scraper.scrapeDigimon(d, { ignoreCache: REDOWNLOAD_DIGIMON, forceCache: ALWAYS_USE_CACHED })
+        ),
         POLITE && !ALWAYS_USE_CACHED ? 1 : 5 // concurrency
       );
       db.digimons.push(...(results.filter(Boolean) as DigimonData[]));
@@ -1465,7 +2022,7 @@ export async function main() {
   // load rest/all
   // safer version: only creates at most 2 promises at a time
   const tasks = allDigimonUrls.map(
-    (d) => async () => scraper.scrapeDigimon(d, { ignoreCache: false, forceCache: ALWAYS_USE_CACHED })
+    (d) => async () => scraper.scrapeDigimon(d, { ignoreCache: REDOWNLOAD_DIGIMON, forceCache: ALWAYS_USE_CACHED })
   );
   const results = await executePromisesWithLimit<DigimonData | undefined>(tasks, POLITE && !ALWAYS_USE_CACHED ? 1 : 5);
   db.digimons.push(...(results.filter(Boolean) as DigimonData[]));

@@ -1,3 +1,117 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+:root {
+  /* follows the OS setting by default; [data-theme] (set by the theme toggle) overrides it */
+  color-scheme: light dark;
+
+  /* light-dark(<light value>, <dark value>) */
+  --bg: light-dark(#ffffff, #111827);
+  --fg: light-dark(#111827, #f3f4f6);
+  --fg-soft: light-dark(#374151, #d1d5db);
+  --surface: light-dark(#ffffff, #1f2937);
+  --border: light-dark(#d1d5db, #374151);
+  --muted: light-dark(#6b7280, #9ca3af);
+  --accent: light-dark(#7c3aed, #8b5cf6);
+  --link: light-dark(#1e40af, #93c5fd);
+  --bg-soft: light-dark(#f3f4f6, #374151);
+  --active-bg: light-dark(#ede9fe, #4c1d95);
+  --badge-bg: light-dark(#f3f4f6, #374151);
+  --badge-fg: light-dark(#374151, #e5e7eb);
+  --badge-anime-bg: light-dark(#fee2e2, #7f1d1d);
+  --badge-anime-fg: light-dark(#991b1b, #fecaca);
+  --switch-off: light-dark(#d1d5db, #4b5563);
+  --knob-border: light-dark(#9ca3af, #6b7280);
+  --shadow: light-dark(rgb(0 0 0 / 0.1), rgb(0 0 0 / 0.4));
+}
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: var(--font-primary), system-ui, sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+  line-height: 1.5;
+}
+h1,
+h2,
+h3,
+h5,
+p {
+  margin: 0;
+}
+a {
+  color: var(--link);
+}
+button,
+input {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.underline {
+  text-decoration: underline;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #fff;
+  background: #374151;
+}
+.btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.btn-primary {
+  background: #0e7490;
+}
+.btn-danger {
+  background: #dc2626;
+}
+.btn-accent {
+  background: var(--accent);
+}
+.btn-small {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--fg);
+  background: var(--surface);
+  border-color: var(--border);
+}
