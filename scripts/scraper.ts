@@ -1679,7 +1679,9 @@ class DigimonScraperScraper {
             .text()
             .trim()
             .replace(/'^. Japanese'/, '')
-            .replace('⇨ Japanese', ''),
+            .replace('⇨ Japanese', '')
+            .replace('^. Original', '')
+            .replace('⇨ Original', ''),
           img: imgFilename,
           imgOrigin: downloadImageUrl,
           levels: levels,
