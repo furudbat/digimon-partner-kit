@@ -160,3 +160,10 @@ yarn-error.log*
 
 # storybook
 storybook-static
+
+# Next.js
+next-env.d.ts
+
+# JetBrains IDEs (WebStorm, IntelliJ, ...): ignore project settings entirely
+.idea/
+*.iml
